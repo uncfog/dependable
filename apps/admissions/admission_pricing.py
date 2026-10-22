@@ -22,29 +22,28 @@ Three things to know about how the data is expressed:
   would bury a real question about the source data. That is how Primary 1's
   2,000 gap is handled in the termly file, and it is how the Pre-KG-KG3 gap
   below is handled here.
-* Compulsory books are ``BOOKS`` lines rather than ``INTAKE`` ones, because the
-  school quotes them as a separate add-on list. They are summed separately on
-  every screen and left out of "due at intake", which is what enrolment is
-  gated on.
+* **Only one-off items live here.** The admission fee, uniform, sportswear (or
+  practical, at senior level), track suit and exam/dossier. Tuition, the book
+  list and development recur every term, so they are on the term fee
+  structure in ``apps/fees/pricing.py`` and nowhere else. They used to be on
+  both, which billed a new child twice for the same term: once at the door and
+  again on the roster. A new child's bill is now this sheet plus the current
+  term's structure, and no line appears on both.
 
 --------------------------------------------------------------------------
-THE BANDS, AND WHAT DIFFERS INSIDE THEM
+THE BANDS
 --------------------------------------------------------------------------
 The school prices intake by band -- nursery, primary, junior, senior -- and
-each band's compulsory items are one sheet. Two things vary *inside* a band,
-which is why some bands below are several specs rather than one:
+each band is one sheet. Senior charges "Practical" where the younger bands
+charge "Sportswear", and the junior and senior sheets quote "Uniform (2)" --
+two sets. The names here are the school's own, not tidied.
 
-* The book list is per class (Pre-KG 30,000 through KG 3 45,000) and, at
-  senior level, per arm (Arts 70,000, Science 75,000). Books are BOOKS lines,
-  summed separately on every screen and excluded from "due at intake".
-* Senior charges "Practical" where the younger bands charge "Sportswear", and
-  the junior and senior sheets quote "Uniform (2)" -- two sets. The names here
-  are the school's own, not tidied.
-
-The Pre-KG-KG 3 cross-check is the known discrepancy: the school's written
-total is 81,000 while its own line items sum to 82,000. The line items are
-seeded as supplied and the seeder warns; no balancing line has been invented,
-exactly as Primary 1's 2,000 gap is handled in apps/fees/pricing.py.
+``client_total`` is the school's written total *less the recurring lines that
+moved to the term structure* (tuition and development; books were never in
+it). That keeps the cross-check meaningful, and it is why the nursery band
+still warns: its written 81,000 less 26,000 is 55,000, against one-off lines
+that sum to 56,000. The same 1,000 gap the client flagged, still unconfirmed,
+still not balanced by an invented line.
 
 Any line still marked PENDING is refused by the seeder rather than seeded as a
 zero -- a real-looking 0 in front of a parent is worse than a command that
@@ -136,36 +135,29 @@ class AdmissionSpec:
         return not self.streams or klass.stream in self.streams
 
 
-#: The compulsory items each band charges at intake, in the order the school's
-#: own sheet lists them. The book list is added per class below, because that
-#: is the one line that differs inside a band.
+#: The one-off items each band charges at intake, in the order the school's own
+#: sheet lists them.
 NURSERY_INTAKE: tuple[AdmissionLine, ...] = (
     line("Admission Fee", 3_000, ADMISSION),
-    line("Tuition", 24_000),
     line("Uniform", 9_000),
     line("Sportswear", 16_000),
-    line("Development Levy", 2_000),
     line("Exam / Dossier", 3_000),
     line("Track suit", 25_000),
 )
 
 PRIMARY_INTAKE: tuple[AdmissionLine, ...] = (
     line("Admission Fee", 3_000, ADMISSION),
-    line("Tuition", 26_000),
     line("Uniform", 10_000),
     line("Sportswear", 16_000),
-    line("Development Levy", 2_000),
     line("Exam / Dossier", 3_000),
     line("Track suit", 25_000),
 )
 
 JUNIOR_INTAKE: tuple[AdmissionLine, ...] = (
     line("Admission Fee", 3_000, ADMISSION),
-    line("Tuition", 31_000),
     # "(2)" is the school's own shorthand for two sets, and is kept.
     line("Uniform (2)", 24_000),
     line("Sportswear", 10_000),
-    line("Development Levy", 2_000),
     line("Exam / Dossier", 3_000),
     line("Track suit", 25_000),
 )
@@ -174,81 +166,51 @@ JUNIOR_INTAKE: tuple[AdmissionLine, ...] = (
 #: rename of the same line -- a different thing, at a different price.
 SENIOR_INTAKE: tuple[AdmissionLine, ...] = (
     line("Admission Fee", 3_000, ADMISSION),
-    line("Tuition", 40_000),
     line("Uniform (2)", 30_000),
-    line("Development Levy", 2_000),
     line("Practical", 3_000),
     line("Exam / Dossier", 3_000),
     line("Track suit", 25_000),
 )
 
 
-def books(amount: int) -> AdmissionLine:
-    """The compulsory book list, quoted by the school as a separate add-on."""
-    return line("Compulsory Books", amount, BOOKS)
+def written_less_recurring(written: int, tuition: int, development: int = 2_000):
+    """The school's written intake total, less the lines now billed per term."""
+    return naira(written - tuition - development)
 
 
 NURSERY_NOTE = (
-    "School's written total is 81,000 but its own line items sum to "
-    "82,000 -- a 1,000 gap being confirmed with the client. Line items "
+    "School's written total was 81,000 including 24,000 tuition and 2,000 "
+    "development, so 55,000 for the one-off items -- but its own one-off lines "
+    "sum to 56,000. A 1,000 gap being confirmed with the client. Line items "
     "are seeded as supplied; no balancing line has been invented. Same "
     "handling as the Primary 1 gap in apps/fees/pricing.py."
 )
 
 
 ADMISSION_FEES: tuple[AdmissionSpec, ...] = (
-    # --- Nursery -----------------------------------------------------------
-    # One sheet for the band; four specs because the book list is per class.
-    # The written total carries the 1,000 discrepancy, so every class in the
-    # band cross-checks against it and the seeder warns four times, once per
-    # class it actually wrote.
     AdmissionSpec(
-        ("Pre-KG",), NURSERY_INTAKE + (books(30_000),),
-        client_total=naira(81_000), total_note=NURSERY_NOTE,
+        ("Pre-KG", "KG 1", "KG 2", "KG 3"),
+        NURSERY_INTAKE,
+        client_total=written_less_recurring(81_000, 24_000),
+        total_note=NURSERY_NOTE,
     ),
-    AdmissionSpec(
-        ("KG 1",), NURSERY_INTAKE + (books(32_000),),
-        client_total=naira(81_000), total_note=NURSERY_NOTE,
-    ),
-    AdmissionSpec(
-        ("KG 2",), NURSERY_INTAKE + (books(35_000),),
-        client_total=naira(81_000), total_note=NURSERY_NOTE,
-    ),
-    AdmissionSpec(
-        ("KG 3",), NURSERY_INTAKE + (books(45_000),),
-        client_total=naira(81_000), total_note=NURSERY_NOTE,
-    ),
-
-    # --- Primary -----------------------------------------------------------
     AdmissionSpec(
         ("Primary 1", "Primary 2", "Primary 3", "Primary 4", "Primary 5",
          "Primary 6"),
-        PRIMARY_INTAKE + (books(50_000),),
-        client_total=naira(85_000),
+        PRIMARY_INTAKE,
+        client_total=written_less_recurring(85_000, 26_000),
     ),
-
-    # --- Junior secondary ---------------------------------------------------
     AdmissionSpec(
         ("JSS 1", "JSS 2", "JSS 3"),
-        JUNIOR_INTAKE + (books(55_000),),
-        client_total=naira(98_000),
+        JUNIOR_INTAKE,
+        client_total=written_less_recurring(98_000, 31_000),
     ),
-
-    # --- Senior secondary ---------------------------------------------------
-    # The compulsory items are the same for both arms; only the book list
-    # differs, which is why this is two specs rather than one. The termly file
-    # splits SSS 2 and SSS 3 by arm for the same reason.
+    # One sheet for both arms now: the book list was the only thing that
+    # differed between them, and books are billed per term.
     AdmissionSpec(
         ("SSS 1", "SSS 2", "SSS 3"),
-        SENIOR_INTAKE + (books(70_000),),
-        streams=("Arts",),
-        client_total=naira(106_000),
-    ),
-    AdmissionSpec(
-        ("SSS 1", "SSS 2", "SSS 3"),
-        SENIOR_INTAKE + (books(75_000),),
-        streams=("Science",),
-        client_total=naira(106_000),
+        SENIOR_INTAKE,
+        client_total=written_less_recurring(106_000, 40_000),
     ),
 )
 

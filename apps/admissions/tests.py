@@ -975,8 +975,7 @@ class AdmissionPricingSheetTests(TestCase):
         for spec in ADMISSION_FEES:
             names = {item.name for item in spec.lines}
             with self.subTest(classes=spec.class_names):
-                for expected in ("Admission Fee", "Tuition", "Development Levy",
-                                 "Exam / Dossier", "Track suit"):
+                for expected in ("Admission Fee", "Exam / Dossier", "Track suit"):
                     self.assertIn(expected, names)
                 # Junior and senior quote two sets; the younger bands one.
                 self.assertTrue({"Uniform", "Uniform (2)"} & names, names)
@@ -984,50 +983,41 @@ class AdmissionPricingSheetTests(TestCase):
                 # a different item, not a renamed one.
                 self.assertTrue({"Sportswear", "Practical"} & names, names)
 
-    def test_every_sheet_totals_what_the_school_wrote(self):
-        """Except the nursery band, whose 1,000 gap has its own test below."""
+    def test_no_sheet_carries_an_item_that_recurs_every_term(self):
+        """Tuition, books and development are billed by the term structure."""
         for spec in ADMISSION_FEES:
-            if spec.client_total == Decimal("81000"):
+            names = {item.name for item in spec.lines}
+            with self.subTest(classes=spec.class_names):
+                self.assertFalse(
+                    {"Tuition", "Development Levy", "Compulsory Books"} & names
+                )
+                self.assertFalse([i for i in spec.lines if i.kind == "books"])
+
+    def test_every_sheet_totals_what_the_school_wrote(self):
+        """Less the recurring lines -- except the nursery band, whose 1,000 gap
+        has its own test below."""
+        for spec in ADMISSION_FEES:
+            if spec.total_note:
                 continue
             with self.subTest(classes=spec.class_names):
                 self.assertEqual(spec.computed_total, spec.client_total)
 
-    def test_books_are_left_out_of_what_is_due_at_intake(self):
-        """computed_total is the sheet's own total line, which excludes books."""
-        for spec in ADMISSION_FEES:
-            book_lines = [i for i in spec.lines if i.kind == "books"]
-            with self.subTest(classes=spec.class_names):
-                self.assertEqual(len(book_lines), 1)
-                self.assertEqual(
-                    spec.computed_total + book_lines[0].amount,
-                    sum(i.amount for i in spec.lines),
-                )
-
-    def test_the_senior_arms_differ_only_in_their_book_list(self):
-        arts, science = [
-            spec for spec in ADMISSION_FEES if "SSS 1" in spec.class_names
-        ]
-        self.assertEqual(arts.computed_total, science.computed_total)
-        self.assertNotEqual(
-            [i.amount for i in arts.lines if i.kind == "books"],
-            [i.amount for i in science.lines if i.kind == "books"],
-        )
-
-    def test_compulsory_books_are_a_separate_add_on(self):
-        for spec in ADMISSION_FEES:
-            books = [i for i in spec.lines if i.kind == "books"]
-            with self.subTest(classes=spec.class_names):
-                self.assertTrue(books)
+    def test_the_senior_arms_share_one_sheet(self):
+        senior = [spec for spec in ADMISSION_FEES if "SSS 1" in spec.class_names]
+        self.assertEqual(len(senior), 1)
+        self.assertEqual(senior[0].streams, ())
 
     def test_the_nursery_total_discrepancy_is_recorded_not_balanced(self):
-        """The 1,000 gap the client flagged. Same handling as Primary 1's 2,000.
+        """The 1,000 gap the client flagged survives the move of tuition.
 
-        No balancing line is invented; the school's written total is kept as a
-        cross-check so the seeder warns the moment the figures land.
+        No balancing line is invented; the school's written total (less what
+        moved to the term structure) is kept as a cross-check so the seeder
+        warns until the client confirms the figure.
         """
         nursery = next(s for s in ADMISSION_FEES if "Pre-KG" in s.class_names)
-        self.assertEqual(nursery.client_total, Decimal("81000"))
-        self.assertIn("82,000", nursery.total_note)
+        self.assertEqual(nursery.client_total, Decimal("55000"))
+        self.assertEqual(nursery.computed_total, Decimal("56000"))
+        self.assertIn("56,000", nursery.total_note)
         names = [item.name for item in nursery.lines]
         self.assertEqual(len(names), len(set(names)))
 
@@ -1074,26 +1064,25 @@ class AdmissionFeeSeedTests(AdmissionsTestCase):
         self.assertEqual(schedules.count(), 3)
         kg2 = schedules.get(school_class=self.north_kg2)
         self.assertEqual(kg2.admission_total, Decimal("3000"))
-        self.assertEqual(kg2.compulsory_total, Decimal("82000"))
-        self.assertEqual(kg2.books_total, Decimal("35000"))
+        self.assertEqual(kg2.compulsory_total, Decimal("56000"))
+        self.assertEqual(kg2.books_total, Decimal("0"))
 
-    def test_the_senior_arm_gets_its_own_book_list(self):
+    def test_the_senior_sheet_charges_practical_not_sportswear(self):
         self.seed()
         sss1 = AdmissionFeeSchedule.all_objects.get(school_class=self.north_sss1)
-        self.assertEqual(sss1.compulsory_total, Decimal("106000"))
-        self.assertEqual(sss1.books_total, Decimal("75000"))  # Science
+        self.assertEqual(sss1.compulsory_total, Decimal("64000"))
+        self.assertEqual(sss1.books_total, Decimal("0"))
         names = [item.name for item in sss1.items.all()]
         self.assertIn("Practical", names)
         self.assertNotIn("Sportswear", names)
 
     def test_it_warns_about_the_nursery_gap_without_balancing_it(self):
         output = self.seed()
-        self.assertIn("82,000", output)
-        self.assertIn("81,000", output)
+        self.assertIn("56,000", output)
+        self.assertIn("55,000", output)
         kg2 = AdmissionFeeSchedule.all_objects.get(school_class=self.north_kg2)
-        # Seeded as supplied: seven compulsory lines, no invented eighth.
-        compulsory = [i for i in kg2.items.all() if i.kind != "books"]
-        self.assertEqual(len(compulsory), 7)
+        # Seeded as supplied: five one-off lines, no invented sixth.
+        self.assertEqual(kg2.items.count(), 5)
 
     def test_it_never_seeds_a_zero(self):
         self.seed()

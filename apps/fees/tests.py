@@ -458,12 +458,14 @@ class SeedCommandTests(TestCase):
 
         expected = {
             "Pre-KG": 56000, "KG 1": 58000, "KG 2": 61000, "KG 3": 71000,
-            "Primary 1": 102000, "Primary 2": 78000, "Primary 3": 78000,
+            # Recurring items only: the entry years no longer carry uniform,
+            # and senior development no longer carries the practical charge.
+            "Primary 1": 78000, "Primary 2": 78000, "Primary 3": 78000,
             "Primary 4": 78000, "Primary 5": 78000, "Primary 6": 78000,
-            "JSS 1": 112000, "JSS 2": 88000, "JSS 3": 88000,
-            "SSS 1 Arts": 150000, "SSS 1 Science": 150000,
-            "SSS 2 Arts": 115000, "SSS 2 Science": 120000,
-            "SSS 3 Arts": 115000, "SSS 3 Science": 120000,
+            "JSS 1": 88000, "JSS 2": 88000, "JSS 3": 88000,
+            "SSS 1 Arts": 117000, "SSS 1 Science": 117000,
+            "SSS 2 Arts": 112000, "SSS 2 Science": 117000,
+            "SSS 3 Arts": 112000, "SSS 3 Science": 117000,
         }
         actual = {
             s.school_class.display_name: int(s.total)
@@ -499,16 +501,16 @@ class SeedCommandTests(TestCase):
     def test_primary_one_discrepancy_is_reported_not_papered_over(self):
         output = self._seed()
         self.assertIn("Primary 1", output)
-        self.assertIn("102,000", output)
-        self.assertIn("104,000", output)
+        self.assertIn("78,000", output)
+        self.assertIn("80,000", output)
 
         structure = FeeStructure.all_objects.get(school_class__name="Primary 1")
-        self.assertEqual(structure.total, Decimal("102000"))
+        self.assertEqual(structure.total, Decimal("78000"))
         # No invented balancing line.
-        self.assertEqual(structure.components.count(), 4)
+        self.assertEqual(structure.components.count(), 3)
         self.assertEqual(
             sorted(c.name for c in structure.components.all()),
-            ["Development", "School Fees", "Textbooks", "Uniform"],
+            ["Development", "School Fees", "Textbooks"],
         )
 
     def test_line_items_keep_the_order_they_were_specified_in(self):
@@ -516,14 +518,14 @@ class SeedCommandTests(TestCase):
         structure = FeeStructure.all_objects.get(school_class__name="Primary 1")
         self.assertEqual(
             [c.name for c in structure.components.all()],
-            ["School Fees", "Uniform", "Development", "Textbooks"],
+            ["School Fees", "Development", "Textbooks"],
         )
 
     def test_seeding_twice_does_not_duplicate_anything(self):
         self._seed()
         call_command("seed_fees", stdout=StringIO())
         self.assertEqual(FeeStructure.all_objects.count(), 19)
-        self.assertEqual(FeeComponent.all_objects.count(), 61)
+        self.assertEqual(FeeComponent.all_objects.count(), 57)
         self.assertEqual(Term.all_objects.count(), 1)
 
     def test_the_seeded_term_is_current(self):

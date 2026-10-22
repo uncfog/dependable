@@ -23,10 +23,12 @@ whole reason a parent is never asked for their child's date of birth twice.
 
 Third: **admission money is not term money.** ``fees.FeeStructure`` is what a
 class owes per term and is not touched here. What a family pays to come in --
-the one-time admission fee, the intake items, the compulsory book list -- is
+the one-time admission fee and the one-off intake items -- is
 :class:`AdmissionFeeSchedule` and :class:`AdmissionFeeItem`, a separate set
 with its own payments, so seeding or repricing one can never overwrite the
-other.
+other. The two never price the same item: what recurs every term (tuition,
+books, development) is on the term structure only, and a new child's bill is
+the intake sheet *plus* the current term.
 
 Everything is tenant-scoped by inheritance, so no view in this app filters by
 school or branch: one school cannot see another's applicants because the
@@ -997,9 +999,9 @@ class Assessment(BranchScopedModel):
 class AdmissionFeeKind(models.TextChoices):
     """What sort of charge a line is.
 
-    The split matters twice over. Enrolment is gated on the ADMISSION line
-    alone, not on the whole bill; and BOOKS is the add-on list the client keeps
-    on a separate sheet, so it prints separately here too.
+    Enrolment is gated on the ADMISSION line alone, not on the whole bill.
+    BOOKS is kept for a school that chooses to sell a book pack at the door; the
+    seeded sheets carry none, because the termly structure bills books.
     """
 
     ADMISSION = "admission", "Admission fee"
@@ -1012,8 +1014,8 @@ class AdmissionFeeSchedule(BranchScopedModel):
 
     Not a ``FeeStructure``, and never derived from one. A fee structure is what
     a class owes *per term* and is repriced every term; this is charged once,
-    at the door, and includes items -- uniform, tracksuit, the book list --
-    that a returning child does not pay again. Sharing a table would mean every
+    at the door, and holds only items -- uniform, tracksuit, the admission fee
+    itself -- that a returning child does not pay again. Sharing a table would mean every
     termly total silently gaining an admission fee.
     """
 

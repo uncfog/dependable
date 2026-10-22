@@ -72,6 +72,14 @@ TERM = {
 
 
 FEE_STRUCTURES: tuple[StructureSpec, ...] = (
+    # Recurring items only: school fees, textbooks and development. Everything
+    # a child pays once -- the admission fee, uniform, sportswear or practical,
+    # track suit, exam/dossier -- is on the intake sheet in
+    # apps/admissions/admission_pricing.py and nowhere else, so a new child's
+    # bill is intake one-offs plus this term's structure with no line counted
+    # twice. The entry years used to carry a Uniform line here as well, at a
+    # different price from the intake sheet's; uniform now lives there only.
+
     # --- Nursery ----------------------------------------------------------
     StructureSpec(
         ("Pre-KG",),
@@ -95,16 +103,20 @@ FEE_STRUCTURES: tuple[StructureSpec, ...] = (
     ),
 
     # --- Primary ----------------------------------------------------------
-    # Entry year: carries the uniform charge.
+    # Primary 1 is its own spec only to keep the cross-check: the school's
+    # written total was 104,000 including a 24,000 uniform, so 80,000 without
+    # it, against line items that sum to 78,000.
     StructureSpec(
         ("Primary 1",),
-        (line("School Fees", 26_000), line("Uniform", 24_000),
-         line("Development", 2_000), line("Textbooks", 50_000)),
-        client_total=Decimal("104000"),
+        (line("School Fees", 26_000), line("Development", 2_000),
+         line("Textbooks", 50_000)),
+        client_total=Decimal("80000"),
         total_note=(
-            "School's written total is 104,000 but these line items sum to "
-            "102,000 -- a 2,000 gap being confirmed with the client. Components "
-            "are seeded as supplied; no balancing line has been invented."
+            "School's written total was 104,000 including a 24,000 uniform "
+            "(80,000 without it, now that uniform is an intake item), but these "
+            "line items sum to 78,000 -- a 2,000 gap being confirmed with the "
+            "client. Components are seeded as supplied; no balancing line has "
+            "been invented."
         ),
     ),
     StructureSpec(
@@ -115,33 +127,31 @@ FEE_STRUCTURES: tuple[StructureSpec, ...] = (
 
     # --- Junior secondary --------------------------------------------------
     StructureSpec(
-        ("JSS 1",),
-        (line("School Fees", 31_000), line("Uniform", 24_000),
-         line("Development", 2_000), line("Textbooks", 55_000)),
-    ),
-    StructureSpec(
-        ("JSS 2", "JSS 3"),
+        ("JSS 1", "JSS 2", "JSS 3"),
         (line("School Fees", 31_000), line("Textbooks", 55_000),
          line("Development", 2_000)),
     ),
 
     # --- Senior secondary ---------------------------------------------------
-    # SSS 1 is priced the same for both arms; the split starts at SSS 2.
+    # The school quoted "Practical/Devy" at 5,000: development (2,000) and the
+    # practical charge (3,000) together. Practical is an intake one-off on the
+    # admission sheet, so only the development part recurs here. SSS 1 is
+    # priced the same for both arms; the book list splits at SSS 2.
     StructureSpec(
         ("SSS 1",),
-        (line("School Fees", 40_000), line("Uniform", 30_000),
-         line("Practical/Devy", 5_000), line("Textbooks", 75_000)),
+        (line("School Fees", 40_000), line("Development", 2_000),
+         line("Textbooks", 75_000)),
     ),
     StructureSpec(
         ("SSS 2", "SSS 3"),
         (line("School Fees", 40_000), line("Textbooks", 75_000),
-         line("Practical/Devy", 5_000)),
+         line("Development", 2_000)),
         streams=("Science",),
     ),
     StructureSpec(
         ("SSS 2", "SSS 3"),
         (line("School Fees", 40_000), line("Textbooks", 70_000),
-         line("Practical/Devy", 5_000)),
+         line("Development", 2_000)),
         streams=("Arts",),
     ),
 )
