@@ -64,6 +64,17 @@
         </span>
       </div>
 
+      {% if intake_portion %}
+        <p class="border-b border-ink-200 bg-ink-50 px-5 py-3 text-sm text-ink-700">
+          Part of an enrolment payment of
+          <span class="numeric font-semibold text-ink-900">{{ received_total|naira }}</span>:
+          this is the term's share. The other
+          <span class="numeric font-semibold text-ink-900">{{ intake_portion|naira }}</span>
+          paid the admission fee and intake items and is kept with the admission
+          record, under the same receipt number.
+        </p>
+      {% endif %}
+
       <dl class="grid gap-x-6 gap-y-4 px-5 py-5 sm:grid-cols-2">
         <div>
           <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">

@@ -350,7 +350,9 @@ class ApplicantDetailView(ViewAdmissionsMixin, DetailView):
         context["missing"] = applicant.missing_requirements
         context["assessment"] = getattr(applicant, "assessment", None)
         context["schedule"] = applicant.fee_schedule
-        context["payments"] = list(applicant.payments.select_related("recorded_by"))
+        context["payments"] = list(
+            applicant.payments.select_related("recorded_by", "term_payment")
+        )
         context["blockers"] = enrolment.can_enrol(applicant)
 
         # What this person may do to this applicant, worked out once here so

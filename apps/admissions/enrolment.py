@@ -7,12 +7,17 @@ is deliberately a service function rather than a model method, because it is a
 and either both happen or neither does. A half-run conversion would leave a
 child enrolled with nobody able to find the application they were admitted on.
 
-What the conversion is not: it does not copy fees, does not create a payment,
-and does not touch the termly fee structure. The new student is billed by the
-same rule as every other student -- their class's structure for the current
-term -- from the moment they exist. What the family paid to come in stays on
-the applicant as :class:`~apps.admissions.models.AdmissionPayment` rows, which
-is what keeps intake money out of a term's collection figure.
+What the conversion does not do is copy fees or touch the termly fee
+structure. The new student is billed by the same rule as every other student
+-- their class's structure for the current term -- from the moment they exist.
+
+What it does do with money is one thing: a family at a walk-in intake pays the
+term's fees in the same lump as the admission fee, before there is a student
+to credit them to, so all of it was recorded as admission money. At conversion
+:func:`apps.admissions.split.settle_at_enrolment` moves the term's share onto
+the new student as an ordinary payment -- otherwise the roster shows a term as
+owed that the family has already paid. What is genuinely intake money stays on
+the applicant, which is what keeps it out of a term's collection figure.
 
 The applicant is kept, not deleted. ``applicant.student`` is the link, and the
 history -- who enquired, when, from which Instagram post, what they scored --
@@ -32,6 +37,7 @@ from apps.students.models import Student, StudentStatus
 from apps.students.validators import normalise_admission_number
 
 from .models import AdmissionsConfig, Applicant, ApplicantStatus
+from .split import settle_at_enrolment
 
 
 class EnrolmentError(Exception):
@@ -143,6 +149,10 @@ def enrol(
         if actor is not None and applicant.decided_by_id is None:
             applicant.decided_by = actor
         applicant.save()
+
+        # Inside the same transaction: a student whose term money was left
+        # behind on the applicant would show a balance the family has paid.
+        settle_at_enrolment(applicant, student, actor=actor)
 
     return student
 

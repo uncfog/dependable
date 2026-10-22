@@ -28,7 +28,8 @@ the one-time admission fee and the one-off intake items -- is
 with its own payments, so seeding or repricing one can never overwrite the
 other. The two never price the same item: what recurs every term (tuition,
 books, development) is on the term structure only, and a new child's bill is
-the intake sheet *plus* the current term.
+the intake sheet *plus* the current term. When a family pays both in one lump,
+:mod:`apps.admissions.split` divides the money between the two ledgers.
 
 Everything is tenant-scoped by inheritance, so no view in this app filters by
 school or branch: one school cannot see another's applicants because the
@@ -999,7 +1000,8 @@ class Assessment(BranchScopedModel):
 class AdmissionFeeKind(models.TextChoices):
     """What sort of charge a line is.
 
-    Enrolment is gated on the ADMISSION line alone, not on the whole bill.
+    Enrolment is gated on the ADMISSION line alone, not on the whole bill, and
+    an all-in payment is allocated to it first (see :mod:`apps.admissions.split`).
     BOOKS is kept for a school that chooses to sell a book pack at the door; the
     seeded sheets carry none, because the termly structure bills books.
     """
@@ -1217,6 +1219,17 @@ class AdmissionPayment(BranchScopedModel):
         null=True,
         blank=True,
     )
+    #: The term payment this row was paid together with, when a family paid
+    #: intake and term fees in one lump. Set by :mod:`apps.admissions.split`,
+    #: never by hand: the two rows are one sum handed over, divided between the
+    #: two ledgers, and they share the term payment's receipt number.
+    term_payment = models.ForeignKey(
+        "payments.Payment",
+        on_delete=models.SET_NULL,
+        related_name="intake_portions",
+        null=True,
+        blank=True,
+    )
 
     class Meta(BranchScopedModel.Meta):
         abstract = False
@@ -1228,6 +1241,17 @@ class AdmissionPayment(BranchScopedModel):
 
     def __str__(self) -> str:
         return f"{self.amount} from {self.applicant.parent_name}"
+
+    @property
+    def receipt_number(self) -> str:
+        """The term payment's number when paid together with one, else its own.
+
+        One sum handed over is one receipt, whichever ledger each part of it
+        landed in.
+        """
+        if self.term_payment_id:
+            return self.term_payment.receipt_number
+        return f"ADM-{self.pk:06d}" if self.pk else "ADM-------"
 
     @property
     def status_pill(self) -> str:

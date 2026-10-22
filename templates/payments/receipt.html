@@ -140,9 +140,28 @@ nothing else.
                   bg-ink-50 px-4 py-4">
         <span class="text-sm font-semibold text-ink-900">Amount received</span>
         <span class="numeric text-3xl font-semibold text-brand-900">
-          {{ payment.amount|naira }}
+          {{ received_total|naira }}
         </span>
       </div>
+
+      {% comment %}
+      An enrolment payment: one sum, divided between the term's fees (this
+      payment, which counts toward the balance below) and the admission fee and
+      intake items (kept with the admission record). The parent handed over one
+      amount, so the receipt shows that amount and how it was applied.
+      {% endcomment %}
+      {% if intake_portion %}
+        <dl class="mt-3 space-y-1.5 px-4 text-sm">
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-600">Term fees &middot; {{ payment.term.name }}</dt>
+            <dd class="numeric text-ink-800">{{ payment.amount|naira }}</dd>
+          </div>
+          <div class="flex items-baseline justify-between gap-3">
+            <dt class="text-ink-600">Admission fee and intake items</dt>
+            <dd class="numeric text-ink-800">{{ intake_portion|naira }}</dd>
+          </div>
+        </dl>
+      {% endif %}
 
       {% if position.is_priced %}
         <dl class="mt-4 space-y-2 border-t border-ink-200 pt-4 text-sm">

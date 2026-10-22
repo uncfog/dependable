@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
+from django.apps import apps as django_apps
 from django.contrib import messages as flash
 from django.db.models import Count, Q, Sum
 import mimetypes
@@ -283,6 +284,21 @@ class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):
         return reverse("payments:pending")
 
 
+def intake_portion(payment) -> Decimal:
+    """Admission money paid in the same lump as ``payment``, or zero.
+
+    An enrolment payment is divided between this ledger and the admissions one
+    (see apps/admissions/split.py). The receipt and the detail screen show the
+    whole sum the parent handed over, so they ask for the other half here.
+    Resolved through the app registry: payments does not depend on admissions.
+    """
+    if not django_apps.is_installed("apps.admissions"):
+        return Decimal("0")
+    from apps.admissions.split import intake_total_for
+
+    return intake_total_for(payment)
+
+
 class PaymentDetailView(ViewPaymentsMixin, DetailView):
     """One payment, its attachment, and the balance it moved."""
 
@@ -305,6 +321,8 @@ class PaymentDetailView(ViewPaymentsMixin, DetailView):
             and payment.status == PaymentStatus.CONFIRMED
         )
         context["can_record"] = "record_payments" in _capabilities(self.request)
+        context["intake_portion"] = intake_portion(payment)
+        context["received_total"] = payment.amount + context["intake_portion"]
         context["page_title"] = f"Payment {payment.receipt_number}"
         return context
 
@@ -422,6 +440,8 @@ class ReceiptView(ViewPaymentsMixin, DetailView):
         # owed now, which may have moved since the parent walked away.
         context["running_balance"] = balances.running_balance(payment)
         context["school"] = payment.student.branch.school
+        context["intake_portion"] = intake_portion(payment)
+        context["received_total"] = payment.amount + context["intake_portion"]
         context["page_title"] = f"Receipt {payment.receipt_number}"
         return context
 

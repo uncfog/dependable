@@ -424,6 +424,19 @@
                     {{ payment.received_on|date:"j M Y" }} &middot;
                     {{ payment.get_method_display }}
                   </p>
+                  {% if payment.term_payment %}
+                    {# The other half of the same lump: the term's share, on the student. #}
+                    <p class="text-xs text-ink-500">
+                      Paid with
+                      {% if "view_payments" in capabilities %}
+                        <a href="{{ payment.term_payment.get_absolute_url }}"
+                           class="numeric font-medium text-brand-800 hover:underline">{{ payment.term_payment.amount|naira }} term fees</a>
+                      {% else %}
+                        <span class="numeric">{{ payment.term_payment.amount|naira }}</span> term fees
+                      {% endif %}
+                      &middot; <span class="numeric">{{ payment.receipt_number }}</span>
+                    </p>
+                  {% endif %}
                 </div>
                 <span class="status-pill {{ payment.status_pill }}">
                   {{ payment.get_status_display }}
