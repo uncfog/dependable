@@ -702,7 +702,8 @@ class SeedCommandTests(TestCase):
         self._seed()
         student = Student.all_objects.filter(school_class__name="Primary 1").first()
         self.assertEqual(
-            fee_position.position_for(student).expected, Decimal("102000")
+            # School fees, development and textbooks: uniform is an intake item.
+            fee_position.position_for(student).expected, Decimal("78000")
         )
 
     def test_ages_match_the_classes(self):
