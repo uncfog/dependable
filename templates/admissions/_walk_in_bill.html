@@ -1,0 +1,92 @@
+{% load money %}
+{% comment %}
+The walk-in bill for one class: the intake one-offs plus the current term's
+fees, and what the class asks the family to bring. Rendered on the form and
+refetched by it whenever the class changes, so the front desk reads the figure
+to the parent before typing what they paid.
+
+Takes `klass`, `bill` (apps.admissions.split.Bill), `profile` (the class
+level's requirements) and `suggested_number`. The `data-suggested-number`
+attribute is how the form's script learns the next admission number for the
+class's campus.
+{% endcomment %}
+<div id="walk-in-bill" data-suggested-number="{{ suggested_number }}">
+  {% if not klass %}
+    <p class="px-5 py-6 text-sm text-ink-500">
+      Choose a class to see what the family pays and what to bring.
+    </p>
+  {% else %}
+    <dl class="divide-y divide-ink-200 text-sm">
+      <div class="px-5 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          At the door &middot; once
+        </dt>
+        {% if bill.schedule %}
+          {% for line in bill.admission_lines %}
+            <dd class="mt-1.5 flex justify-between gap-3">
+              <span class="text-ink-700">{{ line.name }}</span>
+              <span class="numeric text-ink-900">{{ line.amount|naira }}</span>
+            </dd>
+          {% endfor %}
+          {% for line in bill.one_off_lines %}
+            <dd class="mt-1.5 flex justify-between gap-3">
+              <span class="text-ink-700">{{ line.name }}</span>
+              <span class="numeric text-ink-900">{{ line.amount|naira }}</span>
+            </dd>
+          {% endfor %}
+        {% else %}
+          <dd class="mt-1.5 text-ink-500">
+            No admission fee sheet for {{ klass.display_name }}.
+          </dd>
+        {% endif %}
+      </div>
+      <div class="px-5 py-3">
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          {% if bill.term %}{{ bill.term.name }}{% else %}This term{% endif %}
+        </dt>
+        {% if bill.term_is_priced %}
+          {% for line in bill.term_lines %}
+            <dd class="mt-1.5 flex justify-between gap-3">
+              <span class="text-ink-700">{{ line.name }}</span>
+              <span class="numeric text-ink-900">{{ line.amount|naira }}</span>
+            </dd>
+          {% endfor %}
+        {% elif bill.term %}
+          <dd class="mt-1.5 text-partial-strong">
+            {{ klass.display_name }} has no fees set for this term, so all of
+            the payment is recorded as admission money.
+          </dd>
+        {% else %}
+          <dd class="mt-1.5 text-partial-strong">
+            No term is marked current for this campus, so all of the payment is
+            recorded as admission money.
+          </dd>
+        {% endif %}
+      </div>
+      <div class="flex items-baseline justify-between gap-3 bg-ink-50 px-5 py-3">
+        <dt class="font-semibold text-ink-900">Total</dt>
+        <dd class="numeric text-lg font-semibold text-brand-900">{{ bill.total|naira }}</dd>
+      </div>
+    </dl>
+    <p class="border-t border-ink-200 px-5 py-3 text-xs text-ink-500">
+      A part payment goes to the admission fee first, then the term's fees,
+      then the one-off items.
+    </p>
+
+    {% if profile.lines %}
+      <div class="border-t border-ink-200 px-5 py-3">
+        <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          {{ profile.level_label }} asks for
+        </p>
+        <ul class="mt-1.5 space-y-1 text-sm text-ink-700">
+          {% for line in profile.lines %}
+            <li>
+              {{ line.label }}
+              {% if not line.is_required %}<span class="chip ml-1">Optional</span>{% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>

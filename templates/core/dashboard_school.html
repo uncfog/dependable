@@ -23,6 +23,7 @@ campuses themselves is a different job and lives at /branches/.
   <a href="{% url 'reports:index' %}" class="btn btn-secondary text-sm">
     <span class="hidden sm:inline">Full</span> report
   </a>
+  {% include "admissions/_walk_in_button.html" %}
 {% endblock %}
 
 {% block content %}

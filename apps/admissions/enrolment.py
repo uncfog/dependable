@@ -105,55 +105,89 @@ def enrol(
     if blockers:
         raise EnrolmentError(" ".join(blockers))
 
+    with transaction.atomic():
+        student = convert(
+            applicant,
+            admission_number=admission_number,
+            date_admitted=date_admitted,
+            actor=actor,
+            status=status,
+        )
+        # Inside the same transaction: a student whose term money was left
+        # behind on the applicant would show a balance the family has paid.
+        settle_at_enrolment(applicant, student, actor=actor)
+
+    return student
+
+
+@transaction.atomic
+def convert(
+    applicant: Applicant,
+    *,
+    admission_number: str,
+    school_class=None,
+    date_admitted: date | None = None,
+    actor=None,
+    status: str = StudentStatus.ACTIVE,
+) -> Student:
+    """Create the Student and close the applicant -- with no gate in front.
+
+    The conversion itself, shared by the two ways in: :func:`enrol`, which
+    puts :func:`can_enrol` in front of it, and the walk-in screen
+    (:mod:`apps.admissions.walk_in`), which decides and enrols in one sitting
+    and applies the same payment rule to the money on its own form. Anything
+    else should call :func:`enrol`.
+    """
+    if school_class is not None:
+        applicant.school_class = school_class
     klass = applicant.school_class
+    if klass is None:
+        raise EnrolmentError(
+            "Choose the class to enrol them into -- a student cannot be on the "
+            "roll without one."
+        )
     if klass.branch_id != applicant.branch_id:
         # Belt and braces: the forms already scope the class list to the
         # applicant's branch, and a mismatch here would put a child on another
         # campus's register.
         raise EnrolmentError("That class belongs to a different campus.")
 
-    with transaction.atomic():
-        student = Student(
-            school_id=applicant.school_id,
-            branch_id=applicant.branch_id,
-            school_class=klass,
-            admission_number=normalise_admission_number(admission_number),
-            first_name=applicant.first_name,
-            last_name=applicant.last_name,
-            other_names=applicant.other_names,
-            sex=applicant.sex,
-            date_of_birth=applicant.date_of_birth,
-            date_admitted=date_admitted or timezone.localdate(),
-            status=status,
-            parent_name=applicant.parent_name,
-            parent_phone=applicant.parent_phone,
-            parent_email=applicant.parent_email,
-            address=applicant.address,
-        )
-        # full_clean, not a bare save: the admission number has to collide
-        # inside this branch here rather than at the database, so the front
-        # desk gets "that number is taken" and not a 500.
-        #
-        # Nothing is excluded, and that is load-bearing: the roster's
-        # uniqueness rule is UniqueConstraint(Upper("admission_number"),
-        # "branch"), and Django skips a constraint that mentions an excluded
-        # field. Excluding `branch` here -- the obvious thing to do, since it
-        # is derived rather than typed -- would silently turn the check off and
-        # let the collision through to the database as an IntegrityError.
-        student.full_clean()
-        student.save()
+    student = Student(
+        school_id=applicant.school_id,
+        branch_id=applicant.branch_id,
+        school_class=klass,
+        admission_number=normalise_admission_number(admission_number),
+        first_name=applicant.first_name,
+        last_name=applicant.last_name,
+        other_names=applicant.other_names,
+        sex=applicant.sex,
+        date_of_birth=applicant.date_of_birth,
+        date_admitted=date_admitted or timezone.localdate(),
+        status=status,
+        parent_name=applicant.parent_name,
+        parent_phone=applicant.parent_phone,
+        parent_email=applicant.parent_email,
+        address=applicant.address,
+    )
+    # full_clean, not a bare save: the admission number has to collide
+    # inside this branch here rather than at the database, so the front
+    # desk gets "that number is taken" and not a 500.
+    #
+    # Nothing is excluded, and that is load-bearing: the roster's
+    # uniqueness rule is UniqueConstraint(Upper("admission_number"),
+    # "branch"), and Django skips a constraint that mentions an excluded
+    # field. Excluding `branch` here -- the obvious thing to do, since it
+    # is derived rather than typed -- would silently turn the check off and
+    # let the collision through to the database as an IntegrityError.
+    student.full_clean()
+    student.save()
 
-        applicant.student = student
-        applicant.status = ApplicantStatus.ENROLLED
-        applicant.enrolled_at = timezone.now()
-        if actor is not None and applicant.decided_by_id is None:
-            applicant.decided_by = actor
-        applicant.save()
-
-        # Inside the same transaction: a student whose term money was left
-        # behind on the applicant would show a balance the family has paid.
-        settle_at_enrolment(applicant, student, actor=actor)
-
+    applicant.student = student
+    applicant.status = ApplicantStatus.ENROLLED
+    applicant.enrolled_at = timezone.now()
+    if actor is not None and applicant.decided_by_id is None:
+        applicant.decided_by = actor
+    applicant.save()
     return student
 
 

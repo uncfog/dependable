@@ -132,13 +132,18 @@ class RequirementProfile:
     def is_met_by(self, applicant, line: RequirementLine) -> bool:
         """Has this applicant satisfied ``line``?
 
-        A document is satisfied by a file; the entrance exam by an assessment
-        that has been sat. Asked of required and optional lines alike -- a
+        A document is satisfied by a file, or by the paper being ticked off at
+        the desk; the entrance exam by an assessment that has been sat. Asked
+        of required and optional lines alike -- a
         checklist that showed nothing against the optional ones would leave
         staff wondering whether the file they uploaded had landed.
         """
         if line.is_document:
-            return bool(getattr(applicant, line.field_name, None))
+            # A file on record, or the paper ticked off at the desk.
+            received = getattr(applicant, "requirements_received", None) or ()
+            return line.kind in received or bool(
+                getattr(applicant, line.field_name, None)
+            )
         if line.kind == RequirementKind.ENTRANCE_EXAM:
             return applicant.has_sat_assessment
         return False

@@ -208,6 +208,13 @@ def payment_history(student, request) -> dict:
         Decimal("0"),
     )
     context["pending_total"] = pending or None
+
+    # Arriving from an enrolment (?receipt=<payment>): the receipt to print is
+    # the first thing on the page. Looked up within this student's own rows, so
+    # a hand-edited id can only ever name one of their payments.
+    receipt = request.GET.get("receipt", "")
+    if receipt.isdigit():
+        context["fresh_receipt"] = rows.filter(pk=int(receipt)).first()
     return context
 
 

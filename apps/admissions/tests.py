@@ -1484,9 +1484,11 @@ class ScreenTests(AdmissionsTestCase):
         response = self.client.post(
             reverse("admissions:settings"),
             {
+                "intake_mode": "walk_in",
                 "enquiry_validity_days": 14,
                 "reminder_after_days": 5,
                 "bursar_can_view_applicants": "on",
+                "bursar_can_enrol_walk_ins": "on",
                 "require_payment_before_enrolment": "on",
             },
         )
@@ -1495,13 +1497,20 @@ class ScreenTests(AdmissionsTestCase):
         self.assertEqual(config.school_id, self.alpha.pk)
         self.assertEqual(config.enquiry_validity_days, 14)
         self.assertTrue(config.bursar_can_view_applicants)
+        self.assertEqual(config.intake_mode, "walk_in")
+        self.assertTrue(config.bursar_can_enrol_walk_ins)
 
     def test_a_reminder_after_the_window_is_refused(self):
         response = self.client.post(
             reverse("admissions:settings"),
-            {"enquiry_validity_days": 5, "reminder_after_days": 10},
+            {"intake_mode": "both", "enquiry_validity_days": 5,
+             "reminder_after_days": 10},
         )
         self.assertEqual(response.status_code, 200)
+        # Refused for the reminder, not for anything else missing.
+        self.assertEqual(
+            set(response.context["form"].errors), {"reminder_after_days"}
+        )
         self.assertFalse(AdmissionsConfig.all_objects.exists())
 
     def test_the_settings_screen_shows_the_policy_in_force_per_level(self):

@@ -45,9 +45,10 @@ from apps.academics.models import Class, Level
 from apps.core import modules
 from apps.schools.models import School
 
-from . import enrolment, notifications
+from . import enrolment, notifications, split, walk_in
 from .access import (
     DecideAdmissionsMixin,
+    EnrolWalkInsMixin,
     ManageAdmissionsMixin,
     ManageRequirementsMixin,
     RecordAdmissionPaymentsMixin,
@@ -57,6 +58,9 @@ from .access import (
     can_manage_applicants,
     can_record_admission_payments,
     can_view_applicants,
+    config_for,
+    offers_pipeline,
+    offers_walk_ins,
 )
 from .forms import (
     AdmissionPaymentForm,
@@ -69,6 +73,7 @@ from .forms import (
     PublicEnquiryForm,
     RequirementSetForm,
     StaffEnquiryForm,
+    WalkInForm,
 )
 from .models import (
     PIPELINE_STATUSES,
@@ -125,6 +130,10 @@ class SchoolFromSlugMixin:
                 raise Http404("This school is not accepting enquiries.")
             if "admissions" not in modules.enabled_for_school(school.pk):
                 raise Http404("This school does not have an enquiry page.")
+            # A walk-in-only school enrols at the desk; an online form would
+            # collect enquiries into a pipeline it has switched off.
+            if not AdmissionsConfig.for_school(school).offers_pipeline:
+                raise Http404("This school does not take enquiries online.")
             self._school = school
         return self._school
 
@@ -303,7 +312,14 @@ class PipelineView(ViewAdmissionsMixin, TemplateView):
             self.request.GET.get(name)
             for name in ("q", "branch", "level", "school_class", "status")
         )
-        if not context["total"] and not context["is_filtered"]:
+        # A walk-in-only school keeps the board -- its walk-ins are on it, as
+        # enrolled -- but has no enquiries to take, so no link to hand out.
+        context["pipeline_on"] = offers_pipeline(self.request.user)
+        if (
+            context["pipeline_on"]
+            and not context["total"]
+            and not context["is_filtered"]
+        ):
             context["enquiry_links"] = _public_links(self.request)
         context["page_title"] = "Applications"
         return context
@@ -378,11 +394,21 @@ class ApplicantDetailView(ViewAdmissionsMixin, DetailView):
 
 
 class EnquiryCreateView(ManageAdmissionsMixin, CreateView):
-    """The walk-in form. Same model, same pipeline, branch taken from the user."""
+    """A staff-typed enquiry. Same model, same pipeline, branch from the user.
+
+    A school that takes walk-ins only has no pipeline to put an enquiry into,
+    so this sends them to the walk-in screen instead -- the bookmark and the
+    old sidebar habit both still land somewhere useful.
+    """
 
     model = Applicant
     form_class = StaffEnquiryForm
     template_name = "admissions/enquiry_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not offers_pipeline(request.user):
+            return redirect("admissions:walk_in")
+        return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -645,6 +671,125 @@ class EnrolView(ManageAdmissionsMixin, FormView):
             f"{student.school_class.display_name} as {student.admission_number}.",
         )
         return redirect(student.get_absolute_url())
+
+
+class WalkInEnrolView(EnrolWalkInsMixin, FormView):
+    """Enrol a walk-in: the student, the money and the admission record at once.
+
+    The fast path for a school whose parents walk in, pay and leave with the
+    child enrolled. One transaction (:func:`apps.admissions.walk_in.enrol_walk_in`)
+    writes what the pipeline would have written over five screens, and the
+    save lands on the student's page with the receipt.
+
+    404 for a school that runs the pipeline only: there is no such screen
+    there, rather than one the account is merely not allowed to open.
+    """
+
+    form_class = WalkInForm
+    template_name = "admissions/walk_in_form.html"
+
+    def dispatch(self, request, *args, **kwargs):
+        user = request.user
+        if user.is_authenticated and user.school_id and not offers_walk_ins(user):
+            raise Http404("This school does not take walk-in enrolments.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["config"] = config_for(self.request.user)
+        return kwargs
+
+    def get_initial(self):
+        initial = super().get_initial()
+        # One campus: the number can be suggested before a class is chosen.
+        branch = getattr(self.request.user, "branch", None)
+        if branch is not None:
+            initial["admission_number"] = enrolment.suggest_admission_number(branch)
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # After a failed submit the bill follows the class that was chosen.
+        form = context["form"]
+        klass = getattr(form, "cleaned_data", {}).get("school_class")
+        context.update(bill_context(klass))
+        context["pipeline_on"] = offers_pipeline(self.request.user)
+        context["page_title"] = "Enrol a walk-in"
+        return context
+
+    def form_valid(self, form):
+        try:
+            result = walk_in.enrol_walk_in(
+                form.cleaned_data, actor=self.request.user
+            )
+        except enrolment.EnrolmentError as error:
+            form.add_error(None, str(error))
+            return self.form_invalid(form)
+        except ValidationError as error:
+            # Almost always the admission number: unique per campus, checked
+            # by the student's own full_clean inside the transaction, which
+            # has rolled back everything else by the time it lands here.
+            for field, errors in error.message_dict.items():
+                target = field if field in form.fields else None
+                for message in errors:
+                    form.add_error(target, message)
+            return self.form_invalid(form)
+
+        student = result.student
+        money = result.split
+        note = (
+            f"{student.full_name} is on the roll in "
+            f"{student.school_class.display_name} as {student.admission_number}."
+        )
+        url = student.get_absolute_url()
+        if money is not None and money.term_payment is not None:
+            url = f"{url}?receipt={money.term_payment.pk}"
+        if money is not None:
+            note += (
+                f" {money.allocation.total:,.0f} recorded: "
+                f"{money.allocation.term:,.0f} to this term's fees, "
+                f"{money.allocation.intake:,.0f} to admission items."
+            )
+        messages.success(self.request, note)
+        return redirect(url)
+
+
+def bill_context(klass) -> dict:
+    """The walk-in bill panel's context for ``klass`` (or the empty prompt)."""
+    if klass is None:
+        return {"klass": None, "bill": None, "profile": None,
+                "suggested_number": ""}
+    return {
+        "klass": klass,
+        "bill": split.bill_for(klass),
+        "profile": profile_for(klass.level, school=klass.branch.school_id,
+                               branch=klass.branch_id),
+        "suggested_number": enrolment.suggest_admission_number(klass.branch),
+    }
+
+
+class WalkInBillView(EnrolWalkInsMixin, TemplateView):
+    """The bill panel for one class, refetched as the walk-in form's class changes.
+
+    The class comes through the scoped manager, so another school's class --
+    or another campus's, for a principal -- is a 404 and never a price.
+    """
+
+    template_name = "admissions/_walk_in_bill.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        klass = None
+        requested = self.request.GET.get("class", "")
+        if requested:
+            if not requested.isdigit():
+                raise Http404("No such class.")
+            klass = get_object_or_404(
+                Class.objects.select_related("branch"), pk=int(requested),
+                is_active=True,
+            )
+        context.update(bill_context(klass))
+        return context
 
 
 class WithdrawView(ManageAdmissionsMixin, View):

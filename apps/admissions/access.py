@@ -32,6 +32,9 @@ from apps.core.roles import Role
 
 from .models import AdmissionsConfig
 
+#: The template string for :func:`can_enrol_walk_ins`.
+ENROL_WALK_INS = "enrol_walk_ins"
+
 
 def config_for(user) -> AdmissionsConfig | None:
     """This account's school policy, fetched at most once per request.
@@ -96,6 +99,46 @@ def can_decide(user) -> bool:
     return has_capability(user, Capability.DECIDE_ADMISSIONS)
 
 
+def offers_walk_ins(user) -> bool:
+    """Does this account's school take walk-in enrolments at all?"""
+    config = config_for(user)
+    return config is not None and config.offers_walk_ins
+
+
+def offers_pipeline(user) -> bool:
+    """Does this account's school run the enquiry-to-offer pipeline?
+
+    Platform staff have no school and therefore no policy; they keep the
+    pipeline, which is where they would go to help a school with one.
+    """
+    config = config_for(user)
+    return config is None or config.offers_pipeline
+
+
+def can_enrol_walk_ins(user) -> bool:
+    """May this account enrol a walk-in -- student, payment and record at once?
+
+    Owner and principal always, where the school takes walk-ins: enrolling a
+    walk-in *is* the admission decision, made at the desk, so it sits with the
+    roles that hold DECIDE_ADMISSIONS. A bursar only where their school has
+    switched ``bursar_can_enrol_walk_ins`` on -- the front-desk-in-the-bursary
+    case the view toggle was added for. The bursar still needs the admission
+    payments capability, which the module switch withdraws, so turning the
+    add-on off closes this door too.
+    """
+    if user is None or not getattr(user, "is_authenticated", False):
+        return False
+    if getattr(user, "school_id", None) is None or not offers_walk_ins(user):
+        return False
+    if has_capability(user, Capability.DECIDE_ADMISSIONS):
+        return True
+    if getattr(user, "role", None) != Role.BURSAR:
+        return False
+    return config_for(user).bursar_can_enrol_walk_ins and has_capability(
+        user, Capability.RECORD_ADMISSION_PAYMENTS
+    )
+
+
 def can_view_admission_payments(user) -> bool:
     return has_capability(user, Capability.VIEW_ADMISSION_PAYMENTS)
 
@@ -123,6 +166,11 @@ def admissions_capabilities(user) -> set[str]:
         granted.add(Capability.VIEW_ADMISSION_PAYMENTS.value)
     if can_record_admission_payments(user):
         granted.add(Capability.RECORD_ADMISSION_PAYMENTS.value)
+    # Not a Capability: a combination of the role table and two of the
+    # school's settings. Named the same way so a template asks for it the same
+    # way -- the "Enrol a walk-in" buttons on the dashboards and the roster.
+    if can_enrol_walk_ins(user):
+        granted.add(ENROL_WALK_INS)
     return granted
 
 
@@ -190,6 +238,18 @@ class ManageRequirementsMixin(_GateMixin):
 
     def test(self, user) -> bool:
         return can_manage_requirements(user)
+
+
+class EnrolWalkInsMixin(_GateMixin):
+    """The walk-in screen. Owner and principal; a bursar where the school allows."""
+
+    denied_message = (
+        "Your role does not allow enrolling walk-ins. A school owner can turn "
+        "this on for bursars in admissions settings."
+    )
+
+    def test(self, user) -> bool:
+        return can_enrol_walk_ins(user)
 
 
 class ViewAdmissionPaymentsMixin(_GateMixin):

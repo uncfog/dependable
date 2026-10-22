@@ -22,6 +22,19 @@
 {% endblock %}
 
 {% block content %}
+{% if fresh_receipt %}
+  {# Just enrolled and paid: the receipt is what the parent is waiting for. #}
+  <div class="card mb-5 flex flex-col gap-3 border-paid/30 bg-paid-soft px-5 py-4
+              text-sm text-paid-strong sm:flex-row sm:items-center sm:justify-between">
+    <p>
+      <span class="font-semibold">Payment recorded</span>
+      &middot; receipt <span class="numeric">{{ fresh_receipt.receipt_number }}</span>
+    </p>
+    <a href="{% url 'payments:receipt' fresh_receipt.pk %}" class="btn btn-secondary text-sm">
+      Print receipt
+    </a>
+  </div>
+{% endif %}
 <div class="grid gap-5 lg:grid-cols-3">
 
   {# ===== Left: who they are ============================================== #}

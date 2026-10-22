@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% comment %}
+Enrol a walk-in: one screen, one save. The child, the parent, the class, what
+was handed over and what was paid -- and the bill for the chosen class beside
+it, refetched whenever the class changes. Without scripting the bill still
+renders on load and after a submit; it simply does not follow the picker.
+
+Everything lands in one transaction (apps/admissions/walk_in.py), and the save
+lands on the new student's page with the receipt.
+{% endcomment %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    Student, payment and admission record in one step
+  </p>
+{% endblock %}
+
+{% block page_actions %}
+  {% if pipeline_on %}
+    <a href="{% url 'admissions:pipeline' %}" class="btn btn-ghost text-sm">
+      <span class="hidden sm:inline">Admissions</span> pipeline
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" novalidate
+      class="grid gap-5 lg:grid-cols-3">
+  {% csrf_token %}
+
+  <div class="space-y-5 lg:col-span-2">
+
+    {% if form.non_field_errors %}
+      <div class="card border-overdue/30 bg-overdue-soft px-4 py-3 text-sm
+                  text-overdue-strong" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Class</h2>
+      </div>
+      <div class="space-y-5 p-5 sm:p-6">
+        {% include "partials/_field.html" with field=form.school_class %}
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.admission_number %}
+          {% include "partials/_field.html" with field=form.date_admitted %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">The child</h2>
+      </div>
+      <div class="space-y-5 p-5 sm:p-6">
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.first_name %}
+          {% include "partials/_field.html" with field=form.last_name %}
+        </div>
+        {% include "partials/_field.html" with field=form.other_names %}
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.sex %}
+          {% include "partials/_field.html" with field=form.date_of_birth %}
+        </div>
+      </div>
+    </section>
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Parent / guardian</h2>
+      </div>
+      <div class="space-y-5 p-5 sm:p-6">
+        {% include "partials/_field.html" with field=form.parent_name %}
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.parent_phone %}
+          {% include "partials/_field.html" with field=form.parent_phone_alt %}
+        </div>
+        {% include "partials/_field.html" with field=form.parent_email %}
+        {% include "partials/_field.html" with field=form.address %}
+      </div>
+    </section>
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Requirements</h2>
+        <p class="field-hint mt-0.5">
+          Tick what the parent handed over. Uploading a copy is optional, and
+          anything still owed shows on the admission record afterwards.
+        </p>
+      </div>
+      <ul class="divide-y divide-ink-200">
+        {% for label, tick, upload in form.requirement_rows %}
+          <li class="flex flex-col gap-2 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <label class="flex items-center gap-2.5 text-sm text-ink-900">
+              {{ tick.tag }}
+              {{ label }}
+            </label>
+            <div class="min-w-0 sm:max-w-64">
+              <span class="sr-only">Upload {{ label|lower }}</span>
+              {{ upload }}
+              {% for error in upload.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+      <div class="grid gap-5 border-t border-ink-200 p-5 sm:grid-cols-2 sm:p-6">
+        {% include "partials/_field.html" with field=form.assessment_score %}
+        {% include "partials/_field.html" with field=form.assessment_max_score %}
+      </div>
+    </section>
+
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">Payment</h2>
+        <p class="field-hint mt-0.5">
+          One amount for everything paid today. It is split between the term's
+          fees and the admission items on save, under one receipt number.
+        </p>
+      </div>
+      <div class="space-y-5 p-5 sm:p-6">
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.amount %}
+          {% include "partials/_field.html" with field=form.method %}
+        </div>
+        {% include "partials/_field.html" with field=form.reference %}
+      </div>
+    </section>
+
+    <div class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      <a href="{% url 'students:student_list' %}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">Enrol and record payment</button>
+    </div>
+  </div>
+
+  <aside class="lg:col-span-1">
+    <section class="card overflow-hidden lg:sticky lg:top-4"
+             data-bill-url="{% url 'admissions:walk_in_bill' %}">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">What the family pays</h2>
+      </div>
+      {% include "admissions/_walk_in_bill.html" %}
+    </section>
+  </aside>
+</form>
+
+<script>
+  // Follow the class picker: refetch the bill, and move the suggested
+  // admission number along with it -- unless somebody has typed their own.
+  (function () {
+    var card = document.querySelector('[data-bill-url]');
+    var picker = document.getElementById('{{ form.school_class.id_for_label }}');
+    var number = document.getElementById('{{ form.admission_number.id_for_label }}');
+    if (!card || !picker || !window.fetch) return;
+    var url = card.getAttribute('data-bill-url');
+    var inFlight = null;
+
+    function suggested() {
+      var bill = document.getElementById('walk-in-bill');
+      return bill ? bill.getAttribute('data-suggested-number') || '' : '';
+    }
+
+    picker.addEventListener('change', function () {
+      var before = suggested();
+      if (inFlight) inFlight.abort();
+      inFlight = new AbortController();
+      fetch(url + '?class=' + encodeURIComponent(picker.value), {
+        signal: inFlight.signal,
+        headers: { 'X-Requested-With': 'fetch' },
+        credentials: 'same-origin'
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error(response.status);
+          return response.text();
+        })
+        .then(function (html) {
+          document.getElementById('walk-in-bill').outerHTML = html;
+          if (number && (!number.value || number.value === before)) {
+            number.value = suggested();
+          }
+        })
+        // A dropped request leaves the last good bill on screen.
+        .catch(function () {});
+    });
+  })();
+</script>
+{% endblock %}

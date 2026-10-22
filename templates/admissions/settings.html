@@ -20,6 +20,23 @@
       </div>
     {% endif %}
 
+    <div class="card mb-5 overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-4">
+        <h2 class="text-sm font-semibold text-ink-900">{{ form.intake_mode.label|capfirst }}</h2>
+        <p class="field-hint mt-0.5">{{ form.intake_mode.help_text }}</p>
+      </div>
+      <fieldset class="space-y-2 p-5 sm:p-6">
+        <legend class="sr-only">{{ form.intake_mode.label|capfirst }}</legend>
+        {% for choice in form.intake_mode %}
+          <label class="check-row border border-ink-200 py-3">
+            {{ choice.tag }}
+            <span class="text-sm font-medium text-ink-900">{{ choice.choice_label }}</span>
+          </label>
+        {% endfor %}
+        {% for error in form.intake_mode.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </fieldset>
+    </div>
+
     <div class="card overflow-hidden">
       <div class="border-b border-ink-200 px-5 py-4">
         <h2 class="text-sm font-semibold text-ink-900">The enquiry window</h2>
@@ -55,6 +72,18 @@
             </span>
             <span class="block text-xs text-ink-500">
               {{ form.bursar_can_view_applicants.help_text }}
+            </span>
+          </span>
+        </label>
+
+        <label class="check-row border border-ink-200 py-3">
+          {{ form.bursar_can_enrol_walk_ins }}
+          <span class="min-w-0">
+            <span class="block text-sm font-medium text-ink-900">
+              {{ form.bursar_can_enrol_walk_ins.label|capfirst }}
+            </span>
+            <span class="block text-xs text-ink-500">
+              {{ form.bursar_can_enrol_walk_ins.help_text }}
             </span>
           </span>
         </label>

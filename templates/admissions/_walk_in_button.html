@@ -1,0 +1,23 @@
+{% comment %}
+"Enrol a walk-in", the primary action wherever a new child is likely to be
+added: the owner's and principal's dashboards, the roster and the admissions
+board -- and the bursar's dashboard where the school has allowed it.
+
+`enrol_walk_ins` is granted by apps.admissions.access.admissions_capabilities
+only when the school takes walk-ins, has the admissions module, and the role
+may admit (or the bursar has been allowed to). One string, so every placement
+agrees with the screen it opens.
+{% endcomment %}
+{% if "enrol_walk_ins" in capabilities %}
+  <a href="{% url 'admissions:walk_in' %}" class="btn btn-primary text-sm">
+    <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+         stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0
+               3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75
+               0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
+    </svg>
+    <span class="sm:hidden">Walk-in</span>
+    <span class="hidden sm:inline">Enrol a walk-in</span>
+  </a>
+{% endif %}

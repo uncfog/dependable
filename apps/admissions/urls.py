@@ -16,6 +16,8 @@ urlpatterns = [
     path("", views.PipelineView.as_view(), name="pipeline"),
     # Before the <int:pk> patterns, so these words are never read as ids.
     path("new/", views.EnquiryCreateView.as_view(), name="enquiry_create"),
+    path("walk-in/", views.WalkInEnrolView.as_view(), name="walk_in"),
+    path("walk-in/bill/", views.WalkInBillView.as_view(), name="walk_in_bill"),
     path("fees/", views.FeeScheduleListView.as_view(), name="fee_schedules"),
     path("settings/", views.AdmissionsSettingsView.as_view(), name="settings"),
     path(

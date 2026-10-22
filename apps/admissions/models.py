@@ -180,6 +180,20 @@ class Sex(models.TextChoices):
 # ===========================================================================
 
 
+class IntakeMode(models.TextChoices):
+    """How a school takes new children in.
+
+    ``PIPELINE`` is enquiry, application, assessment, offer, enrolment -- for a
+    school whose parents find it online and come back days later. ``WALK_IN``
+    is the parent at the desk who pays and leaves with the child enrolled, in
+    one screen. Most schools see both, which is the default.
+    """
+
+    BOTH = "both", "Walk-ins and the full pipeline"
+    WALK_IN = "walk_in", "Walk-ins only"
+    PIPELINE = "pipeline", "The full pipeline only"
+
+
 class AdmissionsConfig(TenantScopedModel):
     """One school's admissions policy: how long an enquiry lives, and who sees it.
 
@@ -221,6 +235,26 @@ class AdmissionsConfig(TenantScopedModel):
         "bursar runs the front desk. A bursar never decides on an "
         "application either way.",
     )
+    # db_default as well as default on the two below: the column must have a
+    # value for a row inserted by code deployed before this field existed, so
+    # the migration can land ahead of the deploy.
+    intake_mode = models.CharField(
+        "how new children are admitted",
+        max_length=20,
+        choices=IntakeMode.choices,
+        default=IntakeMode.BOTH,
+        db_default=IntakeMode.BOTH,
+        help_text="Walk-ins are enrolled and paid for on one screen. The full "
+        "pipeline runs enquiries and applications for parents who apply online.",
+    )
+    bursar_can_enrol_walk_ins = models.BooleanField(
+        "bursar can enrol walk-ins",
+        default=False,
+        db_default=False,
+        help_text="Off by default: enrolling a walk-in admits the child, which "
+        "is the owner's and principal's decision. Turn on for a school whose "
+        "bursar runs the front desk.",
+    )
     require_payment_before_enrolment = models.BooleanField(
         default=True,
         help_text="Refuse to enrol an accepted applicant until the admission "
@@ -244,6 +278,14 @@ class AdmissionsConfig(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"Admissions settings for {self.school}"
+
+    @property
+    def offers_walk_ins(self) -> bool:
+        return self.intake_mode in (IntakeMode.BOTH, IntakeMode.WALK_IN)
+
+    @property
+    def offers_pipeline(self) -> bool:
+        return self.intake_mode in (IntakeMode.BOTH, IntakeMode.PIPELINE)
 
     @classmethod
     def for_school(cls, school) -> "AdmissionsConfig":
@@ -504,6 +546,12 @@ class Applicant(BranchScopedModel):
         help_text="Where the reminder and the decision are sent. Without one, "
         "neither can go out.",
     )
+    #: Documents handed over on paper and ticked off at the desk, as
+    #: requirement kinds. A paper birth certificate seen at the counter meets
+    #: the requirement as surely as a scan of it, and the walk-in screen does
+    #: not make anyone scan it. Null rather than an empty-list default so the
+    #: column can land before the code that writes it.
+    requirements_received = models.JSONField(null=True, blank=True)
     previous_school = models.CharField(max_length=200, blank=True)
     heard_about = models.CharField(
         "how they heard about the school",
