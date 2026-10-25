@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCHOOLCORD - School Management & Fee Recovery</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            serif: ['"Playfair Display"', 'serif'],
+          },
+          colors: {
+            lattice: {
+              bg: '#F5F5F2',
+              card: '#E8E8E3',
+              dark: '#121316',
+              accent: '#1B4332',
+              blue: '#253E76',
+              text: '#1C1D21',
+              muted: '#6B6E77',
+              border: '#DDDDC7',
+              pill: '#E2E2DC'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F6F6F3;
+      color: #1C1D21;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .bg-grid-pattern {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    }
+
+    .hero-bg-placeholder {
+      background: linear-gradient(135deg, rgba(232, 232, 227, 0.35) 0%, rgba(220, 220, 212, 0.45) 100%),
+                  url('https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;
+    }
+
+    .cta-bg-placeholder {
+      background: linear-gradient(135deg, rgba(18, 19, 22, 0.55) 0%, rgba(37, 62, 118, 0.65) 100%),
+                  url('https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=2000&q=80') center/cover no-repeat;
+    }
+
+    .section-bg-placeholder {
+      background: linear-gradient(180deg, rgba(245, 245, 242, 0.30) 0%, rgba(232, 232, 227, 0.35) 100%),
+                  url('https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+    }
+
+    /* H1 Animation */
+    @keyframes h1Reveal {
+      0% {
+        opacity: 0;
+        transform: translateY(28px) scale(0.97);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .animate-h1 {
+      animation: h1Reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Scroll Reveal Animation */
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: opacity, transform;
+    }
+
+    .scroll-reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Stagger Delays */
+    .delay-100 { transition-delay: 100ms; }
+    .delay-200 { transition-delay: 200ms; }
+    .delay-300 { transition-delay: 300ms; }
+
+    /* Custom print styling */
+    @media print {
+      body * { visibility: hidden; }
+      #printable-receipt, #printable-receipt * { visibility: visible; }
+      #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; }
+    }
+  </style>
+</head>
+<body class="antialiased selection:bg-lattice-dark selection:text-white">
+
+  <!-- TOP ANNOUNCEMENT BANNER -->
+  <div class="bg-lattice-dark text-white text-xs font-semibold uppercase tracking-widest py-2.5 px-4 text-center flex items-center justify-center gap-3">
+    <span>ACADEMIC SESSION IS LIVE</span>
+    <span class="hidden md:inline text-gray-500">•</span>
+    <span class="hidden md:inline">🇳🇬 NIGERIA</span>
+    <span class="text-gray-500">|</span>
+    <a href="#live-demo" class="underline underline-offset-4 decoration-emerald-400 hover:text-emerald-300 transition">TRY INTERACTIVE DEMO &rarr;</a>
+  </div>
+
+  <!-- NAVIGATION BAR (LATTICE STYLE WITH BRANDING LOGO FROM IMAGE 3) -->
+  <header class="sticky top-0 z-50 bg-[#F6F6F3]/90 backdrop-blur-md border-b border-lattice-border/60">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+      
+      <!-- LOGO FROM REFERENCE IMAGE 3 -->
+      <a href="#" class="flex items-center gap-3 group">
+        <div class="flex items-center gap-2">
+          <!-- Icon matched exactly to Image 3 -->
+          <div class="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200/80 flex items-center justify-center p-2 group-hover:scale-105 transition-transform duration-200">
+            <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-[#253E76]">
+              <path d="M15 20 C 35 20, 30 50, 50 50 C 70 50, 65 20, 85 20" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="none"/>
+              <circle cx="15" cy="20" r="10" fill="currentColor"/>
+              <circle cx="85" cy="20" r="10" fill="currentColor"/>
+            </svg>
+          </div>
+          <!-- Text logo matched to Image 3 serif styling -->
+          <span class="font-serif text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f172a] uppercase">
+            SCHOOL<span class="text-[#253E76]">CORD</span>
+          </span>
+        </div>
+      </a>
+
+      <!-- CENTER NAV LINKS -->
+      <nav class="hidden lg:flex items-center gap-8 text-sm font-medium text-lattice-text">
+        <a href="#features" class="hover:text-black transition-colors">Product</a>
+        <a href="#how-it-works" class="hover:text-black transition-colors">Services</a>
+        <a href="#calculator" class="hover:text-black transition-colors">Fee Recovery</a>
+        <a href="#pricing" class="hover:text-black transition-colors">Pricing</a>
+        <a href="#faq" class="hover:text-black transition-colors">About</a>
+      </nav>
+
+      <!-- RIGHT ACTIONS -->
+      <div class="flex items-center gap-3 sm:gap-4">
+        <button onclick="document.getElementById('live-demo').scrollIntoView({behavior: 'smooth'})" class="hidden sm:flex items-center justify-center p-2 text-lattice-text hover:text-black hover:bg-lattice-pill rounded-full transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </button>
+        
+        <a href="#live-demo" class="bg-[#253E76] hover:bg-[#1d315e] text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition duration-200 flex items-center gap-2 shadow-sm">
+          <span>Login ↗</span>
+        </a>
+
+        <button onclick="toggleMobileMenu()" class="lg:hidden p-2 rounded-lg bg-lattice-pill text-lattice-text">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- MOBILE MENU DROPDOWN -->
+    <div id="mobile-menu" class="hidden lg:hidden bg-white border-b border-lattice-border px-6 py-6 space-y-4 text-sm font-medium">
+      <a href="#features" class="block py-2 text-lattice-text hover:text-black">Product</a>
+      <a href="#how-it-works" class="block py-2 text-lattice-text hover:text-black">Services</a>
+      <a href="#calculator" class="block py-2 text-lattice-text hover:text-black">Fee Recovery</a>
+      <a href="#pricing" class="block py-2 text-lattice-text hover:text-black">Pricing</a>
+      <a href="#faq" class="block py-2 text-lattice-text hover:text-black">About</a>
+      <a href="#live-demo" class="block w-full text-center bg-[#253E76] text-white py-3 rounded-full">Explore App Demo ↗</a>
+    </div>
+  </header>
+
+  <!-- HERO SECTION WITH EDITORIAL LATTICE TYPOGRAPHY & HEADER IMAGE PLACEHOLDER -->
+  <section class="pt-12 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <!-- Centered Editorial Headline -->
+    <div class="text-center max-w-4xl mx-auto space-y-6 mb-12 sm:mb-16">
+      
+      <div class="inline-flex items-center gap-2 bg-lattice-pill border border-lattice-border px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase text-lattice-text scroll-reveal">
+        <span>SCHOOL MANAGEMENT &amp; FINANCIAL RECOVERY</span>
+      </div>
+
+      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-light tracking-tight text-lattice-text leading-[1.08] font-sans animate-h1">
+        Where School Financial Clarity is <span class="font-serif italic font-normal">Built.</span>
+      </h1>
+
+      <p class="text-lg sm:text-xl text-lattice-muted max-w-2xl mx-auto font-normal leading-relaxed scroll-reveal delay-100">
+        Keep student records, school-fee payments, and outstanding balances organized in one secure place. Built specifically for Nigerian private school proprietors.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4 pt-2 scroll-reveal delay-200">
+        <a href="#live-demo" class="bg-[#253E76] hover:bg-[#1d315e] text-white px-8 py-4 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg">
+          <span>SET UP MY SCHOOL NOW &rarr;</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- HERO FEATURE BANNER CONTAINER (MATCHING REFERENCE IMAGE 2 & STYLED IMAGE 1 WITH PLACEHOLDER) -->
+    <div class="relative rounded-3xl overflow-hidden bg-lattice-card border border-lattice-border p-4 sm:p-8 lg:p-10 shadow-xl hero-bg-placeholder scroll-reveal">
+      
+      <!-- BACKGROUND PLACEHOLDER OVERLAY BADGE -->
+      <div class="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-md text-[10px] font-mono tracking-wider uppercase">
+        📷 Background Placeholder: Modern Nigerian Classroom &amp; Administration Office
+      </div>
+
+      <!-- BANNER HEADER PILLS -->
+      <div class="flex flex-wrap items-center justify-between gap-4 mb-6 sm:mb-10 z-10 relative">
+        <div class="inline-flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-semibold text-lattice-text shadow-sm">
+          <span>PLATFORM</span>
+          <span class="text-gray-400">•</span>
+          <span class="text-lattice-muted">SCHOOLCORD 2.0</span>
+          <span>&gt;</span>
+        </div>
+        
+        <div class="inline-flex items-center gap-2 bg-white/90 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-semibold text-lattice-text shadow-sm">
+          <span>PROPRIETOR SUMMARY</span>
+          <span>↘</span>
+        </div>
+      </div>
+
+      <!-- MAIN BANNER GRID (FEATURED IMAGE 1 + OVERLAY CARDS) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+        
+        <!-- LEFT TEXT & STAT OVERLAYS -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="inline-block bg-white/80 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-mono font-bold tracking-wider text-lattice-dark uppercase">
+            Executive Control
+          </div>
+          
+          <h2 class="text-2xl sm:text-4xl font-normal text-lattice-text leading-tight">
+            Know your school’s numbers. Without being there every day.
+          </h2>
+
+          <p class="text-lattice-muted text-sm sm:text-base leading-relaxed">
+            Track real-time bank transfers, physical cash collected, and outstanding tuition balances straight from your mobile phone.
+          </p>
+
+          <!-- FLOATING MINI PROFILE PILLS MATCHING IMAGE 2 -->
+          <div class="flex flex-wrap gap-2 pt-2">
+            <div class="bg-white/95 backdrop-blur-sm border border-lattice-border px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+              <span>Fulfilled Academy • ₦3.4M Collected</span>
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-sm border border-lattice-border px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#253E76]"></span>
+              <span>Tuition Debt Reduced by 88%</span>
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-sm border border-lattice-border px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+              <span>WhatsApp Reminders Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT SIDE: STYLED IMAGE 1 CONTAINER -->
+        <div class="lg:col-span-7 relative">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/80 bg-slate-900 group">
+            <!-- IMAGE 1 STYLED WITH MODERN ASPECT RATIO -->
+            <img src="image.png" alt="Nigerian School Proprietor & Administrator" class="w-full h-[380px] sm:h-[480px] object-cover object-top group-hover:scale-102 transition duration-500">
+            
+            <!-- GRADIENT OVERLAY FOR TEXT LEGIBILITY -->
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent"></div>
+
+            <!-- OVERLAY BADGES ON IMAGE 1 -->
+            <div class="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div class="bg-white/90 backdrop-blur-md p-3.5 rounded-xl border border-white/40 shadow-lg max-w-xs">
+                <p class="text-xs font-bold text-slate-900 uppercase tracking-wider">Mrs. G. Oveh</p>
+                <p class="text-[11px] text-slate-600">School Director, Delta State</p>
+                <p class="text-[11px] text-slate-800 font-semibold mt-1">"SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records."</p>
+              </div>
+
+              <div class="bg-[#253E76]/90 backdrop-blur-md text-white px-4 py-2.5 rounded-xl border border-white/20 text-right">
+                <span class="block text-[10px] text-gray-300 uppercase tracking-widest font-mono">LIVE SESSION</span>
+                <span class="text-sm font-bold text-white">98.4% Fee Reconciled</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- BENTO GRID SECTION (STYLED MATCHING BOTTOM HALF OF REFERENCE IMAGE 2) -->
+  <section id="features" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="mb-12 scroll-reveal">
+      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text tracking-tight mb-4">
+        Quickly Expand your <span class="font-serif italic">School Operations.</span>
+      </h2>
+      <p class="text-lattice-muted text-base sm:text-lg max-w-2xl font-normal">
+        Take advantage of our localized fee collection products to maintain 100% financial accuracy across all classes.
+      </p>
+    </div>
+
+    <!-- BENTO CARDS GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+      
+      <!-- CARD 1: STUDENTS DIRECTORY -->
+      <div class="md:col-span-4 bg-lattice-card rounded-3xl p-6 sm:p-8 border border-lattice-border flex flex-col justify-between relative overflow-hidden group hover:border-black/30 transition scroll-reveal delay-100">
+        <div class="flex items-center justify-between mb-8">
+          <span class="bg-white/80 border border-lattice-border px-3 py-1 rounded-full text-xs font-semibold text-lattice-text">Students</span>
+          <span class="text-xs text-lattice-muted font-mono">01</span>
+        </div>
+
+        <div class="space-y-4">
+          <div class="flex -space-x-2 overflow-hidden py-1">
+            <div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-[#253E76] text-white font-bold text-xs flex items-center justify-center">EA</div>
+            <div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-slate-700 text-white font-bold text-xs flex items-center justify-center">FA</div>
+            <div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-amber-600 text-white font-bold text-xs flex items-center justify-center">CO</div>
+            <div class="inline-block h-10 w-10 rounded-full ring-2 ring-white bg-blue-900 text-white font-bold text-xs flex items-center justify-center">+240</div>
+          </div>
+          <h3 class="text-xl font-semibold text-lattice-text">Manage Student Profiles &amp; Siblings</h3>
+          <p class="text-lattice-muted text-sm">Group family records together to issue unified parent bills with single-click reconciliation.</p>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-lattice-border/60 flex items-center justify-between text-xs font-semibold">
+          <span>Class Roster View</span>
+          <span class="p-1.5 bg-white rounded-full">↗</span>
+        </div>
+      </div>
+
+      <!-- CARD 2: WHATSAPP REMINDERS -->
+      <div class="md:col-span-4 bg-lattice-card rounded-3xl p-6 sm:p-8 border border-lattice-border flex flex-col justify-between relative overflow-hidden group hover:border-black/30 transition scroll-reveal delay-200">
+        <div class="flex items-center justify-between mb-8">
+          <span class="bg-white/80 border border-lattice-border px-3 py-1 rounded-full text-xs font-semibold text-lattice-text">Automated Reminders</span>
+          <span class="text-xs text-lattice-muted font-mono">02</span>
+        </div>
+
+        <div class="space-y-4">
+          <div class="bg-[#253E76] text-white p-4 rounded-2xl text-xs font-mono border border-slate-700 shadow-inner">
+            <p class="text-blue-200 font-bold mb-1">WhatsApp Fee Alert ✓</p>
+            <p>"Dear Chief Adebayo, kindly note Emeka's JSS1 term balance is ₦40,000..."</p>
+          </div>
+          <h3 class="text-xl font-semibold text-lattice-text">1-Click WhatsApp Parent Notices</h3>
+          <p class="text-lattice-muted text-sm">Send polite, customized payment reminders straight to parents' mobile phones with zero friction.</p>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-lattice-border/60 flex items-center justify-between text-xs font-semibold">
+          <span>Instant Dispatch</span>
+          <span class="p-1.5 bg-white rounded-full">↗</span>
+        </div>
+      </div>
+
+      <!-- CARD 3: DIRECTOR PORTAL -->
+      <div class="md:col-span-4 bg-[#253E76] text-white rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-col justify-between relative overflow-hidden group scroll-reveal delay-300">
+        <div class="flex items-center justify-between mb-8">
+          <span class="bg-white/10 text-white border border-white/20 px-3 py-1 rounded-full text-xs font-semibold">DIRECTOR PORTAL</span>
+          <span class="text-xs text-gray-300 font-mono">03</span>
+        </div>
+
+        <div class="space-y-4">
+          <div class="text-3xl font-bold text-white tracking-tight">₦415,000</div>
+          <p class="text-xs text-gray-300 uppercase tracking-widest font-mono">Live Expected Term Revenue</p>
+          <h3 class="text-xl font-semibold text-white">Full Executive Control</h3>
+          <p class="text-gray-200 text-sm">Monitor bursar entries, bank transfers, and cash desk collection remotely with complete audit protection.</p>
+        </div>
+
+        <div class="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-white">
+          <span>Real-time Sync</span>
+          <span class="p-1.5 bg-white/10 rounded-full text-white">↗</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- UNCOLLECTED FEE ESTIMATOR CALCULATOR WITH SECTION BACKGROUND PLACEHOLDER -->
+  <section id="calculator" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="bg-lattice-card rounded-3xl border border-lattice-border p-6 sm:p-10 lg:p-12 shadow-md relative overflow-hidden section-bg-placeholder scroll-reveal">
+      
+      <!-- BACKGROUND PLACEHOLDER OVERLAY BADGE -->
+      <div class="absolute top-4 left-4 z-20 bg-black/60 backdrop-blur-md text-white px-3 py-1 rounded-md text-[10px] font-mono tracking-wider uppercase">
+        📷 Background Placeholder: Financial Analytics &amp; School Ledger Concept
+      </div>
+
+      <div class="max-w-3xl mb-10 relative z-10">
+        <span class="bg-white/80 border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">
+          FEE RECOVERY CALCULATOR
+        </span>
+        <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4 mb-3">
+          Uncollected Fee Estimator
+        </h2>
+        <p class="text-lattice-muted text-base sm:text-lg">
+          Slide the controls below to calculate how much tuition debt your school can recover this term with SCHOOLCORD.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
+        <!-- SLIDER CONTROLS -->
+        <div class="lg:col-span-7 bg-white/90 backdrop-blur-md rounded-2xl p-6 sm:p-8 border border-lattice-border space-y-6 shadow-sm">
+          
+          <!-- SLIDER 1: STUDENT COUNT -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-lattice-text uppercase tracking-wider">Number of Enrolled Students:</label>
+              <span id="calc-students-val" class="text-base font-extrabold text-lattice-dark bg-lattice-pill px-3 py-1 rounded-lg">250 Students</span>
+            </div>
+            <input type="range" id="calc-students" min="50" max="1500" step="10" value="250" oninput="updateCalculator()" class="w-full accent-[#253E76] cursor-pointer h-2 bg-gray-200 rounded-lg">
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
+              <span>50</span>
+              <span>750</span>
+              <span>1,500+</span>
+            </div>
+          </div>
+
+          <!-- SLIDER 2: AVERAGE FEE -->
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-lattice-text uppercase tracking-wider">Average Fee Per Student / Term:</label>
+              <span id="calc-fee-val" class="text-base font-extrabold text-lattice-dark bg-lattice-pill px-3 py-1 rounded-lg">₦85,000</span>
+            </div>
+            <input type="range" id="calc-fee" min="20000" max="500000" step="5000" value="85000" oninput="updateCalculator()" class="w-full accent-[#253E76] cursor-pointer h-2 bg-gray-200 rounded-lg">
+            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
+              <span>₦20,000</span>
+              <span>₦250,000</span>
+              <span>₦500,000</span>
+            </div>
+          </div>
+
+          <div class="p-4 bg-slate-100 rounded-xl border border-slate-300 text-slate-800 text-xs leading-relaxed">
+            💡 <strong>Proprietor Insight:</strong> Average uncollected debt in Nigerian private schools ranges between 18% to 25% per term without automated reminders.
+          </div>
+        </div>
+
+        <!-- CALCULATOR RESULTS DISPLAY -->
+        <div class="lg:col-span-5 bg-[#253E76] text-white rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl border border-slate-700">
+          <div>
+            <span class="text-[10px] text-gray-300 font-mono uppercase tracking-widest">ESTIMATED TOTAL TERM EXPECTED:</span>
+            <p id="calc-total" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">₦21,250,000</p>
+          </div>
+
+          <div class="pt-4 border-t border-white/10">
+            <span class="text-[10px] text-rose-300 font-mono uppercase tracking-widest">TYPICAL UNPAID DEBT WITHOUT SCHOOLCORD (~22%):</span>
+            <p id="calc-debt" class="text-xl sm:text-2xl font-bold text-rose-200 mt-1">₦4,675,000</p>
+          </div>
+
+          <div class="pt-4 border-t border-white/10 bg-white/10 p-4 rounded-xl border border-white/20">
+            <span class="text-[10px] text-blue-200 font-mono uppercase tracking-widest">ESTIMATED RECOVERED WITH SCHOOLCORD:</span>
+            <p id="calc-recovered" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">₦4,207,500</p>
+            <span class="inline-block mt-2 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">+90% Debt Recovery Rate</span>
+          </div>
+
+          <a href="#live-demo" class="block w-full text-center bg-white hover:bg-gray-100 text-[#253E76] font-bold py-3 rounded-full text-xs uppercase tracking-wider transition">
+            RECOVER YOUR SCHOOL'S UNPAID FEES &rarr;
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE SECTION -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-12 scroll-reveal">
+      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">THE PROPRIETOR'S DILEMMA</span>
+      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4">
+        Why Paper Registers &amp; Spreadsheets Fail.
+      </h2>
+      <p class="text-lattice-muted text-base sm:text-lg mt-3">
+        Managing fee payments with manual notebooks or scattered WhatsApp messages leads to lost money, awkward parent arguments, and zero visibility when you step out of school.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- TRADITIONAL WAY -->
+      <div class="bg-rose-50/50 border border-rose-200 rounded-3xl p-6 sm:p-8 space-y-4 scroll-reveal delay-100">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center text-sm">✕</div>
+          <h3 class="font-bold text-rose-950 text-lg uppercase tracking-wider">THE TRADITIONAL WAY</h3>
+        </div>
+        <p class="text-xs font-mono text-rose-700">PAPER REGISTERS &amp; MANUAL RECEIPTS</p>
+        <ul class="space-y-3 text-sm text-rose-900/80 pt-2">
+          <li class="flex items-start gap-2">
+            <span class="text-rose-500 font-bold">•</span>
+            <span><strong>Unreported Payments:</strong> Cash paid to bursars or direct bank transfers without immediate proprietor notification.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-rose-500 font-bold">•</span>
+            <span><strong>Exam Hall Disputes:</strong> Parents claiming "I paid last month" with no fast way to verify payment history.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-rose-500 font-bold">•</span>
+            <span><strong>Endless Reconciliation:</strong> Spending hours every weekend trying to balance physical ledger notebooks.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-rose-500 font-bold">•</span>
+            <span><strong>Lost Paper Reminders:</strong> Paper reminder letters given to students that get lost inside school bags.</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- THE SCHOOLCORD WAY -->
+      <div class="bg-blue-50/60 border border-blue-200 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm scroll-reveal delay-200">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#253E76] text-white font-bold flex items-center justify-center text-sm">✓</div>
+          <h3 class="font-bold text-[#253E76] text-lg uppercase tracking-wider">THE SCHOOLCORD WAY</h3>
+        </div>
+        <p class="text-xs font-mono text-[#253E76]">AUTOMATED DIGITAL ACCURACY</p>
+        <ul class="space-y-3 text-sm text-slate-800 pt-2">
+          <li class="flex items-start gap-2">
+            <span class="text-[#253E76] font-bold">✓</span>
+            <span><strong>Instant Executive Overview:</strong> Real-time total expected fees, verified cash/bank payments, and outstanding balances.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[#253E76] font-bold">✓</span>
+            <span><strong>1-Click WhatsApp Reminders:</strong> Send polite, itemized fee reminders straight to parents' WhatsApp phones.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[#253E76] font-bold">✓</span>
+            <span><strong>Digital E-Receipt Generation:</strong> Issue official stamped digital receipts with instant audit logging.</span>
+          </li>
+          <li class="flex items-start gap-2">
+            <span class="text-[#253E76] font-bold">✓</span>
+            <span><strong>Role Security for Bursars:</strong> Staff record payments while keeping high-level proprietor controls locked and safe.</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- LIVE INTERACTIVE APP DEMO SECTION -->
+  <section id="live-demo" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="bg-lattice-dark text-white rounded-3xl p-6 sm:p-10 border border-slate-800 shadow-2xl scroll-reveal">
+      
+      <!-- DEMO HEADER -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-800">
+        <div>
+          <span class="bg-[#253E76] text-white border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
+            LIVE SYSTEM PREVIEW
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-light text-white mt-3">
+            Test Drive SCHOOLCORD Right Now
+          </h2>
+          <p class="text-gray-400 text-sm mt-1">
+            Interact with sample student records below. Filter by class, record a payment in Naira (₦), or generate an e-receipt.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-mono text-gray-400 uppercase">CLASS FILTER:</label>
+          <select id="demo-class-filter" onchange="renderDemoTable()" class="bg-slate-900 text-white border border-slate-700 rounded-xl px-4 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#253E76]">
+            <option value="ALL">ALL CLASSES (5)</option>
+            <option value="JSS 1">JSS 1</option>
+            <option value="JSS 2">JSS 2</option>
+            <option value="SSS 1">SSS 1</option>
+            <option value="PRIMARY 4">PRIMARY 4</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- FINANCIAL SUMMARY CARDS -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-6">
+        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-gray-400 uppercase font-mono">TOTAL EXPECTED FEES</span>
+          <p id="summary-expected" class="text-xl sm:text-2xl font-bold text-white mt-1">₦415,000</p>
+          <span class="text-[10px] text-gray-500">First Term Total Bill</span>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-blue-300 uppercase font-mono">TOTAL FEES COLLECTED</span>
+          <p id="summary-collected" class="text-xl sm:text-2xl font-bold text-blue-300 mt-1">₦250,000</p>
+          <span class="text-[10px] text-gray-500">Verified Cash &amp; Bank</span>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-rose-400 uppercase font-mono">TOTAL OUTSTANDING DEBT</span>
+          <p id="summary-outstanding" class="text-xl sm:text-2xl font-bold text-rose-400 mt-1">₦165,000</p>
+          <span class="text-[10px] text-gray-500">Pending Debt</span>
+        </div>
+
+        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
+          <span class="text-[10px] text-amber-400 uppercase font-mono">COLLECTION RATE</span>
+          <p id="summary-rate" class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">60.2%</p>
+          <span class="text-[10px] text-gray-500">Term Target: 95%+</span>
+        </div>
+      </div>
+
+      <!-- DEMO FILTER TABS -->
+      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2">
+        <button onclick="filterStatus('ALL')" id="tab-ALL" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-[#253E76] text-white">ALL</button>
+        <button onclick="filterStatus('PAID')" id="tab-PAID" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white">PAID</button>
+        <button onclick="filterStatus('PARTIAL')" id="tab-PARTIAL" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white">PARTIAL</button>
+        <button onclick="filterStatus('UNPAID')" id="tab-UNPAID" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white">UNPAID</button>
+      </div>
+
+      <!-- STUDENT DATA TABLE -->
+      <div class="overflow-x-auto rounded-2xl border border-slate-800">
+        <table class="w-full text-left text-xs font-sans">
+          <thead class="bg-slate-900/90 text-gray-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="p-3.5">STUDENT NAME</th>
+              <th class="p-3.5">CLASS</th>
+              <th class="p-3.5">PARENT &amp; PHONE</th>
+              <th class="p-3.5">TOTAL FEE</th>
+              <th class="p-3.5">PAID</th>
+              <th class="p-3.5">BALANCE</th>
+              <th class="p-3.5">STATUS</th>
+              <th class="p-3.5 text-center">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="demo-table-body" class="divide-y divide-slate-800/60 bg-slate-950/40">
+            <!-- Dynamic JS injection -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- FOOTER DEMO HINT -->
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-400 font-mono gap-2">
+        <span>SHOWING DEMO RECORDS (5 OF 250 STUDENTS)</span>
+        <span class="text-blue-300">💡 TIP: CLICK "RECORD PAY" TO TEST LIVE RECONCILIATION</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MODAL: RECORD PAYMENT -->
+  <div id="payment-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-lattice-text space-y-5 shadow-2xl relative">
+      <button onclick="closePaymentModal()" class="absolute top-5 right-5 text-gray-400 hover:text-black text-xl font-bold">✕</button>
+      
+      <div>
+        <span class="text-[10px] font-mono font-bold bg-blue-100 text-[#253E76] px-2.5 py-1 rounded-full uppercase">RECORD PAYMENT</span>
+        <h3 id="modal-student-name" class="text-2xl font-bold text-lattice-dark mt-2">Emeka Adebayo</h3>
+        <p id="modal-student-info" class="text-xs text-lattice-muted">JSS 1 • Current Unpaid Debt: ₦40,000</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-lattice-text uppercase mb-1">PAYMENT AMOUNT (₦):</label>
+          <input type="number" id="modal-pay-amount" class="w-full border border-lattice-border rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-[#253E76] focus:outline-none" placeholder="e.g. 20000">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-lattice-text uppercase mb-1">PAYMENT METHOD:</label>
+          <select id="modal-pay-method" class="w-full border border-lattice-border rounded-xl p-3 text-sm font-semibold focus:outline-none">
+            <option value="Bank Transfer">Direct Bank Transfer</option>
+            <option value="Cash">Physical Cash Desk</option>
+            <option value="POS Card">School POS</option>
+          </select>
+        </div>
+
+        <button onclick="submitPayment()" class="w-full bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition">
+          CONFIRM PAYMENT &amp; UPDATE LEDGER
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: PRINTABLE DIGITAL RECEIPT -->
+  <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 text-lattice-text space-y-6 shadow-2xl relative">
+      <button onclick="closeReceiptModal()" class="absolute top-5 right-5 text-gray-400 hover:text-black text-xl font-bold">✕</button>
+
+      <!-- PRINTABLE RECEIPT CARD -->
+      <div id="printable-receipt" class="border-2 border-dashed border-lattice-border p-6 rounded-2xl space-y-4 bg-slate-50/50">
+        <!-- LOGO ON RECEIPT -->
+        <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+          <div class="flex items-center gap-2">
+            <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-[#253E76]">
+              <path d="M15 20 C 35 20, 30 50, 50 50 C 70 50, 65 20, 85 20" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="none"/>
+              <circle cx="15" cy="20" r="10" fill="currentColor"/>
+              <circle cx="85" cy="20" r="10" fill="currentColor"/>
+            </svg>
+            <span class="font-serif text-lg font-bold uppercase text-slate-900">SCHOOL<span class="text-[#253E76]">CORD</span></span>
+          </div>
+          <div class="text-right">
+            <span class="text-[10px] font-mono text-gray-500 block">OFFICIAL DIGITAL RECEIPT</span>
+            <span id="receipt-no" class="text-xs font-mono font-bold text-slate-800">#SC-2026-0891</span>
+          </div>
+        </div>
+
+        <!-- DETAILS -->
+        <div class="grid grid-cols-2 gap-4 text-xs font-sans">
+          <div>
+            <span class="text-gray-400 block text-[10px] font-mono">STUDENT NAME:</span>
+            <span id="receipt-student" class="font-bold text-slate-900 text-sm">Emeka Adebayo</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block text-[10px] font-mono">CLASS / TERM:</span>
+            <span id="receipt-class" class="font-bold text-slate-900">JSS 1 • Term 1 2026</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block text-[10px] font-mono">AMOUNT PAID:</span>
+            <span id="receipt-paid" class="font-extrabold text-[#253E76] text-base">₦45,000</span>
+          </div>
+          <div>
+            <span class="text-gray-400 block text-[10px] font-mono">REMAINING DEBT:</span>
+            <span id="receipt-balance" class="font-bold text-rose-600">₦40,000</span>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-gray-200 text-center space-y-1">
+          <span class="inline-block bg-blue-100 text-[#253E76] text-[10px] font-bold px-3 py-0.5 rounded-full uppercase">STATUS: VERIFIED &amp; LOGGED</span>
+          <p class="text-[10px] text-gray-400">Issued by SchoolCORD Automated Bursar Portal</p>
+        </div>
+      </div>
+
+      <div class="flex gap-3">
+        <button onclick="window.print()" class="flex-1 bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition">
+          🖨️ PRINT / DOWNLOAD PDF
+        </button>
+        <button onclick="closeReceiptModal()" class="bg-lattice-pill hover:bg-lattice-border text-lattice-text font-bold px-5 py-3 rounded-xl text-xs uppercase">
+          CLOSE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS (3 EASY STEPS) -->
+  <section id="how-it-works" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-lattice-border/60">
+    <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
+      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">SIMPLE ONBOARDING</span>
+      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4">
+        Set Up Your School in 3 Easy Steps.
+      </h2>
+      <p class="text-lattice-muted text-base sm:text-lg mt-3">
+        No technical knowledge or complicated training required. Get up and running in under 20 minutes.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      
+      <!-- STEP 1 -->
+      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 scroll-reveal delay-100">
+        <div>
+          <h3 class="text-xl font-bold text-lattice-text mt-4">ADD YOUR CLASSES &amp; STUDENTS</h3>
+          <p class="text-lattice-muted text-sm mt-2">
+            Upload your student list using Excel or type them in manually. Group siblings together for combined family fee bills.
+          </p>
+        </div>
+        <div class="pt-4 border-t border-lattice-border/60 text-xs font-mono font-bold text-lattice-text uppercase">
+          STEP 01 • ROSTER MANAGEMENT
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 scroll-reveal delay-200">
+        <div>
+          <h3 class="text-xl font-bold text-lattice-text mt-4">SET TERM SCHOOL FEES</h3>
+          <p class="text-lattice-muted text-sm mt-2">
+            Specify tuition fees, bus transport, uniform, and feeding charges for each class. Apply custom discounts for staff children.
+          </p>
+        </div>
+        <div class="pt-4 border-t border-lattice-border/60 text-xs font-mono font-bold text-lattice-text uppercase">
+          STEP 02 • BILLING SETUP
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 scroll-reveal delay-300">
+        <div>
+          <h3 class="text-xl font-bold text-lattice-text mt-4">RECORD PAYMENTS &amp; NOTIFY</h3>
+          <p class="text-lattice-muted text-sm mt-2">
+            Log bank transfers or cash payments as they come in. Issue digital e-receipts and watch your uncollected debt shrink.
+          </p>
+        </div>
+        <div class="pt-4 border-t border-lattice-border/60 text-xs font-mono font-bold text-lattice-text uppercase">
+          STEP 03 • FEE RECOVERY
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section id="pricing" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="text-center max-w-3xl mx-auto mb-16 scroll-reveal">
+      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">TRANSPARENT PRICING</span>
+      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4">
+        Affordable for Every Nigerian School.
+      </h2>
+      <p class="text-lattice-muted text-base sm:text-lg mt-3">
+        Simple term-based subscription with zero hidden charges. Pay per academic term.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- PLAN 1: STARTER -->
+      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 scroll-reveal delay-100">
+        <div>
+          <span class="text-xs font-mono font-bold text-lattice-muted uppercase">SMALL SCHOOLS</span>
+          <h3 class="text-2xl font-bold text-lattice-text mt-1">STARTER PLAN</h3>
+          <p class="text-xs text-lattice-muted mt-1">Ideal for crèches, nursery, and small primary schools up to 100 students.</p>
+          
+          <div class="mt-6 mb-6">
+            <span class="text-3xl font-extrabold text-lattice-dark">₦25,000</span>
+            <span class="text-xs text-lattice-muted font-medium">/ PER TERM</span>
+          </div>
+
+          <ul class="space-y-3 text-xs font-medium text-lattice-text border-t border-lattice-border/60 pt-6">
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Up to 100 Enrolled Students</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Student Fee Directory &amp; Ledger</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Digital E-Receipt Generation</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> WhatsApp Payment Reminders</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> 1 Admin / Bursar Account</li>
+          </ul>
+        </div>
+
+        <a href="#live-demo" class="block text-center bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3.5 rounded-full text-xs uppercase tracking-wider transition">
+          CHOOSE STARTER
+        </a>
+      </div>
+
+      <!-- PLAN 2: STANDARD (FEATURED) -->
+      <div class="bg-lattice-dark text-white rounded-3xl p-8 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative scroll-reveal delay-200">
+        <div class="absolute -top-3.5 right-8 bg-[#253E76] text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-blue-400/30">
+          MOST POPULAR
+        </div>
+
+        <div>
+          <span class="text-xs font-mono font-bold text-gray-400 uppercase">GROWING SCHOOLS</span>
+          <h3 class="text-2xl font-bold text-white mt-1">STANDARD PLAN</h3>
+          <p class="text-xs text-gray-400 mt-1">For established primary and secondary schools up to 400 students.</p>
+          
+          <div class="mt-6 mb-6">
+            <span class="text-3xl font-extrabold text-white">₦45,000</span>
+            <span class="text-xs text-gray-400 font-medium">/ PER TERM</span>
+          </div>
+
+          <ul class="space-y-3 text-xs font-medium text-gray-200 border-t border-slate-800 pt-6">
+            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold">✓</span> Up to 400 Enrolled Students</li>
+            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold">✓</span> Full Debtors Tracking &amp; Recovery</li>
+            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold">✓</span> Unlimited E-Receipts</li>
+            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold">✓</span> Automated WhatsApp Reminders</li>
+            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold">✓</span> Multi-Staff Roles (Owner + Bursar)</li>
+            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold">✓</span> Daily SMS/Email Summary</li>
+          </ul>
+        </div>
+
+        <a href="#live-demo" class="block text-center bg-[#253E76] hover:bg-[#1d315e] text-white font-extrabold py-3.5 rounded-full text-xs uppercase tracking-wider transition">
+          GET STARTED NOW &rarr;
+        </a>
+      </div>
+
+      <!-- PLAN 3: EXECUTIVE -->
+      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 scroll-reveal delay-300">
+        <div>
+          <span class="text-xs font-mono font-bold text-lattice-muted uppercase">LARGE INSTITUTIONS</span>
+          <h3 class="text-2xl font-bold text-lattice-text mt-1">EXECUTIVE PLAN</h3>
+          <p class="text-xs text-lattice-muted mt-1">For large group of schools and multi-campus institutions.</p>
+          
+          <div class="mt-6 mb-6">
+            <span class="text-3xl font-extrabold text-lattice-dark">₦75,000</span>
+            <span class="text-xs text-lattice-muted font-medium">/ PER TERM</span>
+          </div>
+
+          <ul class="space-y-3 text-xs font-medium text-lattice-text border-t border-lattice-border/60 pt-6">
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Unlimited Enrolled Students</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Multi-Campus Support</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Dedicated Account Manager</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Custom Bank API Reconciliation</li>
+            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold">✓</span> Priority Telephone Support</li>
+          </ul>
+        </div>
+
+        <a href="https://wa.me/2348000000000" target="_blank" class="block text-center bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3.5 rounded-full text-xs uppercase tracking-wider transition">
+          CONTACT SALES
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FREQUENTLY ASKED QUESTIONS -->
+  <section id="faq" class="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-lattice-border/60">
+    <div class="text-center mb-12 scroll-reveal">
+      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">FREQUENTLY ASKED QUESTIONS</span>
+      <h2 class="text-3xl sm:text-4xl font-light text-lattice-text mt-4">
+        Answers for School Proprietors
+      </h2>
+    </div>
+
+    <div class="space-y-4">
+      <details class="group bg-lattice-card rounded-2xl p-6 border border-lattice-border [&_summary::-webkit-details-marker]:hidden scroll-reveal">
+        <summary class="flex items-center justify-between cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
+          <span>CAN I USE SCHOOLCORD IF MY BURSAR IS NOT COMPUTER LITERATE?</span>
+          <span class="transition group-open:rotate-180 text-lg">↓</span>
+        </summary>
+        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
+          Yes! SCHOOLCORD is designed with simple buttons and straightforward forms. If your bursar can send a message on WhatsApp, they can easily record payments and issue e-receipts on SCHOOLCORD within 10 minutes of training.
+        </p>
+      </details>
+
+      <details class="group bg-lattice-card rounded-2xl p-6 border border-lattice-border [&_summary::-webkit-details-marker]:hidden scroll-reveal">
+        <summary class="flex items-center justify-between cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
+          <span>HOW DOES SCHOOLCORD HELP ME WHEN I AM NOT AT SCHOOL?</span>
+          <span class="transition group-open:rotate-180 text-lg">↓</span>
+        </summary>
+        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
+          You can log into your Director Portal from any smartphone or tablet anywhere in the world. You see real-time updates as payments are entered by your bursar, ensuring zero unreported money.
+        </p>
+      </details>
+
+      <details class="group bg-lattice-card rounded-2xl p-6 border border-lattice-border [&_summary::-webkit-details-marker]:hidden scroll-reveal">
+        <summary class="flex items-center justify-between cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
+          <span>WHAT HAPPENS IF INTERNET NETWORK IS POOR AT OUR SCHOOL LOCATION?</span>
+          <span class="transition group-open:rotate-180 text-lg">↓</span>
+        </summary>
+        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
+          SCHOOLCORD requires very little data and is optimized for 3G/4G Nigerian mobile networks. Entries can also be queued offline and automatically synced once connection is restored.
+        </p>
+      </details>
+
+      <details class="group bg-lattice-card rounded-2xl p-6 border border-lattice-border [&_summary::-webkit-details-marker]:hidden scroll-reveal">
+        <summary class="flex items-center justify-between cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
+          <span>CAN PARENTS PAY THROUGH WHATSAPP REMINDERS?</span>
+          <span class="transition group-open:rotate-180 text-lg">↓</span>
+        </summary>
+        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
+          Yes! Reminders sent via WhatsApp include your verified school bank account details and payment breakdown, making it convenient for parents to transfer fees immediately from their mobile banking apps.
+        </p>
+      </details>
+    </div>
+  </section>
+
+  <!-- BOTTOM CTA BANNER WITH CTA BACKGROUND PLACEHOLDER -->
+  <section class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="rounded-3xl p-8 sm:p-14 text-center text-white space-y-6 shadow-2xl relative overflow-hidden cta-bg-placeholder scroll-reveal">
+      
+      <!-- BACKGROUND PLACEHOLDER OVERLAY BADGE -->
+      <div class="absolute top-4 left-4 z-20 bg-white/20 backdrop-blur-md text-white px-3 py-1 rounded-md text-[10px] font-mono tracking-wider uppercase">
+        📷 Background Placeholder: Graduation / Modern School Frontage
+      </div>
+
+      <div class="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest text-blue-200">
+        TAKE CONTROL OF YOUR SCHOOL'S NUMBERS TODAY
+      </div>
+
+      <h2 class="text-3xl sm:text-5xl font-light max-w-3xl mx-auto leading-tight">
+        Ready to stop unpaid school fees and disorganized records?
+      </h2>
+
+      <p class="text-gray-300 max-w-xl mx-auto text-sm sm:text-base">
+        Join hundreds of Nigerian school proprietors who use SCHOOLCORD to maintain 100% financial clarity and faster fee recovery.
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4 pt-4">
+        <a href="#live-demo" class="bg-[#253E76] hover:bg-[#1d315e] text-white font-extrabold px-8 py-4 rounded-full text-xs uppercase tracking-wider transition shadow-lg">
+          CREATE MY SCHOOL ACCOUNT &rarr;
+        </a>
+        <a href="https://wa.me/2348000000000" target="_blank" class="bg-[#253E76] hover:bg-[#1d315e] border border-white/30 text-white font-bold px-8 py-4 rounded-full text-xs uppercase tracking-wider transition">
+          CHAT WITH US ON WHATSAPP
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER WITH BRAND LOGO FROM IMAGE 3 -->
+  <footer class="bg-lattice-dark text-white pt-16 pb-12 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-slate-800">
+        
+        <!-- BRAND COLUMN -->
+        <div class="md:col-span-5 space-y-4">
+          <!-- LOGO FROM REFERENCE IMAGE 3 -->
+          <div class="flex items-center gap-2">
+            <div class="w-9 h-9 bg-white rounded-lg flex items-center justify-center p-1.5">
+              <svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="w-full h-full text-[#253E76]">
+                <path d="M15 20 C 35 20, 30 50, 50 50 C 70 50, 65 20, 85 20" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="none"/>
+                <circle cx="15" cy="20" r="10" fill="currentColor"/>
+                <circle cx="85" cy="20" r="10" fill="currentColor"/>
+              </svg>
+            </div>
+            <span class="font-serif text-2xl font-extrabold tracking-tight text-white uppercase">
+              SCHOOL<span class="text-[#253E76]">CORD</span>
+            </span>
+          </div>
+
+          <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
+            School records, school-fee payments, and outstanding balances in one place. Built specifically for Nigerian private schools.
+          </p>
+
+          <div class="text-[11px] font-mono text-blue-300 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-[#253E76] animate-ping"></span>
+            <span>OPERATIONAL IN NIGERIA • ALL 36 STATES</span>
+          </div>
+        </div>
+
+        <!-- QUICK LINKS -->
+        <div class="md:col-span-3 space-y-3">
+          <h4 class="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">NAVIGATION</h4>
+          <ul class="space-y-2 text-xs text-gray-300">
+            <li><a href="#features" class="hover:text-white transition">Product Features</a></li>
+            <li><a href="#how-it-works" class="hover:text-white transition">How It Works</a></li>
+            <li><a href="#live-demo" class="hover:text-white transition">Live Interactive Demo</a></li>
+            <li><a href="#pricing" class="hover:text-white transition">Pricing Plans</a></li>
+          </ul>
+        </div>
+
+        <!-- CONTACT INFO -->
+        <div class="md:col-span-4 space-y-3">
+          <h4 class="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">CONTACT &amp; SUPPORT</h4>
+          <p class="text-xs text-gray-300">📍 Warri, Delta, Nigeria</p>
+          <p class="text-xs text-gray-300">✉️ hello@theschoolcord.com</p>
+          <p class="text-xs text-gray-300">📞 +234 (0) 800 SCHOOLCORD</p>
+        </div>
+
+      </div>
+
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 font-mono gap-4">
+        <p>© 2026 SCHOOLCORD. ALL RIGHTS RESERVED.</p>
+        <div class="flex gap-6">
+          <a href="#" class="hover:text-gray-300">PRIVACY POLICY</a>
+          <a href="#" class="hover:text-gray-300">TERMS OF SERVICE</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- DYNAMIC INTERACTIVE JAVASCRIPT LOGIC -->
+  <script>
+    // DEMO DATASET
+    let studentData = [
+      { id: 1, name: "EMEKA ADEBAYO", class: "JSS 1", parent: "Chief Adebayo", phone: "08031234567", total: 85000, paid: 45000 },
+      { id: 2, name: "FATIMA ABUBAKAR", class: "JSS 2", parent: "Alhaji Abubakar", phone: "08029876543", total: 85000, paid: 85000 },
+      { id: 3, name: "CHIOMA OKONKWO", class: "SSS 1", parent: "Mrs. Okonkwo", phone: "08051112223", total: 95000, paid: 0 },
+      { id: 4, name: "TUNDE BAKARE", class: "PRIMARY 4", parent: "Mr. Bakare", phone: "08073334445", total: 65000, paid: 35000 },
+      { id: 5, name: "AMINA BELLO", class: "JSS 1", parent: "Dr. Bello", phone: "08095556667", total: 85000, paid: 85000 }
+    ];
+
+    let currentStatusTab = 'ALL';
+    let selectedStudentId = null;
+
+    // CALCULATOR LOGIC
+    function updateCalculator() {
+      const students = parseInt(document.getElementById('calc-students').value);
+      const fee = parseInt(document.getElementById('calc-fee').value);
+
+      document.getElementById('calc-students-val').innerText = `${students.toLocaleString()} Students`;
+      document.getElementById('calc-fee-val').innerText = `₦${fee.toLocaleString()}`;
+
+      const totalTerm = students * fee;
+      const debt = totalTerm * 0.22;
+      const recovered = debt * 0.90;
+
+      document.getElementById('calc-total').innerText = `₦${totalTerm.toLocaleString()}`;
+      document.getElementById('calc-debt').innerText = `₦${Math.round(debt).toLocaleString()}`;
+      document.getElementById('calc-recovered').innerText = `₦${Math.round(recovered).toLocaleString()}`;
+    }
+
+    // RENDER DEMO TABLE
+    function renderDemoTable() {
+      const filterClass = document.getElementById('demo-class-filter').value;
+      const tbody = document.getElementById('demo-table-body');
+      tbody.innerHTML = '';
+
+      let filtered = studentData.filter(s => {
+        const matchesClass = (filterClass === 'ALL' || s.class === filterClass);
+        const balance = s.total - s.paid;
+        let status = 'PARTIAL';
+        if (s.paid === 0) status = 'UNPAID';
+        if (s.paid >= s.total) status = 'PAID';
+
+        const matchesStatus = (currentStatusTab === 'ALL' || status === currentStatusTab);
+        return matchesClass && matchesStatus;
+      });
+
+      filtered.forEach(s => {
+        const balance = s.total - s.paid;
+        let statusTag = '';
+        if (s.paid >= s.total) {
+          statusTag = `<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">PAID</span>`;
+        } else if (s.paid === 0) {
+          statusTag = `<span class="bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">UNPAID</span>`;
+        } else {
+          statusTag = `<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">PARTIAL</span>`;
+        }
+
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-slate-900/60 transition";
+        tr.innerHTML = `
+          <td class="p-3.5 font-bold text-white">${s.name}</td>
+          <td class="p-3.5 text-gray-300 font-mono">${s.class}</td>
+          <td class="p-3.5 text-gray-400 text-[11px]">${s.parent}<br><span class="text-gray-500 font-mono">${s.phone}</span></td>
+          <td class="p-3.5 text-gray-300 font-mono">₦${s.total.toLocaleString()}</td>
+          <td class="p-3.5 text-blue-300 font-mono font-semibold">₦${s.paid.toLocaleString()}</td>
+          <td class="p-3.5 text-rose-400 font-mono font-semibold">₦${balance.toLocaleString()}</td>
+          <td class="p-3.5">${statusTag}</td>
+          <td class="p-3.5 text-center">
+            <div class="flex items-center justify-center gap-1.5">
+              <button onclick="openPaymentModal(${s.id})" class="bg-[#253E76] hover:bg-[#1d315e] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition">
+                RECORD PAY
+              </button>
+              <button onclick="sendWhatsAppReminder(${s.id})" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2 py-1 rounded-lg text-[10px] font-bold transition">
+                WHATSAPP
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      calculateTotals();
+    }
+
+    // CALCULATE DEMO TOTALS
+    function calculateTotals() {
+      let totalExpected = 0;
+      let totalCollected = 0;
+
+      studentData.forEach(s => {
+        totalExpected += s.total;
+        totalCollected += s.paid;
+      });
+
+      const totalOutstanding = totalExpected - totalCollected;
+      const rate = ((totalCollected / totalExpected) * 100).toFixed(1);
+
+      document.getElementById('summary-expected').innerText = `₦${totalExpected.toLocaleString()}`;
+      document.getElementById('summary-collected').innerText = `₦${totalCollected.toLocaleString()}`;
+      document.getElementById('summary-outstanding').innerText = `₦${totalOutstanding.toLocaleString()}`;
+      document.getElementById('summary-rate').innerText = `${rate}%`;
+    }
+
+    // TAB FILTERING
+    function filterStatus(status) {
+      currentStatusTab = status;
+      document.querySelectorAll('.demo-tab').forEach(btn => {
+        btn.className = "demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white";
+      });
+      document.getElementById(`tab-${status}`).className = "demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-[#253E76] text-white";
+      renderDemoTable();
+    }
+
+    // PAYMENT MODAL CONTROLS
+    function openPaymentModal(id) {
+      selectedStudentId = id;
+      const student = studentData.find(s => s.id === id);
+      const balance = student.total - student.paid;
+
+      document.getElementById('modal-student-name').innerText = student.name;
+      document.getElementById('modal-student-info').innerText = `${student.class} • Current Unpaid Debt: ₦${balance.toLocaleString()}`;
+      document.getElementById('modal-pay-amount').value = balance > 0 ? balance : '';
+      document.getElementById('payment-modal').classList.remove('hidden');
+    }
+
+    function closePaymentModal() {
+      document.getElementById('payment-modal').classList.add('hidden');
+    }
+
+    function submitPayment() {
+      const amount = parseInt(document.getElementById('modal-pay-amount').value);
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid payment amount.');
+        return;
+      }
+
+      const student = studentData.find(s => s.id === selectedStudentId);
+      student.paid = Math.min(student.total, student.paid + amount);
+
+      closePaymentModal();
+      renderDemoTable();
+
+      // Open digital receipt
+      openReceiptModal(student, amount);
+    }
+
+    // RECEIPT MODAL CONTROLS
+    function openReceiptModal(student, amountPaid) {
+      const balance = student.total - student.paid;
+      document.getElementById('receipt-student').innerText = student.name;
+      document.getElementById('receipt-class').innerText = `${student.class} • Term 1 2026`;
+      document.getElementById('receipt-paid').innerText = `₦${amountPaid.toLocaleString()}`;
+      document.getElementById('receipt-balance').innerText = `₦${balance.toLocaleString()}`;
+      document.getElementById('receipt-no').innerText = `#SC-2026-0${Math.floor(1000 + Math.random() * 9000)}`;
+
+      document.getElementById('receipt-modal').classList.remove('hidden');
+    }
+
+    function closeReceiptModal() {
+      document.getElementById('receipt-modal').classList.add('hidden');
+    }
+
+    // WHATSAPP REMINDER SIMULATION
+    function sendWhatsAppReminder(id) {
+      const student = studentData.find(s => s.id === id);
+      const balance = student.total - student.paid;
+
+      if (balance <= 0) {
+        alert(`${student.name} has fully settled their fees!`);
+        return;
+      }
+
+      const msg = `Dear ${student.parent}, this is a gentle fee reminder from Fulfilled Academy regarding ${student.name} (${student.class}). Unpaid Term Balance: ₦${balance.toLocaleString()}. Kindly make payment to School Bank Account: 1012345678 (Zenith Bank). Thank you!`;
+      const encoded = encodeURIComponent(msg);
+      window.open(`https://wa.me/${student.phone.replace(/^0/, '234')}?text=${encoded}`, '_blank');
+    }
+
+    // MOBILE MENU TOGGLE
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    // SCROLL REVEAL OBSERVER
+    function initScrollReveal() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('active');
+          }
+        });
+      }, {
+        threshold: 0.1
+      });
+
+      document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+    }
+
+    // INIT
+    window.onload = function() {
+      updateCalculator();
+      renderDemoTable();
+      initScrollReveal();
+    };
+  </script>
+</body>
+</html>

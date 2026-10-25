@@ -433,11 +433,14 @@ class FooterTests(UITestCase):
     def test_careers_is_gone(self):
         self.assertNotIn("Careers", self.body(reverse("core:landing")))
 
-    def test_contact_points_at_the_socials_in_the_same_footer(self):
+    def test_contact_and_socials_share_the_landing_footer(self):
+        from apps.core.branding import CONTACT_EMAIL
+
         body = self.body(reverse("core:landing"))
-        self.assertIn('href="#contact"', body)
-        self.assertIn('id="contact"', body)
-        self.assertIn("Get in touch", body)
+        footer = body[body.index("<footer"):body.index("</footer>")]
+        self.assertIn("CONTACT &amp; SUPPORT", footer)
+        self.assertIn(f'href="mailto:{CONTACT_EMAIL}"', footer)
+        self.assertIn('aria-label="Social accounts"', footer)
 
     def test_about_is_linked(self):
         self.assertIn(reverse("core:about"), self.body(reverse("core:landing")))

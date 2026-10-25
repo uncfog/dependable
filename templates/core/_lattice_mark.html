@@ -1,0 +1,11 @@
+{% comment %}
+The SCHOOLCORD mark as the landing page draws it: two dots joined by a dipping
+cord. Takes `svg_class` for size and colour (it paints in currentColor).
+Decorative wherever it sits beside the wordmark, so it is hidden from
+assistive technology.
+{% endcomment %}
+<svg viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg" class="{{ svg_class }}" aria-hidden="true" focusable="false">
+  <path d="M15 20 C 35 20, 30 50, 50 50 C 70 50, 65 20, 85 20" stroke="currentColor" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <circle cx="15" cy="20" r="10" fill="currentColor"/>
+  <circle cx="85" cy="20" r="10" fill="currentColor"/>
+</svg>

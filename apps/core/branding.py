@@ -45,6 +45,13 @@ PRODUCT_INITIAL = "S"
 #: questions.
 CONTACT_EMAIL = "hello@theschoolcord.com"
 
+#: The support line: the landing footer prints it, and the "Chat with us on
+#: WhatsApp" and "Contact sales" links open a chat with it. The URL is the same
+#: number in international format with no plus sign or spaces.
+SUPPORT_PHONE = "+234 813 551 3401"
+SUPPORT_PHONE_TEL = "+2348135513401"
+SUPPORT_WHATSAPP_URL = "https://wa.me/2348135513401"
+
 #: Where privacy requests go -- printed on the privacy policy, and a mailbox a
 #: person can actually reply to, unlike the no-reply sender below.
 PRIVACY_EMAIL = "privacy@theschoolcord.com"
@@ -113,4 +120,7 @@ def branding(request=None) -> dict:
         # The footer is on signed-out pages too, and it needs both.
         "contact_email": CONTACT_EMAIL,
         "social_links": SOCIAL_LINKS,
+        "support_phone": SUPPORT_PHONE,
+        "support_phone_tel": SUPPORT_PHONE_TEL,
+        "support_whatsapp_url": SUPPORT_WHATSAPP_URL,
     }

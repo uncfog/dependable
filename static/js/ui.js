@@ -111,6 +111,10 @@
   }
 
   function initTheme() {
+    // A page that is light-only by design says so on <html>; neither a stored
+    // choice nor the OS following dark mode may repaint it.
+    if (document.documentElement.hasAttribute('data-theme-lock')) return;
+
     // The markup ships the switch hidden; it only makes sense once the code
     // that services it is running.
     var toggles = document.querySelectorAll('[data-theme-toggle]');
