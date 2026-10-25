@@ -180,29 +180,24 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
           </div>
         </div>
 
-        <!-- RIGHT SIDE: gradient panel (the design's photo slot) -->
-        <div class="lg:col-span-7 relative">
-          <div class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-white/80 bg-slate-900">
-            <div class="w-full h-[380px] sm:h-[480px] lp-cta-bg" aria-hidden="true"></div>
+        <!-- RIGHT SIDE: the testimonial card is the whole block -->
+        <div class="lg:col-span-7 lg:self-stretch">
+          {# Enlarged from the design so the quote reads at a glance. #}
+          <figure class="h-full min-h-[260px] sm:min-h-[320px] flex flex-col bg-white rounded-2xl border border-lattice-border shadow-lg p-6 sm:p-8">
+            <span class="font-serif text-5xl leading-none text-lattice-border select-none" aria-hidden="true">&ldquo;</span>
+            <figcaption class="mt-2">
+              <p class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mrs. G. Oveh</p>
+              <p class="text-xs text-slate-600">School Director, Delta State</p>
+            </figcaption>
+            <blockquote class="text-sm sm:text-base leading-relaxed text-slate-800 font-semibold mt-2">"SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records."</blockquote>
 
-            <div class="absolute inset-0 bg-linear-to-t from-slate-950/80 via-slate-950/20 to-transparent"></div>
-
-            <div class="absolute bottom-6 left-6 right-6 flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
-              {# Enlarged from the design so the quote reads at a glance. #}
-              <figure class="bg-white/95 backdrop-blur-sm p-5 sm:p-6 rounded-xl border border-white/40 shadow-lg max-w-md">
-                <figcaption>
-                  <p class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mrs. G. Oveh</p>
-                  <p class="text-xs text-slate-600">School Director, Delta State</p>
-                </figcaption>
-                <blockquote class="text-sm sm:text-base leading-relaxed text-slate-800 font-semibold mt-2">"SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records."</blockquote>
-              </figure>
-
-              <div class="bg-[#253E76]/95 text-white px-4 py-2.5 rounded-xl border border-white/20 text-right shrink-0">
+            <div class="mt-auto pt-6 flex justify-end">
+              <div class="bg-[#253E76] text-white px-4 py-2.5 rounded-xl text-right shadow-sm">
                 <span class="block text-[10px] text-gray-300 uppercase tracking-widest font-mono">LIVE SESSION</span>
                 <span class="text-sm font-bold text-white">98.4% Fee Reconciled</span>
               </div>
             </div>
-          </div>
+          </figure>
         </div>
 
       </div>

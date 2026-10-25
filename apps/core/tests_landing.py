@@ -113,6 +113,14 @@ class DesignCleanupTests(LandingTestCase):
         self.assertIn("sm:text-base", quote)
         self.assertNotIn("text-[11px]", quote)
 
+    def test_the_testimonial_card_is_the_block_and_holds_the_badge(self):
+        figure = self.html[self.html.index("<figure"):self.html.index("</figure>")]
+        self.assertIn("Mrs. G. Oveh", figure)
+        self.assertIn("98.4% Fee Reconciled", figure)
+        self.assertIn("bg-white", re.search(r'<figure class="([^"]*)"', figure).group(1))
+        # The navy photo panel it used to float on is gone.
+        self.assertNotIn("bg-slate-900", self.html[:self.html.index("<figure")][-600:])
+
     def test_the_structured_data_is_still_there(self):
         self.assertIn('<script type="application/ld+json">', self.html)
 
