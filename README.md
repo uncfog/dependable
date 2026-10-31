@@ -199,15 +199,32 @@ project**.
 | `MEDIA_ACCESS_KEY_ID` | from Supabase → Project Settings → Storage → S3 access keys |
 | `MEDIA_SECRET_ACCESS_KEY` | the secret from that same pair |
 | `MEDIA_S3_REGION` | `us-east-1` (Supabase ignores it; boto3 insists on one) |
-| `MEDIA_PUBLIC_BASE_URL` | `https://<project-ref>.supabase.co/storage/v1/object/public/media` |
+| `MEDIA_PRIVATE_BUCKET` | `true` (the default; set it anyway so nobody flips it by accident) |
 
-In Supabase first: **Storage → New bucket**, named `media`, marked **public**.
+In Supabase first: **Storage → New bucket**, named `media`, **not** public.
 
-Two optional ones. `MEDIA_PRIVATE_BUCKET=true` serves signed, expiring URLs
-instead — correct if receipts should not be hotlinkable, and then
-`MEDIA_PUBLIC_BASE_URL` is left unset. `MEDIA_PREFIX` puts uploads under a prefix
-so the bucket can be shared; leave the prefix *out* of the public base URL if you
-set it, because django-storages appends it.
+#### The bucket is private, and the app hands out every file
+
+The bucket holds children's birth certificates and parents' bank slips. It used
+to be public, and the links were guessable:
+`…/object/public/media/admissions/<school-id>/ENQ-2026-0043/…`. Now nothing in
+the app links to a storage URL. Every file is read with the app's own S3
+credentials and streamed by a view that decides who may have it:
+
+| File | URL | Who gets it |
+| --- | --- | --- |
+| School logo | `/schools/<slug>/logo/?v=…` | Anyone. It is on the school's public enquiry page. Cached for a year per version. |
+| Payment receipt | `/payments/<id>/receipt/file/` | Signed-in accounts with the payments capability, at that school |
+| Applicant document | `/admissions/<id>/documents/<kind>/` | Signed-in accounts that can read the pipeline, at that school and campus |
+
+The shared part, including the `nosniff` and sandboxing headers that stop an SVG
+logo from running script, is in `apps/core/files.py`. Since nothing depends on
+signed URLs, it does not matter whether a given S3-compatible host supports
+them; `MEDIA_PRIVATE_BUCKET` now only changes the file links in `/admin/`.
+
+`MEDIA_PUBLIC_BASE_URL` applies only to a deliberately public bucket
+(`MEDIA_PRIVATE_BUCKET=false`); leave it unset. `MEDIA_PREFIX` puts uploads under
+a prefix so the bucket can be shared.
 
 #### Every one of them is read at runtime, never at build time
 
@@ -1660,13 +1677,14 @@ lock itself out of, with nobody left who can undo it. So `PLATFORM_OWNER_EMAIL`
 names one address that is never a valid target:
 
 ```
-# config/settings/base.py, overridable in .env
-PLATFORM_OWNER_EMAIL=ayebasuokante@gmail.com
+# Railway service variables (read in config/settings/base.py)
+PLATFORM_OWNER_EMAIL=<the platform owner's login email>
 ```
 
-Matched case-insensitively on the trimmed address, and **defaulted rather than left
-blank** — an unset env var must not quietly remove the protection, so the fallback
-is the real address and an override is a deliberate act.
+Matched case-insensitively on the trimmed address. It is **environment-only**: an
+address belongs to whoever runs the platform, not to the code. So unset means no
+account is protected, and check `schoolcord.W005` says so on every deploy rather
+than letting the protection lapse silently.
 
 The rule is a *target*, not a role: the protected account still holds the capability
 and can deactivate anybody, including another platform owner. What changes is that
@@ -2633,6 +2651,7 @@ that.
 | `schoolcord.W002` | the backend is Anymail/Resend but `RESEND_API_KEY` is empty |
 | `schoolcord.W003` | `DEFAULT_FROM_EMAIL` has no address in it |
 | `schoolcord.W004` | uploads are going to local disk in production |
+| `schoolcord.W005` | `PLATFORM_OWNER_EMAIL` is unset, so no account is protected from deactivation |
 
 All warnings, never errors: none of them stops the app serving pages, and a check
 that refused to boot over an unsendable email would be a worse failure than the one

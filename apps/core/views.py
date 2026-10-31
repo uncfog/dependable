@@ -52,6 +52,7 @@ from .emails import send_password_changed_email, send_welcome_email
 # The money and payment-state derivations the dashboards and Reports share.
 # Re-exported by name so `from apps.core.views import status_breakdown` -- which
 # is how the dashboard tests reach it -- keeps working after the move.
+from .files import IMAGE_TYPES, stream_stored_file
 from .finance import collection_summary, status_breakdown, with_outstanding
 from .forms import SchoolProfileForm, SchoolSignupForm
 from .modules import BY_KEY, MODULES, state_for_school
@@ -1137,3 +1138,29 @@ class OnboardingView(LoginRequiredMixin, TemplateView):
         context["setup"] = setup_progress(self.request)
         context["page_title"] = "Set up your school"
         return context
+
+
+class SchoolLogoView(View):
+    """A school's logo, for any page that shows it -- signed in or not.
+
+    Public on purpose: the logo is on the school's own public enquiry page, and
+    it is the one upload that is meant to be seen. It still comes through the
+    app rather than the bucket, so the bucket can be private for everything
+    else. A request carrying the current ``v`` (see ``School.logo_url``) is
+    cached for a year; anything else for five minutes, so a stale link settles
+    quickly once a logo is replaced.
+    """
+
+    INLINE_TYPES = IMAGE_TYPES | {"image/svg+xml"}
+
+    def get(self, request, school_slug):
+        school = get_object_or_404(School.all_objects, slug=school_slug)
+        current = school.logo_url.partition("?v=")[2]
+        fresh = bool(current) and request.GET.get("v") == current
+        return stream_stored_file(
+            school.logo,
+            inline_types=self.INLINE_TYPES,
+            cache_control=(
+                "public, max-age=31536000, immutable" if fresh else "public, max-age=300"
+            ),
+        )

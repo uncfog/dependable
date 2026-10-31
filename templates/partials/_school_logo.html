@@ -14,7 +14,7 @@ Params:
   tone    "light" for the dark sidebar; anything else for light backgrounds.
 {% endcomment %}
 {% if school.logo %}
-  <img src="{{ school.logo.url }}" alt="{{ school.name }} logo" decoding="async"
+  <img src="{{ school.logo_url }}" alt="{{ school.name }} logo" decoding="async"
        class="{{ size|default:'size-9' }} shrink-0 {{ rounded|default:'rounded-md' }}
               bg-surface object-contain
               {% if tone != 'light' %}border border-ink-200{% endif %}">

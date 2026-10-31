@@ -43,6 +43,7 @@ from django.views.generic import (
 
 from apps.academics.models import Class, Level
 from apps.core import modules
+from apps.core.files import DOCUMENT_TYPES, stream_stored_file
 from apps.schools.models import School
 
 from . import enrolment, notifications, split, walk_in
@@ -86,7 +87,7 @@ from .models import (
     Assessment,
     RequirementSet,
 )
-from .requirements import profile_for
+from .requirements import DOCUMENT_FIELDS, profile_for
 
 ZERO = Decimal("0")
 
@@ -391,6 +392,27 @@ class ApplicantDetailView(ViewAdmissionsMixin, DetailView):
         context["can_pay"] = can_record_admission_payments(user) and applicant.is_open
         context["page_title"] = applicant.full_name
         return context
+
+
+class ApplicantDocumentView(ViewAdmissionsMixin, View):
+    """One of an applicant's uploads, behind the same gate as the applicant.
+
+    A child's birth certificate and photograph are reached only through here:
+    a signed-in account that may read the pipeline, for an applicant in its own
+    school -- ``Applicant.objects`` is tenant-scoped, so another school's id
+    404s. ``kind`` is a document field name; anything else 404s too, so the URL
+    cannot be used to read an arbitrary attribute off the model.
+    """
+
+    def get(self, request, pk, kind):
+        if kind not in DOCUMENT_FIELDS.values():
+            raise Http404("No such document.")
+        applicant = get_object_or_404(Applicant.objects, pk=pk)
+        return stream_stored_file(
+            getattr(applicant, kind),
+            inline_types=DOCUMENT_TYPES,
+            cache_control="private, no-store",
+        )
 
 
 class EnquiryCreateView(ManageAdmissionsMixin, CreateView):

@@ -386,7 +386,8 @@ class UploadStorageTests(BatchTestCase):
         self.assertEqual(response.status_code, 302)
         self.school.refresh_from_db()
         self.assertTrue(self.school.logo)
-        return self.school.logo.url
+        # The app's own gated URL, never the storage one -- see apps/core/files.py.
+        return self.school.logo_url
 
     def test_the_logo_renders_on_every_screen_that_references_it(self):
         """Including the platform ones -- which is the half that was reported
@@ -494,6 +495,14 @@ class DeploymentCheckTests(TestCase):
     @override_settings(DEBUG=False, USE_OBJECT_STORAGE=True)
     def test_and_not_reported_once_a_bucket_is_configured(self):
         self.assertNotIn("schoolcord.W004", self.run_checks())
+
+    @override_settings(DEBUG=False, PLATFORM_OWNER_EMAIL="")
+    def test_no_protected_account_is_reported(self):
+        self.assertIn("schoolcord.W005", self.run_checks())
+
+    @override_settings(DEBUG=False, PLATFORM_OWNER_EMAIL="owner@example.com")
+    def test_and_not_reported_once_one_is_named(self):
+        self.assertNotIn("schoolcord.W005", self.run_checks())
 
 
 class MailcheckCommandTests(TestCase):

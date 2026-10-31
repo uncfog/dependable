@@ -126,3 +126,26 @@ def uploads_need_somewhere_to_live(app_configs, **kwargs):
             id=f"{_ID}.W004",
         )
     ]
+
+
+@register(Tags.security)
+def one_account_is_out_of_reach(app_configs, **kwargs):
+    """Without ``PLATFORM_OWNER_EMAIL`` every platform owner can be deactivated.
+
+    Including by each other -- which is how a platform locks itself out. The
+    address is environment-only, so a deployment that never set it has no
+    protected account, and this is the only place that says so.
+    """
+    if not _is_production() or (settings.PLATFORM_OWNER_EMAIL or "").strip():
+        return []
+    return [
+        Warning(
+            "PLATFORM_OWNER_EMAIL is not set, so no account is protected from "
+            "deactivation.",
+            hint=(
+                "Set PLATFORM_OWNER_EMAIL to the email address of the platform "
+                "owner account that must never be switched off."
+            ),
+            id=f"{_ID}.W005",
+        )
+    ]

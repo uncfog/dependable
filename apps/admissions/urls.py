@@ -38,6 +38,11 @@ urlpatterns = [
 
     path("<int:pk>/", views.ApplicantDetailView.as_view(), name="applicant_detail"),
     path(
+        "<int:pk>/documents/<slug:kind>/",
+        views.ApplicantDocumentView.as_view(),
+        name="applicant_document",
+    ),
+    path(
         "<int:pk>/application/",
         views.ApplicationUpdateView.as_view(),
         name="application",

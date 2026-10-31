@@ -301,8 +301,8 @@ the rest.
 ## 5. Restore / migrate the storage bucket
 
 1. In the **target** Supabase project: **Storage → New bucket**, name it exactly
-   as before (`media`). Make it **public** if the app runs with
-   `MEDIA_PRIVATE_BUCKET` unset/false, **private** if it is `true`.
+   as before (`media`), and leave it **private**. The app streams every file
+   through its own views, so nothing needs the bucket to be public.
 2. **Project Settings → Storage → S3 Connection → New access key.**
 3. Add a second rclone remote for it:
 
@@ -336,15 +336,14 @@ the rest.
 object key — `schools_school.logo`, `payments_payment.receipt`, and
 `admissions_applicant.passport_photo`, `birth_certificate`, `previous_results`,
 `transfer_letter`, `immunisation_record` hold strings like
-`logos/fulfilled/crest.png`. The URL a browser gets is built at request time
-from `MEDIA_PUBLIC_BASE_URL`. Copy the keys unchanged, change the variables,
-and every link points at the new bucket. Keep `MEDIA_PREFIX` the same as before
+`logos/fulfilled/crest.png`. Browsers never see the bucket: the app reads each
+key with its S3 credentials and streams the file. Copy the keys unchanged,
+change the variables, and every file comes from the new bucket. Keep `MEDIA_PREFIX` the same as before
 (or move the objects under the new prefix).
 
 **Moving to a non-Supabase bucket** (S3, Cloudflare R2, Backblaze B2): same
 rclone copy with that provider's remote. Then set `MEDIA_S3_ENDPOINT_URL` to
-its endpoint and either leave `MEDIA_PUBLIC_BASE_URL` empty (django-storages
-builds the standard URL) or set it to the bucket's public URL.
+its endpoint and keep the bucket private.
 
 **Moving from local disk** (a machine that ran without `MEDIA_BUCKET_NAME`):
 `rclone copy ./media schoolcord-new:media` — the folder layout under `./media`
@@ -362,7 +361,7 @@ added one), change:
 | `MEDIA_S3_ENDPOINT_URL` | `https://<new-ref>.supabase.co/storage/v1/s3` |
 | `MEDIA_ACCESS_KEY_ID` / `MEDIA_SECRET_ACCESS_KEY` | The new key pair |
 | `MEDIA_S3_REGION` | The new region (or keep `us-east-1`; Supabase does not check it) |
-| `MEDIA_PUBLIC_BASE_URL` | `https://<new-ref>.supabase.co/storage/v1/object/public/media` (public bucket only) |
+| `MEDIA_PRIVATE_BUCKET` | `true` (unchanged) |
 
 Saving variables triggers a redeploy; the `Procfile` runs `migrate`
 (a no-op if the schema is current), `collectstatic`, then gunicorn.
@@ -473,4 +472,4 @@ Moving production to a new Supabase project (or any new Postgres + bucket):
 | `password authentication failed` | Special characters in the password not URL-encoded, or (session pooler) the user is not written `postgres.<ref>`. |
 | rclone `AccessDenied` / `SignatureDoesNotMatch` | Wrong key pair or endpoint; `force_path_style = true` missing. |
 | rclone tries to create the bucket and fails | Add `no_check_bucket = true` to the remote. |
-| Images 404 after the move | `MEDIA_PUBLIC_BASE_URL` still points at the old project, the new bucket is private while the app expects public (or the reverse), or `MEDIA_PREFIX` differs. |
+| Images 404 after the move | `MEDIA_S3_ENDPOINT_URL` or the key pair still point at the old project, the objects were copied under different keys, or `MEDIA_PREFIX` differs. `default_storage.exists("<key>")` in a shell tells you which. |

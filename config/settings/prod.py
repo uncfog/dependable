@@ -3,10 +3,31 @@
 import os
 
 from .base import *  # noqa: F401,F403
-from .base import BASE_DIR, PRODUCT_NAME, SUPPORT_EMAIL, env_list
+from django.core.exceptions import ImproperlyConfigured
+
+from .base import (
+    BASE_DIR,
+    PRODUCT_NAME,
+    SECRET_KEY,
+    SUPPORT_EMAIL,
+    env_list,
+    is_placeholder_secret_key,
+)
 from .database import get_database_config
 
 DEBUG = False
+
+# --- Signing key ---------------------------------------------------------
+# A crash, not a warning. Sessions, password-reset links and CSRF tokens are all
+# signed with this; on a key anyone can read in the repository, anyone can forge
+# them. A deploy that will not start is the cheaper failure.
+if is_placeholder_secret_key(SECRET_KEY):
+    raise ImproperlyConfigured(
+        "SECRET_KEY is missing or is a development placeholder. Set SECRET_KEY "
+        "in the host's environment to a long random value, e.g. the output of "
+        "python -c \"import secrets; print(secrets.token_urlsafe(50))\". "
+        "Changing it signs everybody out."
+    )
 
 # --- Host and origin allow-lists ----------------------------------------
 # ALLOWED_HOSTS / CSRF_TRUSTED_ORIGINS carry the domains we own and can write

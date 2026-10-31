@@ -143,7 +143,10 @@ capabilities, enabled modules), `apps.core.branding.branding` (product name),
 | `/accounts/settings/` | Own account: name, email, password |
 | `/<school-slug>/enquiry/` | A school's public admissions enquiry form (only when admissions is on) |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | Crawler files, from `apps/core/seo.py` |
-| `/media/…` | Served by Django **only when `DEBUG` is on**; in production uploads come from the bucket |
+| `/schools/<school-slug>/logo/?v=…` | A school's logo, streamed by the app. Public (it is on the enquiry page). |
+| `/payments/<id>/receipt/file/` | A payment's attached slip. Signed-in, payments capability, own school only. |
+| `/admissions/<id>/documents/<kind>/` | An applicant's upload (`passport_photo`, `birth_certificate`, …). Signed-in, may read the pipeline, own school/branch only. |
+| `/media/…` | Served by Django **only when `DEBUG` is on**, for local disk storage. Nothing in the app links to it. |
 
 ## 3. Key models
 
@@ -304,9 +307,12 @@ with unscoped():
   context exists); use `User.scoped` for staff listings.
 - The admin is narrowed separately by `TenantScopedAdminMixin` (changelists and
   FK dropdowns).
-- Uploaded files are namespaced by school in their storage path:
-  `logos/<school-slug>/…`, `receipts/<school-id>/…`,
-  `admissions/<school-id>/<reference>/…`.
+- Uploaded files are namespaced by school in their storage path
+  (`logos/<school-slug>/…`, `receipts/<school-id>/…`,
+  `admissions/<school-id>/<reference>/…`), live in a **private** bucket, and
+  reach a browser only through the app's views — which look the record up
+  through the tenant-scoped manager, so another school's id is a 404. See
+  `apps/core/files.py`.
 
 Adding a new tenant-owned model: subclass `TenantScopedModel` (school-wide
 records allowed) or `BranchScopedModel` (must belong to one campus). See README →
@@ -383,7 +389,8 @@ Account creation:
 - Platform owners and additional school owners are created from the shell
   (`create_platform_owner`, `invite_school_owner` — see §11).
 - The account named by `PLATFORM_OWNER_EMAIL` can never be deactivated, so the
-  platform cannot lock itself out.
+  platform cannot lock itself out. The address is read from the environment
+  only; unset, no account is protected and check `schoolcord.W005` says so.
 
 ## 7. Modules (per-school feature switches)
 
@@ -477,7 +484,8 @@ Set in Railway → service → **Variables**. The full list with meanings is in
 production service:
 
 ```
-SECRET_KEY=<50+ random characters>
+SECRET_KEY=<50+ random characters>   # required: prod refuses to start without a real one
+PLATFORM_OWNER_EMAIL=<the platform owner's login email>
 DB_ENGINE=postgres
 DATABASE_URL=postgresql://…supabase…
 ALLOWED_HOSTS=theschoolcord.com,www.theschoolcord.com
@@ -491,7 +499,7 @@ MEDIA_S3_ENDPOINT_URL=https://<project-ref>.supabase.co/storage/v1/s3
 MEDIA_ACCESS_KEY_ID=…
 MEDIA_SECRET_ACCESS_KEY=…
 MEDIA_S3_REGION=us-east-1
-MEDIA_PUBLIC_BASE_URL=https://<project-ref>.supabase.co/storage/v1/object/public/media
+MEDIA_PRIVATE_BUCKET=true            # the default; stated so nobody flips it by accident
 MESSAGING_PROVIDER=console          # until Termii approves the Sender IDs; then set it empty
 TERMII_API_KEY=…                    # once messaging goes live
 DJANGO_SETTINGS_MODULE=config.settings.prod   # recommended, see above
@@ -515,7 +523,7 @@ environment; on Railway, service variables take its place. Nothing else is read.
 | Variable | Where | Default | Purpose |
 | --- | --- | --- | --- |
 | `DJANGO_SETTINGS_MODULE` | all | `config.settings.dev` for `manage.py`; `config.settings.prod` for `wsgi.py`/`asgi.py` | Which settings module loads. Django's own variable. |
-| `SECRET_KEY` | all | `dev-insecure-change-me` | Django signing key (sessions, password-reset tokens, CSRF). **Must** be set to a long random value in production — `prod.py` does not refuse to start without it. Changing it logs everyone out and invalidates outstanding reset links. |
+| `SECRET_KEY` | all | `dev-insecure-change-me` (dev only) | Django signing key (sessions, password-reset tokens, CSRF). **Required in production**: `prod.py` raises `ImproperlyConfigured` and the service will not start if it is missing, blank, the dev placeholder, or a `django-insecure-…` key. Generate one with `python -c "import secrets; print(secrets.token_urlsafe(50))"`. Changing it signs everyone out and invalidates outstanding reset links. |
 | `DEBUG` | dev | `True` in dev | Debug pages and `/media/` serving. Ignored in prod (`DEBUG = False` is hard-coded). |
 | `ALLOWED_HOSTS` | all | `localhost,127.0.0.1` (base); dev overrides to `*`; prod: empty | Comma-separated hostnames Django will answer for. |
 | `CSRF_TRUSTED_ORIGINS` | prod | empty | Comma-separated origins **with scheme** (`https://…`) allowed to POST. |
@@ -523,7 +531,7 @@ environment; on Railway, service variables take its place. Nothing else is read.
 | `TIME_ZONE` | all | `UTC` | Django time zone. Production uses `Africa/Lagos`. |
 | `LOG_LEVEL` | all | `INFO` | Root logger level (console handler only). |
 | `PUBLIC_BASE_URL` | all | empty | Absolute site URL, e.g. `https://www.theschoolcord.com`, no trailing slash. Needed for links inside emails (welcome email, admissions reminders, invites). Unset → those links are omitted and the welcome email is skipped; check `schoolcord.W001` warns. |
-| `PLATFORM_OWNER_EMAIL` | all | `ayebasuokante@gmail.com` | The one account (by email, case-insensitive) that can never be deactivated. **Change on handover** if the platform owner changes. |
+| `PLATFORM_OWNER_EMAIL` | all | empty | The one account (by email, case-insensitive) that can never be deactivated. Environment-only: unset means **no account is protected**, and check `schoolcord.W005` warns on every deploy. Set it in Railway. |
 
 ### Database
 
@@ -582,8 +590,8 @@ lives in the database on its `SchoolMessagingConfig`.
 | `MEDIA_ACCESS_KEY_ID` | all | empty | S3 access key (Supabase → Project Settings → Storage → S3 access keys). |
 | `MEDIA_SECRET_ACCESS_KEY` | all | empty | Its secret. |
 | `MEDIA_S3_REGION` | all | `us-east-1` | Region string boto3 requires. |
-| `MEDIA_PUBLIC_BASE_URL` | all | empty | Where browsers fetch public files, e.g. `https://<ref>.supabase.co/storage/v1/object/public/media`. Ignored when the bucket is private. |
-| `MEDIA_PRIVATE_BUCKET` | all | `false` | `true` → signed, expiring URLs instead of public ones. See [§14](#14-known-gaps-and-open-items) — recommended. |
+| `MEDIA_PRIVATE_BUCKET` | all | `true` | The bucket is private: any storage URL Django builds is signed and expiring. The app itself never sends a browser to a storage URL — it streams every file through its own views — so this mainly affects the "Currently:" link on file fields in `/admin/`. Set `false` only for a deliberately public bucket. |
+| `MEDIA_PUBLIC_BASE_URL` | all | empty | Only for `MEDIA_PRIVATE_BUCKET=false`: the public base URL, e.g. `https://<ref>.supabase.co/storage/v1/object/public/media`. Ignored for a private bucket. Leave unset. |
 | `MEDIA_PREFIX` | all | empty | Key prefix inside the bucket, to share it with something else. Do not also put it in `MEDIA_PUBLIC_BASE_URL`. |
 
 ### Process / platform
@@ -637,9 +645,15 @@ lives in the database on its `SchoolMessagingConfig`.
     (passport photo, birth certificate, previous results, transfer letter,
     immunisation record)
 
-  The database stores only each file's **key** (e.g. `logos/fulfilled/crest.png`);
-  the full URL is built at request time from `MEDIA_PUBLIC_BASE_URL`. Moving to
-  another bucket therefore needs no database change — see the backup guide.
+  The bucket is **private**. Files are read with the app's S3 credentials and
+  streamed to the browser by three views (`apps/core/files.py` holds the shared
+  part): the school logo (public), payment receipts and applicant documents
+  (both gated by capability and tenant scope, `Cache-Control: private,
+  no-store`). Every response carries `nosniff` and a sandboxing
+  `Content-Security-Policy`, so an SVG logo opened directly cannot run script.
+
+  The database stores only each file's **key** (e.g. `logos/fulfilled/crest.png`),
+  so moving to another bucket needs no database change — see the backup guide.
 - Supabase Auth, Realtime, Edge Functions and the Supabase client libraries are
   **not** used.
 
@@ -738,9 +752,9 @@ with the admissions module on.
 
 | Task | How |
 | --- | --- |
-| Check deployment health | `python manage.py check --deploy --settings=config.settings.prod` — look for `schoolcord.W001`–`W004` and Django's `security.*` warnings. |
+| Check deployment health | `python manage.py check --deploy --settings=config.settings.prod` — look for `schoolcord.W001`–`W005` and Django's `security.*` warnings. |
 | Mail not arriving | `mailcheck` (above); then confirm `PUBLIC_BASE_URL`, `RESEND_API_KEY`, and the domain in Resend. |
-| Logos/receipts 404 or vanish after deploy | `MEDIA_BUCKET_NAME` unset in Railway → uploads went to the container's disk. Set the `MEDIA_*` variables; affected files must be re-uploaded. |
+| Logos/receipts 404 or vanish after deploy | `MEDIA_BUCKET_NAME` unset in Railway → uploads went to the container's disk. Set the `MEDIA_*` variables; affected files must be re-uploaded. If the variables are set, check the S3 key pair can read the bucket (`python manage.py shell` → `default_storage.exists("<key>")`). |
 | Add a platform owner | `create_platform_owner` (above). |
 | A school needs a second owner | `invite_school_owner --school <slug> …` (not possible from the UI by design). |
 | Lock out an account | `/staff/` (Users, at platform scope) → deactivate. Nothing is deleted; reactivating restores access. |
@@ -753,33 +767,44 @@ with the admissions module on.
 
 ## 14. Known gaps and open items
 
-Found while writing this handover. None is fixed by it.
+Found while writing this handover.
 
-1. **Uploaded documents are publicly reachable by predictable URLs.** With the
-   public bucket the settings assume, an applicant's birth certificate sits at
-   `…/object/public/media/admissions/<school-id>/ENQ-<year>-<n>/<filename>` —
-   sequential IDs and references, no token. The same applies to payment
-   receipts. Setting `MEDIA_PRIVATE_BUCKET=true` (and making the bucket private
-   in Supabase) switches every file link to a signed, expiring URL; logos would
-   then be signed too. Recommended before admissions is used widely.
-2. **`SECRET_KEY` has an insecure default and production does not refuse it.**
-   If the Railway variable were ever removed, the app would start with
-   `dev-insecure-change-me`. `check --deploy` reports it; nothing blocks it.
+**Resolved in the handover PR**
+
+- Uploaded documents were reachable at public, predictable URLs
+  (`…/object/public/media/admissions/<school-id>/ENQ-<year>-<n>/…`). The bucket
+  is now private and every file goes through a gated view (§10).
+- Production started on the placeholder `SECRET_KEY`; it now refuses to.
+- `PLATFORM_OWNER_EMAIL` defaulted to a personal address in code; it is now
+  environment-only, with check `schoolcord.W005`.
+- `venv/` was tracked in git despite `.gitignore`; it no longer is.
+
+**Known limitations — documented, not fixed**
+
+1. **No delivery webhooks** for Termii or Resend: SMS stays `SENT`; email
+   bounces are invisible in the app. The `[resend]` Anymail extra is installed
+   but no tracking-webhook URL is routed.
+2. **Per-school gateway API keys are stored in plain text** in
+   `messaging_schoolmessagingconfig.api_key`, so database dumps contain secrets.
+   Treat every backup as sensitive (see the backup guide).
+
+**Open items**
+
 3. **No scheduled job is configured in the repo** for the two nightly admissions
    commands (§12).
-4. **No delivery webhooks** for Termii or Resend: SMS stays `SENT`; email
-   bounces are invisible in the app.
-5. **SMS is in console mode in production** per `.env.example` until Termii
+4. **SMS is in console mode in production** per `.env.example` until Termii
    approves Sender IDs — confirm the Railway value.
-6. **Africa's Talking** is a stub.
-7. **`venv/` is committed to git** (≈7,000 files) despite being in
-   `.gitignore`; it was added before the ignore rule. `git rm -r --cached venv`
-   removes it from the repository without touching the local folder.
-8. **No CI** — there is no `.github/workflows`; tests run only by hand.
-9. **Backups** depend on the Supabase plan (the Free plan has no automated
+5. **Africa's Talking** is a stub.
+6. **No CI** — there is no `.github/workflows`; tests run only by hand.
+7. **Backups** depend on the Supabase plan (the Free plan has no automated
    backups) and Storage objects are **not** included in Supabase database
    backups. See the backup guide for a manual routine.
-10. **Per-school gateway API keys are stored in plain text** in
-    `messaging_schoolmessagingconfig.api_key`, so database dumps contain secrets.
-11. `PLATFORM_OWNER_EMAIL` defaults to a personal address in code; set the
-    variable explicitly when ownership changes.
+8. **Four of the five applicant documents are not linked anywhere in the staff
+   screens.** Parents upload a birth certificate, previous results, a transfer
+   letter and an immunisation record; only the passport photo is shown. The
+   gated view already serves all five (`/admissions/<id>/documents/<kind>/`), so
+   linking them is a template change.
+9. **`/admin/` file links** ("Currently: …" on a logo, receipt or document
+   field) are signed storage URLs, valid for an hour. They work only if the
+   storage host honours S3 pre-signed URLs; the app's own screens do not depend
+   on that.
