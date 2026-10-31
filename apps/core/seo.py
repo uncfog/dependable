@@ -124,6 +124,9 @@ PRIVATE_PATHS: tuple[str, ...] = (
     "/admissions/",
     "/reports/",
     "/media/",
+    # A school's logo, /schools/<school-slug>/logo/. Fetched by browsers on the
+    # school's pages; nothing a search index needs.
+    "/schools/",
     # Each school's own public enquiry page, /<school-slug>/enquiry/. Public to
     # parents, but it is the school's page, not the product's, and it already
     # carries its own noindex.

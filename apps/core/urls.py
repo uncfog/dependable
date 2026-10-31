@@ -50,4 +50,10 @@ urlpatterns = [
     # The school's own profile -- name, logo, office contacts. What the
     # "Settings" nav entry has been waiting for.
     path("settings/", views.SchoolSettingsView.as_view(), name="school_settings"),
+    # Public: the logo is shown on the school's own enquiry page too.
+    path(
+        "schools/<slug:school_slug>/logo/",
+        views.SchoolLogoView.as_view(),
+        name="school_logo",
+    ),
 ]

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import hashlib
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.text import slugify
 
 from apps.core.models import TimeStampedModel
@@ -107,6 +110,20 @@ class School(TimeStampedModel):
     @property
     def is_active(self) -> bool:
         return self.status in {SchoolStatus.ACTIVE, SchoolStatus.TRIALING}
+
+    @property
+    def logo_url(self) -> str:
+        """Where a page points an ``<img>`` at this school's logo, or ``""``.
+
+        The app's own view rather than the storage URL, because the bucket is
+        private -- see :mod:`apps.core.files`. ``v`` changes whenever the stored
+        file does (every upload gets a fresh name), so the view can tell the
+        browser to cache it for a year without a new logo ever going unseen.
+        """
+        if not self.logo:
+            return ""
+        version = hashlib.sha256(self.logo.name.encode()).hexdigest()[:12]
+        return f"{reverse('core:school_logo', args=[self.slug])}?v={version}"
 
     @property
     def initial(self) -> str:

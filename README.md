@@ -28,20 +28,76 @@ Multi-tenant school management SaaS.
 - **Step 7 — payments:** money recorded against a student, with every balance
   derived from confirmed payments.
 
+## Documentation
+
+| Document | What it covers |
+| --- | --- |
+| This README, from here to [Tests](#tests) | Installing, running, testing and maintaining it locally |
+| [docs/TECHNICAL.md](docs/TECHNICAL.md) | Architecture, apps and models, frontend, database and multi-tenancy, authentication and roles, Railway deployment, **every environment variable**, third-party integrations, management commands, scheduled jobs, runbook, known gaps |
+| [docs/BACKUP_AND_RESTORE.md](docs/BACKUP_AND_RESTORE.md) | Full `pg_dump` of the Supabase database, restoring into a fresh Postgres or Supabase project, and moving the storage bucket |
+| The rest of this README, from [How the tenancy works](#how-the-tenancy-works) on | Design notes: why each feature works the way it does |
+
 ## Running it
 
+### Prerequisites
+
+| Tool | Version | Needed for |
+| --- | --- | --- |
+| Python | **3.11** (pinned in `.python-version` and `runtime.txt`) | Everything |
+| Git | any | Cloning |
+| PostgreSQL | 15+ | Optional. Without it the project runs on SQLite. |
+| Node.js | 20+ | Only to rebuild the CSS. The compiled stylesheet is committed. |
+
+No credentials are needed to run it locally: with an unedited `.env`, mail
+prints to the terminal, SMS is logged rather than sent, and uploads go to
+`./media`.
+
+### Install
+
 ```bash
+git clone https://github.com/ayebasuokante669-cpu/dependable.git schoolcord
+cd schoolcord
+
 python -m venv venv
 venv\Scripts\activate            # macOS/Linux: source venv/bin/activate
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 copy .env.example .env           # macOS/Linux: cp .env.example .env
+```
 
+### Configure `.env`
+
+`.env` is gitignored and read on every start. For local work, edit three things
+in the copy you just made:
+
+1. **Pick a database.** The example's `DATABASE_URL` points at a local Postgres
+   called `dependable`. Either create it
+   (`createdb -U postgres dependable`), or add `DB_ENGINE=sqlite` and use SQLite.
+   If Postgres is configured but not running, dev settings fall back to SQLite
+   and print a warning.
+2. **Never point a local `.env` at the production database.** `migrate`,
+   `runserver` and the demo-data commands would write to the live site. If you
+   need production data locally, restore a backup into a local Postgres
+   ([backup guide](docs/BACKUP_AND_RESTORE.md)).
+3. **`PLATFORM_OWNER_EMAIL`** can stay as it is locally.
+
+Every variable, what it does and its default:
+[docs/TECHNICAL.md → Environment variables](docs/TECHNICAL.md#9-environment-variables--complete-reference).
+
+### Create the tables and run
+
+```bash
 python manage.py migrate
 python manage.py runserver
 ```
 
-Then open http://127.0.0.1:8000/.
+Then open http://127.0.0.1:8000/. Sign up a school at `/signup/`, or load the
+demo data below. `manage.py` uses `config.settings.dev` unless told otherwise:
+`DEBUG` on, any host allowed, email printed to the console.
+
+To get into `/admin/` with a fresh database:
+`python manage.py createsuperuser` (a superuser is treated as a platform owner).
 
 ### Local demo data
 
@@ -143,15 +199,32 @@ project**.
 | `MEDIA_ACCESS_KEY_ID` | from Supabase → Project Settings → Storage → S3 access keys |
 | `MEDIA_SECRET_ACCESS_KEY` | the secret from that same pair |
 | `MEDIA_S3_REGION` | `us-east-1` (Supabase ignores it; boto3 insists on one) |
-| `MEDIA_PUBLIC_BASE_URL` | `https://<project-ref>.supabase.co/storage/v1/object/public/media` |
+| `MEDIA_PRIVATE_BUCKET` | `true` (the default; set it anyway so nobody flips it by accident) |
 
-In Supabase first: **Storage → New bucket**, named `media`, marked **public**.
+In Supabase first: **Storage → New bucket**, named `media`, **not** public.
 
-Two optional ones. `MEDIA_PRIVATE_BUCKET=true` serves signed, expiring URLs
-instead — correct if receipts should not be hotlinkable, and then
-`MEDIA_PUBLIC_BASE_URL` is left unset. `MEDIA_PREFIX` puts uploads under a prefix
-so the bucket can be shared; leave the prefix *out* of the public base URL if you
-set it, because django-storages appends it.
+#### The bucket is private, and the app hands out every file
+
+The bucket holds children's birth certificates and parents' bank slips. It used
+to be public, and the links were guessable:
+`…/object/public/media/admissions/<school-id>/ENQ-2026-0043/…`. Now nothing in
+the app links to a storage URL. Every file is read with the app's own S3
+credentials and streamed by a view that decides who may have it:
+
+| File | URL | Who gets it |
+| --- | --- | --- |
+| School logo | `/schools/<slug>/logo/?v=…` | Anyone. It is on the school's public enquiry page. Cached for a year per version. |
+| Payment receipt | `/payments/<id>/receipt/file/` | Signed-in accounts with the payments capability, at that school |
+| Applicant document | `/admissions/<id>/documents/<kind>/` | Signed-in accounts that can read the pipeline, at that school and campus |
+
+The shared part, including the `nosniff` and sandboxing headers that stop an SVG
+logo from running script, is in `apps/core/files.py`. Since nothing depends on
+signed URLs, it does not matter whether a given S3-compatible host supports
+them; `MEDIA_PRIVATE_BUCKET` now only changes the file links in `/admin/`.
+
+`MEDIA_PUBLIC_BASE_URL` applies only to a deliberately public bucket
+(`MEDIA_PRIVATE_BUCKET=false`); leave it unset. `MEDIA_PREFIX` puts uploads under
+a prefix so the bucket can be shared.
 
 #### Every one of them is read at runtime, never at build time
 
@@ -190,13 +263,47 @@ Nothing to migrate: every file previously written to the container is already go
 A school that uploaded a logo before this change needs to upload it again, and the
 fallback initial has been showing in the meantime rather than a broken image.
 
+## Maintaining it
+
+| Task | How |
+| --- | --- |
+| Change a model | Edit it, then `python manage.py makemigrations <app>`, review the generated file, commit it with the model change. Production applies it on the next deploy, because the `Procfile` runs `migrate` before starting. |
+| Add a tenant-owned model | Subclass `TenantScopedModel` or `BranchScopedModel` — see [Adding a tenant-scoped model](#adding-a-tenant-scoped-model). |
+| Change styles | Edit `assets/app.css`, `npm run build:css`, commit **both** `assets/app.css` and `static/css/app.css`. Railway does not build CSS. |
+| Upgrade a dependency | Change its pin in `requirements.txt`, `pip install -r requirements.txt`, run the full test suite, deploy. Django should stay on a supported release (5.2 LTS is supported until April 2028). |
+| Deploy | Merge to the branch Railway deploys from. Details and the production variables: [docs/TECHNICAL.md → Deployment](docs/TECHNICAL.md#8-deployment-on-railway). |
+| Check a deployment | `python manage.py check --deploy --settings=config.settings.prod` and `python manage.py mailcheck --settings=config.settings.prod` in a Railway shell. |
+| Run a command on production | Always add `--settings=config.settings.prod` (or set `DJANGO_SETTINGS_MODULE` in Railway). Never run `bootstrap_tenant` or any `seed_*` command there. |
+| Nightly admissions jobs | `send_enquiry_reminders` then `expire_enquiries` — needs a Railway cron service, see [docs/TECHNICAL.md → Scheduled jobs](docs/TECHNICAL.md#12-scheduled-jobs). |
+| Back up / restore | [docs/BACKUP_AND_RESTORE.md](docs/BACKUP_AND_RESTORE.md). Take one before any risky migration or before deleting a school. |
+| Change the product name, contact addresses, social links | `apps/core/branding.py` only. |
+
 ## Tests
 
 ```bash
-python manage.py test apps
+# bash
+DB_ENGINE=sqlite python manage.py test apps
+
+# PowerShell
+$env:DB_ENGINE = "sqlite"; python manage.py test apps
 ```
 
-1,421 tests in all. The first of them cover the parts that must never regress:
+**Always set `DB_ENGINE=sqlite`.** Without it the test runner uses whatever
+`DATABASE_URL` your `.env` holds, and creates and drops a test database on that
+server. Run the suite **serially**: `--parallel` has exhausted memory on the
+development machine and leaves `default_*.sqlite3` files behind when killed. A
+full serial run takes around ten minutes, so while working run only the apps
+you touched:
+
+```bash
+DB_ENGINE=sqlite python manage.py test apps.payments apps.core
+DB_ENGINE=sqlite python manage.py test apps.core.tests_auth      # one module
+```
+
+There is no CI; run the full suite before every deploy.
+
+The suite has roughly 1,600 test methods (`grep -r "def test_" apps | wc -l`).
+The first of them cover the parts that must never regress:
 what each role can see, what each role may change,
 that a fee total always equals its live line items,
 that a student's expected fee is always read from their class rather than stored
@@ -1570,13 +1677,14 @@ lock itself out of, with nobody left who can undo it. So `PLATFORM_OWNER_EMAIL`
 names one address that is never a valid target:
 
 ```
-# config/settings/base.py, overridable in .env
-PLATFORM_OWNER_EMAIL=ayebasuokante@gmail.com
+# Railway service variables (read in config/settings/base.py)
+PLATFORM_OWNER_EMAIL=<the platform owner's login email>
 ```
 
-Matched case-insensitively on the trimmed address, and **defaulted rather than left
-blank** — an unset env var must not quietly remove the protection, so the fallback
-is the real address and an override is a deliberate act.
+Matched case-insensitively on the trimmed address. It is **environment-only**: an
+address belongs to whoever runs the platform, not to the code. So unset means no
+account is protected, and check `schoolcord.W005` says so on every deploy rather
+than letting the protection lapse silently.
 
 The rule is a *target*, not a role: the protected account still holds the capability
 and can deactivate anybody, including another platform owner. What changes is that
@@ -2543,6 +2651,7 @@ that.
 | `schoolcord.W002` | the backend is Anymail/Resend but `RESEND_API_KEY` is empty |
 | `schoolcord.W003` | `DEFAULT_FROM_EMAIL` has no address in it |
 | `schoolcord.W004` | uploads are going to local disk in production |
+| `schoolcord.W005` | `PLATFORM_OWNER_EMAIL` is unset, so no account is protected from deactivation |
 
 All warnings, never errors: none of them stops the app serving pages, and a check
 that refused to boot over an unsendable email would be a worse failure than the one
@@ -3091,6 +3200,9 @@ apps/admissions/     the paid add-on: Applicant (enquiry through enrolment),
                      one capability a school configures), notifications.py
                      (the parent emails), admission_pricing.py, the public
                      enquiry page (public_urls.py) and the staff pipeline
+apps/reports/        the collections report (HTML and PDF); no models
+docs/                TECHNICAL.md (the handover reference) and
+                     BACKUP_AND_RESTORE.md
 templates/           base.html, 403.html, partials/ (including _toasts.html,
                      the notification region every Django message renders
                      into), core/ (landing, signup,

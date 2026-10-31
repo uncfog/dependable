@@ -18,10 +18,7 @@ from decimal import Decimal
 from django.apps import apps as django_apps
 from django.contrib import messages as flash
 from django.db.models import Count, Q, Sum
-import mimetypes
-import posixpath
-
-from django.http import FileResponse, Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
@@ -33,6 +30,7 @@ from django.views.generic import (
     View,
 )
 
+from apps.core.files import DOCUMENT_TYPES, stream_stored_file
 from apps.core.permissions import Capability, CapabilityRequiredMixin
 from apps.fees.models import Term
 from apps.students import fees
@@ -446,14 +444,6 @@ class ReceiptView(ViewPaymentsMixin, DetailView):
         return context
 
 
-#: What an attached slip may be shown inline as. Anything else (or a file whose
-#: type cannot be told from its name) is handed over as a download, so a stray
-#: upload can never render as a page on this origin.
-_INLINE_RECEIPT_TYPES = {
-    "application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic",
-}
-
-
 class ReceiptFileView(ViewPaymentsMixin, View):
     """The attached slip itself, behind the same gate as the payment.
 
@@ -467,25 +457,12 @@ class ReceiptFileView(ViewPaymentsMixin, View):
         payment = Payment.objects.filter(pk=pk).first()
         if payment is None or not payment.receipt:
             raise Http404("No receipt is attached to that payment.")
-        try:
-            handle = payment.receipt.open("rb")
-        except (FileNotFoundError, OSError):
-            raise Http404("The attached receipt could not be found.")
-
-        filename = posixpath.basename(payment.receipt.name)
-        content_type, _ = mimetypes.guess_type(filename)
-        if content_type not in _INLINE_RECEIPT_TYPES:
-            content_type = "application/octet-stream"
-        response = FileResponse(
-            handle,
-            content_type=content_type,
-            as_attachment=content_type == "application/octet-stream",
-            filename=filename,
-        )
         # A parent's bank slip is personal financial data.
-        response["Cache-Control"] = "private, no-store"
-        response["X-Content-Type-Options"] = "nosniff"
-        return response
+        return stream_stored_file(
+            payment.receipt,
+            inline_types=DOCUMENT_TYPES,
+            cache_control="private, no-store",
+        )
 
 
 class StudentPaymentHistoryView(ViewPaymentsMixin, DetailView):

@@ -32,7 +32,22 @@ def env_list(name: str, default: str = "") -> list[str]:
     return [item.strip() for item in os.environ.get(name, default).split(",") if item.strip()]
 
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-change-me")
+#: The development fallback. Production refuses to start on it -- see
+#: ``is_placeholder_secret_key`` and config/settings/prod.py.
+DEV_SECRET_KEY = "dev-insecure-change-me"
+
+SECRET_KEY = os.environ.get("SECRET_KEY", DEV_SECRET_KEY)
+
+
+def is_placeholder_secret_key(value: str | None) -> bool:
+    """Whether ``value`` is no secret at all: missing, blank, or a known stand-in.
+
+    ``django-insecure-`` is the prefix ``startproject`` puts on the key it
+    generates, which is as public as the dev fallback above.
+    """
+    key = (value or "").strip()
+    return not key or key == DEV_SECRET_KEY or key.startswith("django-insecure-")
+
 
 #: The account that may never be deactivated, by email address.
 #:
@@ -41,12 +56,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-insecure-change-me")
 #: to be out of reach or the platform can be locked out of itself: two owners can
 #: disable each other, and nobody is left who can undo it.
 #:
-#: Matched case-insensitively against ``user.email``. Defaulted rather than left
-#: blank on purpose: an unset env var must not quietly remove the protection, so
-#: the fallback is the real address and an override is a deliberate act.
-PLATFORM_OWNER_EMAIL = os.environ.get(
-    "PLATFORM_OWNER_EMAIL", "ayebasuokante@gmail.com"
-).strip().lower()
+#: Matched case-insensitively against ``user.email``. Read from the environment
+#: only -- an address belongs to whoever runs the platform, not to the code -- so
+#: unset means no account is protected, and ``schoolcord.W005`` says so on every
+#: deploy (see apps/core/checks.py).
+PLATFORM_OWNER_EMAIL = os.environ.get("PLATFORM_OWNER_EMAIL", "").strip().lower()
 DEBUG = env_bool("DEBUG", False)
 ALLOWED_HOSTS = env_list("ALLOWED_HOSTS", "localhost,127.0.0.1")
 
@@ -322,7 +336,11 @@ if USE_OBJECT_STORAGE:
     #: No ACL header. Supabase rejects requests that carry one, and bucket-level
     #: public/private is how it decides access anyway.
     AWS_DEFAULT_ACL = None
-    AWS_QUERYSTRING_AUTH = env_bool("MEDIA_PRIVATE_BUCKET", False)
+    #: Private by default. Uploads include children's birth certificates and
+    #: parents' bank slips, and the app streams every file through its own views
+    #: (apps/core/files.py), so nothing needs a public URL. Set false only for a
+    #: bucket that is deliberately public.
+    AWS_QUERYSTRING_AUTH = env_bool("MEDIA_PRIVATE_BUCKET", True)
 
     #: A year. Every stored name is unique -- see AWS_S3_FILE_OVERWRITE -- so a
     #: cached file can never be the wrong one.

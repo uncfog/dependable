@@ -29,7 +29,7 @@ import re
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.core.modules import ALL_KEYS
@@ -52,6 +52,12 @@ def png(name="logo.png") -> SimpleUploadedFile:
     return SimpleUploadedFile(name, PNG_1PX, content_type="image/png")
 
 
+#: The protected account's address. The setting is environment-only, so the
+#: suite names its own rather than inheriting whatever the machine has set.
+PROTECTED_EMAIL = "protected@example.com"
+
+
+@override_settings(PLATFORM_OWNER_EMAIL=PROTECTED_EMAIL)
 class UITestCase(TestCase):
     """One school with every role, and a second school to stay out of."""
 
@@ -871,10 +877,25 @@ class ProtectedAccountTests(UITestCase):
         )
 
     def test_the_setting_names_an_account(self):
-        self.assertTrue(settings.PLATFORM_OWNER_EMAIL)
-        self.assertEqual(
-            settings.PLATFORM_OWNER_EMAIL, settings.PLATFORM_OWNER_EMAIL.lower()
+        self.assertEqual(settings.PLATFORM_OWNER_EMAIL, PROTECTED_EMAIL)
+
+    def test_the_address_comes_from_the_environment_not_the_code(self):
+        """Nobody's personal address is a default any more: unset means unset."""
+        source = (
+            pathlib.Path(settings.BASE_DIR) / "config" / "settings" / "base.py"
+        ).read_text(encoding="utf-8")
+        self.assertIn(
+            'PLATFORM_OWNER_EMAIL = os.environ.get("PLATFORM_OWNER_EMAIL", "")', source
         )
+        self.assertNotIn("@gmail.com", source)
+
+    @override_settings(PLATFORM_OWNER_EMAIL="")
+    def test_unset_protects_nobody(self):
+        from apps.core.permissions import is_protected_account
+
+        for user in (self.protected, self.platform, self.owner):
+            with self.subTest(user=user.username):
+                self.assertFalse(is_protected_account(user))
 
     def test_it_recognises_that_account_and_no_other(self):
         from apps.core.permissions import is_protected_account

@@ -39,7 +39,7 @@
     <section class="card overflow-hidden">
       <div class="flex items-center gap-4 border-b border-ink-200 px-5 py-4">
         {% if applicant.passport_photo %}
-          <img src="{{ applicant.passport_photo.url }}" alt="" loading="lazy" decoding="async"
+          <img src="{% url 'admissions:applicant_document' applicant.pk 'passport_photo' %}" alt="" loading="lazy" decoding="async"
                class="size-12 shrink-0 rounded-lg border border-ink-200 object-cover">
         {% else %}
           <span class="grid size-12 shrink-0 place-items-center rounded-lg bg-brand-100
