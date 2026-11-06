@@ -1352,6 +1352,80 @@
   window.toast.info = function (m) { return showToast(m, 'info'); };
 
   /* ====================================================================== *
+   * Tables as cards, on a phone
+   *
+   * Every table in the signed-in shell gets its column headings copied onto its
+   * cells, which the stylesheet shows as labels below `sm`. Here rather than in
+   * each template so a new table is covered without anyone remembering, and so
+   * that with scripting off it stays an ordinary table that scrolls. A table opts
+   * out with `data-no-cards`.
+   * ====================================================================== */
+  function initCardTables() {
+    var main = document.getElementById('main');
+    if (!main) return;
+    var tables = main.querySelectorAll('table:not([data-no-cards]):not([role="grid"])');
+    for (var i = 0; i < tables.length; i++) cardTable(tables[i]);
+  }
+
+  function cardTable(table) {
+    var headings = [];
+    var head = table.tHead && table.tHead.rows[0];
+    if (head) {
+      for (var h = 0; h < head.cells.length; h++) {
+        headings.push(head.cells[h].textContent.replace(/\s+/g, ' ').trim());
+      }
+    }
+    var rows = table.querySelectorAll('tbody tr, tfoot tr');
+    for (var r = 0; r < rows.length; r++) {
+      var column = 0;
+      for (var c = 0; c < rows[r].cells.length; c++) {
+        var cell = rows[r].cells[c];
+        if (cell.colSpan > 1) {
+          cell.classList.add('table-card-span');
+        } else if (headings[column]) {
+          cell.setAttribute('data-label', headings[column]);
+        }
+        column += cell.colSpan;
+      }
+    }
+    table.classList.add('table-cards');
+  }
+
+  /* ====================================================================== *
+   * Filters folded away on a phone
+   *
+   * A form marked `data-filter-sheet` starts closed on a phone behind a button,
+   * so results are the first thing on screen, and open when a search is already
+   * applied, so what is narrowing the list stays visible. The label is the
+   * attribute's value.
+   * ====================================================================== */
+  function initFilterSheets() {
+    var forms = document.querySelectorAll('form[data-filter-sheet]');
+    var applied = /[?&](?!page=)[^=&]+=[^&]/.test(window.location.search);
+    for (var i = 0; i < forms.length; i++) foldFilterSheet(forms[i], i, applied);
+  }
+
+  function foldFilterSheet(form, index, applied) {
+    if (!form.id) form.id = 'filter-sheet-' + index;
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn btn-secondary filter-sheet-toggle text-sm';
+    button.setAttribute('aria-controls', form.id);
+    button.setAttribute('data-no-loading', '');
+    button.textContent = form.getAttribute('data-filter-sheet');
+
+    function set(open) {
+      form.classList.toggle('filter-sheet-closed', !open);
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    button.addEventListener('click', function () {
+      set(form.classList.contains('filter-sheet-closed'));
+    });
+    set(applied);
+    form.parentNode.insertBefore(button, form);
+  }
+
+  /* ====================================================================== *
    * Boot
    * ====================================================================== */
   function init() {
@@ -1375,6 +1449,8 @@
     initButtonLoading();
     initPresets();
     initTotals();
+    initCardTables();
+    initFilterSheets();
   }
 
   if (document.readyState === 'loading') {

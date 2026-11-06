@@ -5,7 +5,7 @@ from __future__ import annotations
 from django.apps import apps as django_apps
 
 from .modules import enabled_for_user
-from .navigation import nav_for
+from .navigation import bottom_nav_for, nav_for
 from .permissions import capabilities_of
 from .roles import Role, scope_for
 
@@ -50,11 +50,13 @@ def tenancy(request):
     # request, so the sidebar, the capability set above and the middleware that
     # guards the URLs all share one query.
     modules = enabled_for_user(user)
+    # Capability- and module-gated nav entries need the same answers the views and
+    # the middleware will give, or the sidebar offers a link that 403s. See
+    # navigation.nav_for.
+    sections = nav_for(role, request.path, capabilities, modules)
     return {
-        # Capability- and module-gated nav entries need the same answers the
-        # views and the middleware will give, or the sidebar offers a link that
-        # 403s. See navigation.nav_for.
-        "nav_sections": nav_for(role, request.path, capabilities, modules),
+        "nav_sections": sections,
+        "bottom_nav": bottom_nav_for(role, sections),
         "tenant": context,
         "current_school": getattr(user, "school", None),
         "current_branch": getattr(user, "branch", None),

@@ -33,7 +33,8 @@ Three things are worth knowing:
 
   {% if table.rows %}
     <div class="overflow-x-auto">
-      <table class="w-full text-sm">
+      {# A grid for comparing figures down a column, so it stays one and scrolls. #}
+      <table class="w-full text-sm" data-no-cards>
         <thead class="table-head">
           <tr>
             {% for column in table.columns %}

@@ -224,6 +224,20 @@ students 2, messaging 5, payments 1, admissions 3.
   checklist), `datepicker.js`, `tour.js` (guided tour on Driver.js).
   Driver.js is vendored at `static/js/vendor/` and `static/css/vendor/`.
 - **Charts are CSS**, not a chart library (`apps/core/templatetags/charts.py`).
+- **Phones.** Below `lg` the sidebar gives way to a bottom bar
+  (`partials/_bottom_nav.html`; `BOTTOM_NAV` in `apps/core/navigation.py` chooses each
+  role's screens) with More opening the full menu, which is copied from the sidebar
+  on first use so it is only sent once. Below `sm`, every table in `#main` becomes a
+  stack of labelled cards: `ui.js` copies the column headings onto the cells, so a
+  new table is covered automatically. Opt out with `data-no-cards`, as the report
+  grids do because they exist to be compared down a column. Add
+  `data-filter-sheet="Label"` to a filter form to fold it behind a button below `lg`.
+  With scripting off, tables scroll sideways and filters stay open.
+- **Fonts are self-hosted** in `static/fonts/` (SIL Open Font License) and declared at
+  the top of `assets/app.css`. No page requests anything from a font host.
+- **Error pages** `404.html`, `500.html` and `403_csrf.html` extend
+  `_error_page.html`, which is styled inline and uses no database, because it may be
+  showing because one of those is down.
 - **Design-system notes** — tokens, dark mode, toasts, navigation, layout — are
   in README → [Design tokens](../README.md#design-tokens) and following sections.
 - `SCHOOLCORD_Landing_Page.html` in the repo root is the **design reference**

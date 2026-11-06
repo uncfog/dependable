@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, integration/pre-launch]
 
 permissions:
   contents: read
@@ -16,7 +16,7 @@ env:
 jobs:
   tests:
     name: Tests on Postgres
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 40
     services:
       postgres:
@@ -53,7 +53,7 @@ jobs:
 
   browser:
     name: Browser smoke tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 20
     env:
       DB_ENGINE: sqlite
@@ -72,7 +72,7 @@ jobs:
 
   security:
     name: Dependency and secret scans
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
 
   frontend:
     name: Design tokens
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4

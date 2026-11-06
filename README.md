@@ -271,6 +271,7 @@ fallback initial has been showing in the meantime rather than a broken image.
 | Add a tenant-owned model | Subclass `TenantScopedModel` or `BranchScopedModel` — see [Adding a tenant-scoped model](#adding-a-tenant-scoped-model). |
 | Change styles | Edit `assets/app.css`, `npm run build:css`, commit **both** `assets/app.css` and `static/css/app.css`. Railway does not build CSS. |
 | Upgrade a dependency | Change its pin in `requirements.txt`, `pip install -r requirements.txt`, run the full test suite, deploy. Django should stay on a supported release (5.2 LTS is supported until April 2028). |
+| Build work that is not ready to go live | Target `integration/pre-launch`, not `main`, which is what Railway normally deploys from. |
 | Deploy | Merge to the branch Railway deploys from. Details and the production variables: [docs/TECHNICAL.md → Deployment](docs/TECHNICAL.md#8-deployment-on-railway). |
 | Check a deployment | `python manage.py check --deploy --settings=config.settings.prod` and `python manage.py mailcheck --settings=config.settings.prod` in a Railway shell. |
 | Run a command on production | Always add `--settings=config.settings.prod` (or set `DJANGO_SETTINGS_MODULE` in Railway). Never run `bootstrap_tenant` or any `seed_*` command there. |
