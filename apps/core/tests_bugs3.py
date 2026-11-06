@@ -504,6 +504,15 @@ class DeploymentCheckTests(TestCase):
     def test_and_not_reported_once_one_is_named(self):
         self.assertNotIn("schoolcord.W005", self.run_checks())
 
+    @override_settings(DEBUG=False, MESSAGING_PROVIDER="console")
+    def test_console_messaging_in_production_is_reported(self):
+        """It marks texts delivered and sends nothing, so a school would be misled."""
+        self.assertIn("schoolcord.W006", self.run_checks())
+
+    @override_settings(DEBUG=False, MESSAGING_PROVIDER="")
+    def test_and_not_reported_once_real_gateways_are_in_use(self):
+        self.assertNotIn("schoolcord.W006", self.run_checks())
+
 
 class MailcheckCommandTests(TestCase):
     """The command that answers "why didn't it arrive?" from the server."""

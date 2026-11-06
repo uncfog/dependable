@@ -128,6 +128,31 @@ def uploads_need_somewhere_to_live(app_configs, **kwargs):
     ]
 
 
+@register(Tags.compatibility)
+def console_messaging_sends_nothing(app_configs, **kwargs):
+    """The console provider marks every text delivered and sends none of them.
+
+    Right for a developer and for a deployment waiting on Sender ID approval, but a
+    school looking at that log believes its parents were told. It also writes
+    parents' numbers and message text to the logs. So it has to be a known choice.
+    """
+    if not _is_production():
+        return []
+    if (getattr(settings, "MESSAGING_PROVIDER", "") or "").strip() != "console":
+        return []
+    return [
+        Warning(
+            "MESSAGING_PROVIDER is console: no SMS leaves the platform, every text "
+            "is marked delivered, and parents' numbers go to the logs.",
+            hint=(
+                "Keep it only while no school is relying on messaging. To go live, "
+                "set MESSAGING_PROVIDER to empty and TERMII_API_KEY to the real key."
+            ),
+            id=f"{_ID}.W006",
+        )
+    ]
+
+
 @register(Tags.security)
 def one_account_is_out_of_reach(app_configs, **kwargs):
     """Without ``PLATFORM_OWNER_EMAIL`` every platform owner can be deactivated.

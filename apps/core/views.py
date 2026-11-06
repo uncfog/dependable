@@ -47,6 +47,7 @@ from apps.fees.models import FeeComponent, FeeStructure, Term
 from apps.schools.models import Branch, School, SchoolModule
 from apps.students.models import Student, StudentStatus
 
+from . import ratelimit
 from .branding import PRIVACY_EMAIL, PRODUCT_DESCRIPTION, branding
 from .emails import send_password_changed_email, send_welcome_email
 # The money and payment-state derivations the dashboards and Reports share.
@@ -185,6 +186,21 @@ class RoleAwareLoginView(LoginView):
         return response
 
     def form_invalid(self, form):
+        # The attempt that just failed has been counted, so this also catches the
+        # one that used up the last try. Their password may have been right: the
+        # backend does not check it once the limit is reached.
+        identifier = self.request.POST.get("username", "")
+        if ratelimit.login_is_blocked(self.request, identifier):
+            form.errors.clear()
+            form.add_error(
+                None,
+                "Too many sign-in attempts. Wait 15 minutes and try again, or "
+                "reset your password.",
+            )
+            response = super().form_invalid(form)
+            response.status_code = 429
+            return response
+
         # The form already prints why inline, next to the fields. The toast is
         # for the case that costs people the most time: pressing Sign in,
         # looking away, and looking back at a page that seems unchanged.
@@ -273,6 +289,15 @@ class BrandedPasswordResetView(PasswordResetView):
     extra_email_context = branding()
     html_email_template_name = "registration/password_reset_email_html.html"
 
+    def form_valid(self, form):
+        # Over the limit, nothing is sent and the answer does not change. Refusing
+        # out loud would tell a stranger that this mailbox is being tried.
+        if not ratelimit.allow_password_reset(
+            self.request, form.cleaned_data["email"]
+        ):
+            return HttpResponseRedirect(self.get_success_url())
+        return super().form_valid(form)
+
 
 class BrandedPasswordResetConfirmView(PasswordResetConfirmView):
     """Django's "choose a new password" step, with the owner told it happened.
@@ -320,6 +345,20 @@ class SignupView(FormView):
         if request.user.is_authenticated:
             return HttpResponseRedirect(home_url_for(request.user))
         return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        # Every attempt counts, not only the ones that create a school: each one
+        # runs the password policy, which calls out to the breach checker.
+        if not ratelimit.SIGNUP_CLIENT.allow(ratelimit.client_ip(request)):
+            messages.error(
+                request,
+                "Too many signup attempts from this connection. Try again in an "
+                "hour, or contact us if you need help getting started.",
+            )
+            return self.render_to_response(
+                self.get_context_data(form=self.get_form()), status=429
+            )
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         school, branch, owner = form.save()

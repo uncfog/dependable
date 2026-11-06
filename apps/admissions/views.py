@@ -43,7 +43,7 @@ from django.views.generic import (
 )
 
 from apps.academics.models import Class, Level
-from apps.core import modules
+from apps.core import modules, ratelimit
 from apps.core.files import DOCUMENT_TYPES, stream_stored_file
 from apps.payments import duplicates
 from apps.schools.models import School
@@ -180,6 +180,25 @@ class PublicEnquiryView(SchoolFromSlugMixin, FormView):
             branch__school=school, branch__is_active=True, is_active=True
         ).exists()
         return context
+
+    def post(self, request, *args, **kwargs):
+        # After the school is resolved, so a school taking no enquiries stays a 404
+        # however many times it is asked. Every attempt counts, because an upload
+        # has cost storage and bandwidth by the time anyone reads it.
+        school = self.get_school()
+        key = f"{school.pk}|{ratelimit.client_ip(request)}"
+        if not ratelimit.ENQUIRY_CLIENT.allow(key):
+            form = self.get_form()
+            form.full_clean()
+            form.add_error(
+                None,
+                "Too many enquiries from this connection. Please try again in an "
+                "hour, or contact the school directly.",
+            )
+            return self.render_to_response(
+                self.get_context_data(form=form), status=429
+            )
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         applicant = form.save()

@@ -115,6 +115,10 @@ MIDDLEWARE = [
     "apps.core.middleware.TenantMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    # A suspended school's staff are locked out, and a past-due school is read-only.
+    # Before the temporary-password hold, so that hold cannot show a locked-out
+    # account a screen. See apps/core/middleware.py.
+    "apps.core.middleware.SchoolStatusMiddleware",
     # An account on a temporary password is held at Account settings until it
     # chooses its own. Reads request.user, so after AuthenticationMiddleware.
     "apps.accounts.middleware.RequirePasswordChangeMiddleware",
@@ -207,6 +211,12 @@ PWNED_PASSWORDS = {
 PWNED_PASSWORDS_ENABLED = env_bool(
     "PWNED_PASSWORDS_ENABLED", default=sys.argv[1:2] != ["test"]
 )
+
+# The limits on sign-in, password reset, signup and enquiries -- see
+# apps/core/ratelimit.py. Off under the test runner for the same reason the breach
+# check is; the limits' own tests turn them back on. Setting this to false in the
+# environment is the off switch if a limit ever catches real people.
+RATE_LIMITS_ENABLED = env_bool("RATE_LIMITS_ENABLED", default=sys.argv[1:2] != ["test"])
 
 LOGIN_URL = "login"
 # The role-aware dispatcher, not a screen: it forwards to whichever dashboard

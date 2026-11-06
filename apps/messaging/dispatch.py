@@ -124,6 +124,13 @@ def deliver(message: Message, provider: MessagingProvider | None = None) -> Mess
     so re-running a half-finished batch finishes it rather than texting the
     parents who already heard.
 
+    That is only true if each result is on record before the next send, so every
+    row is written as it goes. gunicorn kills a worker that outlives its timeout,
+    and whatever was held in memory dies with it: writing the batch at the end
+    left parents who had been texted looking as if they had not. A kill between
+    the gateway accepting a message and this write can still repeat that one
+    message, and only that one.
+
     Called without a provider -- finishing a batch that was recorded earlier --
     it rebuilds one from the school's identity, so a resumed send goes out
     under the same name the batch was stamped with.
@@ -139,20 +146,19 @@ def deliver(message: Message, provider: MessagingProvider | None = None) -> Mess
         message.school.name if message.channel == Channel.WHATSAPP else ""
     )
 
-    for recipient in pending:
-        result = _send_one(provider, recipient, message, school_name)
-        recipient.status = result.status
-        recipient.provider_reference = result.reference[:120]
-        recipient.error = result.error
-        if result.ok:
-            recipient.sent_at = timezone.now()
-
-    if pending:
-        MessageRecipient.objects.bulk_update(
-            pending, ["status", "provider_reference", "error", "sent_at"]
-        )
-
-    message.refresh_status()
+    try:
+        for recipient in pending:
+            result = _send_one(provider, recipient, message, school_name)
+            MessageRecipient.all_objects.filter(pk=recipient.pk).update(
+                status=result.status,
+                provider_reference=result.reference[:120],
+                error=result.error,
+                sent_at=timezone.now() if result.ok else recipient.sent_at,
+            )
+    finally:
+        # In ``finally`` so a batch that is cut off still reads as what it is on
+        # the log, rather than as queued with nothing sent.
+        message.refresh_status()
     return message
 
 

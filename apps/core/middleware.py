@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from django.shortcuts import render
+from django.urls import Resolver404, resolve
 
 from .tenancy import TenantContext, activate, deactivate
 
@@ -49,6 +50,100 @@ class TenantMiddleware:
             return self.get_response(request)
         finally:
             deactivate(token)
+
+
+#: What a locked-out account can still reach: the way out, and pages anyone can read.
+_OPEN_WHEN_LOCKED = frozenset(
+    {
+        "logout",
+        "core:landing",
+        "core:privacy",
+        "core:about",
+        "core:school_logo",
+        "robots_txt",
+        "sitemap",
+        "llms_txt",
+        "admissions_public:public_enquiry",
+        "admissions_public:public_enquiry_done",
+    }
+)
+
+#: What a read-only school can still change: a person's own account and their way out.
+_WRITABLE_WHEN_READ_ONLY = frozenset(
+    {"logout", "accounts:settings", "accounts:generate_password"}
+)
+
+_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
+
+
+class SchoolStatusMiddleware:
+    """What a school's billing status does to the people who work there.
+
+    * **suspended, cancelled** -- locked out. Every screen answers with a notice
+      saying so and how to reach support.
+    * **past due** -- read-only. They can read and export their records, which are
+      theirs, and change nothing but their own account.
+    * **active, trialing** -- nothing.
+
+    Nothing is deleted, and changing the status back restores everything. Platform
+    accounts are exempt: they have no school of their own, and they are who has to
+    get in to sort it out. Signed-out visitors pass through, so signing in still
+    works and leads to the notice rather than to an unexplained failure.
+
+    A middleware for the same reason module access is: a screen added next year is
+    covered before anybody remembers it needs to be.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        refusal = self._refuse(request)
+        return refusal if refusal is not None else self.get_response(request)
+
+    def _refuse(self, request):
+        from apps.schools.models import SchoolStatus
+
+        from .branding import SUPPORT_EMAIL
+        from .roles import is_platform_role
+
+        user = getattr(request, "user", None)
+        if user is None or not user.is_authenticated or user.is_superuser:
+            return None
+        if is_platform_role(user.role) or user.school_id is None:
+            return None
+
+        school = user.school
+        if school.status in (SchoolStatus.SUSPENDED, SchoolStatus.CANCELLED):
+            if self._url_name(request) in _OPEN_WHEN_LOCKED:
+                return None
+        elif school.status == SchoolStatus.PAST_DUE:
+            if (
+                request.method in _SAFE_METHODS
+                or self._url_name(request) in _WRITABLE_WHEN_READ_ONLY
+            ):
+                return None
+        else:
+            return None
+
+        return render(
+            request,
+            "403_school_status.html",
+            {
+                "school": school,
+                "read_only": school.status == SchoolStatus.PAST_DUE,
+                "support_email": SUPPORT_EMAIL,
+                "page_title": f"{school.name} is not available",
+            },
+            status=403,
+        )
+
+    @staticmethod
+    def _url_name(request):
+        try:
+            return resolve(request.path_info).view_name
+        except Resolver404:
+            return None
 
 
 class ModuleAccessMiddleware:
