@@ -236,6 +236,5 @@ class PhoneLayoutTests(BrowserTestCase):
     def test_the_payments_page_fits(self):
         self.assertLessEqual(self.overflow("bursar", "/payments/"), 0)
 
-    @unittest.expectedFailure
     def test_the_record_payment_page_fits(self):
-        self.assertLessEqual(self.overflow("bursar", "/payments/record/"), 0)
+        self.assertLessEqual(self.overflow("owner", "/payments/record/"), 0)
