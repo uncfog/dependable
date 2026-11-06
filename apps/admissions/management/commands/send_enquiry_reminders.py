@@ -61,6 +61,10 @@ class Command(BaseCommand):
         sent = failed = considered = 0
 
         for school in schools:
+            # Its public page has gone dark, so a reminder would point a parent at
+            # nothing. Past-due schools are skipped too, for the same reason.
+            if not school.is_active:
+                continue
             config = AdmissionsConfig.for_school(school)
             # "Old enough to nudge" is measured from when the enquiry came in,
             # so the cut-off is a created_at ceiling rather than a date on the

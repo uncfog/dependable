@@ -131,8 +131,9 @@ class ReceiptLinkTests(PaymentsTestCase):
     def open_receipt(self, payment):
         response = self.client.get(reverse("payments:receipt_file", args=[payment.pk]))
         self.assertEqual(response.status_code, 200)
+        # Reading it to the end closes it. Closing it again by hand fires the
+        # end-of-request signal, which closes the database connection under the test.
         body = b"".join(response.streaming_content)
-        response.close()
         return response, body
 
     def test_a_freshly_uploaded_receipt_opens_from_the_confirmation(self):

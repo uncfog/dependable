@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% comment %}
+The school's account is suspended, cancelled or past due.
+
+Not the ordinary 403 page: this is about the school's account with the platform,
+not about what this person may do. Staff who see it usually did not cause it and
+cannot fix it, so it says what is happening and who can help. It says nothing about
+money owed, because the person reading may be a bursar and not the proprietor, and
+it says nothing has been lost, because that is the first thing they will wonder.
+{% endcomment %}
+
+{% block content %}
+<div class="mx-auto max-w-xl py-10">
+  <div class="card p-6 sm:p-8">
+    <span class="icon-tile accent-amber">
+      <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
+           stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round"
+              d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0
+                 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0
+                 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+      </svg>
+    </span>
+
+    {% if read_only %}
+      <h1 class="mt-4 text-xl font-semibold text-brand-900">
+        {{ school.name }} is read-only at the moment
+      </h1>
+      <p class="mt-2 text-sm text-ink-600">
+        You can still open and export your records, but changes cannot be saved until
+        the school's account is brought up to date. Your proprietor or the platform
+        team can help with that.
+      </p>
+    {% else %}
+      <h1 class="mt-4 text-xl font-semibold text-brand-900">
+        {{ school.name }} is not available at the moment
+      </h1>
+      <p class="mt-2 text-sm text-ink-600">
+        Access for this school has been paused. Your proprietor or the platform team
+        can help with that.
+      </p>
+    {% endif %}
+    <p class="mt-3 text-sm text-ink-600">
+      Nothing has been deleted. Everything returns exactly as it was once the account
+      is back in order.
+    </p>
+
+    <div class="mt-6 flex flex-wrap gap-2">
+      {% if read_only %}
+        <a href="{% url 'core:dashboard' %}" class="btn btn-primary text-sm">
+          Back to your dashboard
+        </a>
+      {% endif %}
+      {% if support_email %}
+        <a href="mailto:{{ support_email }}?subject={{ school.name|urlencode }} account"
+           class="btn btn-secondary text-sm">Contact support</a>
+      {% endif %}
+      <form method="post" action="{% url 'logout' %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-ghost text-sm">Sign out</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

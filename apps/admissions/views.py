@@ -25,6 +25,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -42,8 +43,9 @@ from django.views.generic import (
 )
 
 from apps.academics.models import Class, Level
-from apps.core import modules
+from apps.core import modules, ratelimit
 from apps.core.files import DOCUMENT_TYPES, stream_stored_file
+from apps.payments import duplicates
 from apps.schools.models import School
 
 from . import enrolment, notifications, split, walk_in
@@ -178,6 +180,25 @@ class PublicEnquiryView(SchoolFromSlugMixin, FormView):
             branch__school=school, branch__is_active=True, is_active=True
         ).exists()
         return context
+
+    def post(self, request, *args, **kwargs):
+        # After the school is resolved, so a school taking no enquiries stays a 404
+        # however many times it is asked. Every attempt counts, because an upload
+        # has cost storage and bandwidth by the time anyone reads it.
+        school = self.get_school()
+        key = f"{school.pk}|{ratelimit.client_ip(request)}"
+        if not ratelimit.ENQUIRY_CLIENT.allow(key):
+            form = self.get_form()
+            form.full_clean()
+            form.add_error(
+                None,
+                "Too many enquiries from this connection. Please try again in an "
+                "hour, or contact the school directly.",
+            )
+            return self.render_to_response(
+                self.get_context_data(form=form), status=429
+            )
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, form):
         applicant = form.save()
@@ -869,7 +890,29 @@ class AdmissionPaymentCreateView(RecordAdmissionPaymentsMixin, CreateView):
         form.instance.school_id = self.applicant.school_id
         form.instance.branch_id = self.applicant.branch_id
         form.instance.recorded_by = self.request.user
-        response = super().form_valid(form)
+        cleaned = form.cleaned_data
+        with transaction.atomic():
+            duplicates.lock_row(Applicant, self.applicant.pk)
+            twin = duplicates.recent_twin(
+                AdmissionPayment.all_objects.filter(
+                    applicant=self.applicant,
+                    amount=cleaned["amount"],
+                    received_on=cleaned["received_on"],
+                    method=cleaned["method"],
+                    reference=cleaned["reference"],
+                ),
+                recorded_by=self.request.user,
+            )
+            if twin is None:
+                response = super().form_valid(form)
+        if twin is not None:
+            self.object = twin
+            messages.info(
+                self.request,
+                f"{twin.amount:,.0f} against {self.applicant.reference} was already "
+                f"recorded a moment ago, so it was not added again.",
+            )
+            return HttpResponseRedirect(self.get_success_url())
         messages.success(
             self.request,
             f"{self.object.amount:,.0f} recorded against "

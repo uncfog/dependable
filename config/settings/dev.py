@@ -7,6 +7,9 @@ from .database import get_database_config
 DEBUG = env_bool("DEBUG", True)
 ALLOWED_HOSTS = ["*"]
 
+# Nobody needs an authenticator to run this on their own machine.
+MFA_REQUIRED_FOR_PLATFORM = env_bool("MFA_REQUIRED_FOR_PLATFORM", False)
+
 # Postgres when it is up, SQLite when it is not.
 DATABASES = {"default": get_database_config(BASE_DIR, allow_fallback=True)}
 

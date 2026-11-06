@@ -10,6 +10,23 @@ from __future__ import annotations
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth.signals import user_logged_in, user_login_failed
+from django.dispatch import receiver
+
+from apps.core import ratelimit
+
+
+@receiver(user_login_failed, dispatch_uid="schoolcord_count_login_failure")
+def count_login_failure(sender, credentials, request=None, **kwargs):
+    if request is not None:
+        ratelimit.record_login_failure(request, credentials.get("username"))
+
+
+@receiver(user_logged_in, dispatch_uid="schoolcord_clear_login_failures")
+def clear_login_failures(sender, request, user, **kwargs):
+    # Whichever one they typed: both reach the same account.
+    if request is not None:
+        ratelimit.clear_login_failures(request, user.get_username(), user.email)
 
 
 class EmailOrUsernameBackend(ModelBackend):
@@ -28,6 +45,12 @@ class EmailOrUsernameBackend(ModelBackend):
         if username is None or password is None:
             return None
         identifier = username.strip()
+
+        # In the backend, so every sign-in form is covered, the admin's included.
+        # Answered as a wrong password: this door says nothing about the account.
+        # ``request`` is None for code calling authenticate() directly.
+        if request is not None and ratelimit.login_is_blocked(request, identifier):
+            return None
 
         user = User._default_manager.filter(**{User.USERNAME_FIELD: identifier}).first()
         if user is None and "@" in identifier:

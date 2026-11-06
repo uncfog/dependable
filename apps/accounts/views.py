@@ -32,6 +32,7 @@ from django.urls import reverse, reverse_lazy
 
 from apps.core.emails import send_password_changed_email
 from apps.core.navigation import home_url_for
+from apps.core.ratelimit import client_ip
 from apps.core.permissions import (
     Capability,
     CapabilityRequiredMixin,
@@ -126,20 +127,6 @@ class AccountSettingsView(LoginRequiredMixin, TemplateView):
         return self.render_to_response(self.get_context_data(password_form=form))
 
 
-def _client_ip(request) -> str:
-    """Best-effort client identity for throttling.
-
-    ``X-Forwarded-For`` is trusted because this only ever runs behind the
-    platform's proxy, which sets it. Nothing security-critical hangs off the
-    result: the worst case of a spoofed value is that a caller gets their own
-    private bucket, which still costs them a request per token.
-    """
-    forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.META.get("REMOTE_ADDR", "unknown")
-
-
 @require_POST
 def generate_password_view(request):
     """Return one generated password as JSON.
@@ -148,7 +135,7 @@ def generate_password_view(request):
     front of it -- a cached response here would hand the same password to
     everyone who asked.
     """
-    key = f"pwgen:{_client_ip(request)}"
+    key = f"pwgen:{client_ip(request)}"
     # add() only succeeds on the first call in the window, which is what starts
     # the clock; incr() after that. The pair is not atomic across processes, so
     # a multi-worker deployment enforces this per worker -- fine for a limit

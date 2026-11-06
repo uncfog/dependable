@@ -2,10 +2,58 @@
 
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from django.conf import settings
 from django.contrib import messages
 from django.shortcuts import redirect
 from django.urls import reverse
+from django_otp import user_has_device
+
+
+class RequirePlatformMFAMiddleware:
+    """Hold a platform account at its two-step code until this session has passed it.
+
+    A middleware so the Django admin and every screen written later are covered. It
+    follows the temporary-password hold, which goes first: a person sorting out a
+    temporary password is on Account settings, and this must not send them away.
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        user = getattr(request, "user", None)
+        if (
+            settings.MFA_REQUIRED_FOR_PLATFORM
+            and user is not None
+            and user.is_authenticated
+            and user.is_platform_staff
+            and not user.must_change_password
+            and not user.is_verified()
+            and not self._exempt(request.path_info)
+        ):
+            name = (
+                "accounts:mfa_verify"
+                if user_has_device(user, confirmed=True)
+                else "accounts:mfa_setup"
+            )
+            target = reverse(name)
+            if request.method == "GET":
+                target += f"?next={quote(request.get_full_path(), safe='/')}"
+            return redirect(target)
+        return self.get_response(request)
+
+    @staticmethod
+    def _exempt(path: str) -> bool:
+        allowed = (
+            reverse("accounts:mfa_setup"),
+            reverse("accounts:mfa_verify"),
+            reverse("logout"),
+            settings.STATIC_URL,
+            settings.MEDIA_URL,
+        )
+        return any(path.startswith(prefix) for prefix in allowed if prefix)
 
 
 class RequirePasswordChangeMiddleware:
