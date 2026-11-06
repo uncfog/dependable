@@ -11,7 +11,7 @@ openpyxl==3.1.5
 django-storages[s3]==1.14.6
 psycopg[binary]==3.3.7
 pwned-passwords-django==5.2.0
-python-dotenv==1.2.2
+python-dotenv==1.2.4
 # Error reporting, off unless SENTRY_DSN is set. See config/settings/monitoring.py.
 sentry-sdk[django]==2.74.0
 # Authenticator-app sign-in for platform accounts, with recovery codes. segno draws
