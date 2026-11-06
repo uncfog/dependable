@@ -104,6 +104,7 @@ RESET_EMAIL = Limit("reset-email", 3, HOUR)
 RESET_CLIENT = Limit("reset-client", 20, HOUR)
 SIGNUP_CLIENT = Limit("signup-client", 20, HOUR)
 ENQUIRY_CLIENT = Limit("enquiry-client", 20, HOUR)
+MFA_VERIFY = Limit("mfa-verify", 10, 15 * MINUTE)
 
 
 def _identifier(value) -> str:

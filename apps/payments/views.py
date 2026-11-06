@@ -31,6 +31,7 @@ from django.views.generic import (
     View,
 )
 
+from apps.audit.recording import history_for
 from apps.core.files import DOCUMENT_TYPES, stream_stored_file
 from apps.core.permissions import Capability, CapabilityRequiredMixin, has_capability
 from apps.fees.models import Term
@@ -362,6 +363,7 @@ class PaymentDetailView(ViewPaymentsMixin, DetailView):
         context["can_record"] = "record_payments" in _capabilities(self.request)
         context["intake_portion"] = intake_portion(payment)
         context["received_total"] = payment.amount + context["intake_portion"]
+        context["history"] = history_for("payments.Payment", payment.pk)
         context["page_title"] = f"Payment {payment.receipt_number}"
         return context
 

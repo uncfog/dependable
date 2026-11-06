@@ -91,6 +91,12 @@ INSTALLED_APPS = [
     "apps.messaging",
     # Money received, recorded against a student. Balances derive from here.
     "apps.payments",
+    # The append-only record of changes to money and access. See apps/audit/models.py.
+    "apps.audit",
+    # Authenticator codes and recovery codes for two-step sign-in.
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "django_otp.plugins.otp_static",
     # Object storage for uploads. Installed in every environment so its checks
     # run locally too, though a machine with no MEDIA_BUCKET_NAME still writes to
     # the filesystem -- see STORAGES below.
@@ -111,8 +117,12 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Adds request.user.is_verified(), for two-step sign-in. Follows authentication.
+    "django_otp.middleware.OTPMiddleware",
     # Must follow AuthenticationMiddleware: it reads request.user.
     "apps.core.middleware.TenantMiddleware",
+    # Tells the audit log who is acting. Also reads request.user.
+    "apps.audit.context.AuditContextMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     # A suspended school's staff are locked out, and a past-due school is read-only.
@@ -122,6 +132,8 @@ MIDDLEWARE = [
     # An account on a temporary password is held at Account settings until it
     # chooses its own. Reads request.user, so after AuthenticationMiddleware.
     "apps.accounts.middleware.RequirePasswordChangeMiddleware",
+    # A platform account proves itself with a code before it reaches any screen.
+    "apps.accounts.middleware.RequirePlatformMFAMiddleware",
     # A URL belonging to a module this school does not have answers 403 with a
     # page saying so. Last, so the temporary-password redirect above wins: being
     # told a feature is unavailable is a dead end for somebody who cannot use any
@@ -217,6 +229,14 @@ PWNED_PASSWORDS_ENABLED = env_bool(
 # check is; the limits' own tests turn them back on. Setting this to false in the
 # environment is the off switch if a limit ever catches real people.
 RATE_LIMITS_ENABLED = env_bool("RATE_LIMITS_ENABLED", default=sys.argv[1:2] != ["test"])
+
+# Platform accounts must use an authenticator code as well as a password. Off under
+# the test runner, where its own tests turn it on; dev.py turns it off for local work.
+MFA_REQUIRED_FOR_PLATFORM = env_bool(
+    "MFA_REQUIRED_FOR_PLATFORM", default=sys.argv[1:2] != ["test"]
+)
+#: The name an authenticator app shows beside the code.
+OTP_TOTP_ISSUER = PRODUCT_NAME
 
 LOGIN_URL = "login"
 # The role-aware dispatcher, not a screen: it forwards to whichever dashboard

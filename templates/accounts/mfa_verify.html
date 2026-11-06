@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="mx-auto max-w-md py-4">
+  <div class="card p-6 sm:p-8">
+    <h2 class="text-xl font-semibold text-brand-900">Enter your sign-in code</h2>
+    <p class="mt-2 text-sm text-ink-600">
+      Open your authenticator app and enter the code it shows, or use one of your
+      recovery codes.
+    </p>
+    {% if form.non_field_errors %}
+      <div class="mt-4 rounded-md border border-overdue/30 bg-overdue-soft px-3 py-2.5
+                  text-sm text-overdue-strong" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    <form method="post" class="mt-5 space-y-4">
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% include "partials/_field.html" with field=form.token %}
+      <button type="submit" class="btn btn-primary w-full">Continue</button>
+    </form>
+    <form method="post" action="{% url 'logout' %}" class="mt-3">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost w-full text-sm">Sign out</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

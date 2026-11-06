@@ -1,0 +1,8 @@
+# Gitleaks' own rules, minus a virtualenv that was committed long ago and later
+# removed. Its contents are third-party packages, not this project's secrets.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Third-party code once tracked by mistake"
+paths = ['''^venv/''']

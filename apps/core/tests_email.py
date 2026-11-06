@@ -49,6 +49,9 @@ PRODUCTION_ENV = {
 
 def _import_production_settings():
     with mock.patch.dict(os.environ, PRODUCTION_ENV, clear=False):
+        # base first: it is what reads SECRET_KEY, and it was imported long ago with
+        # whatever this machine's environment held, which may be nothing.
+        importlib.reload(importlib.import_module("config.settings.base"))
         return importlib.reload(importlib.import_module("config.settings.prod"))
 
 

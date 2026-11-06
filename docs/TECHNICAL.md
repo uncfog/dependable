@@ -367,6 +367,39 @@ then the socket. **After a deploy, confirm `X-Real-IP` holds real client address
 on Railway**: if a proxy address appears instead, everyone shares one address count.
 `RATE_LIMITS_ENABLED=false` switches every limit off.
 
+### Two-step sign-in (`apps/accounts/mfa_views.py`)
+
+Platform accounts and superusers need an authenticator-app code as well as a
+password, on every new session, the Django admin included. Their first sign-in after
+this ships walks them through setting it up and gives ten one-use recovery codes.
+School staff are not asked. Built on `django-otp`, whose secrets are stored in the
+database, so treat database backups as sensitive. Lost phone and no recovery codes:
+`reset_platform_mfa --email …`, from a shell, after checking who is asking.
+`MFA_REQUIRED_FOR_PLATFORM=false` turns it off in an emergency.
+
+### Audit log (`apps/audit/`)
+
+`AuditEvent` is an append-only record of changes to money and access: who, when,
+from where, and each field's old and new values. Tracked: `Payment`,
+`AdmissionPayment`, `FeeComponent`, `User` (role, school, campus, active and staff
+flags, email; a password change is noted without its value), `School` (status,
+plan) and `SchoolModule`, plus two-step sign-in being set up, reset or recovered
+from. Add a model with one entry in `TRACKED` in `apps/audit/recording.py`.
+
+- **Read it:** each payment's page has a History card; the whole log is read-only
+  in the Django admin, for the platform.
+- **Limits:** it records `save()`, so `QuerySet.update()` and `bulk_create()` on a
+  tracked model bypass it. Do not change tracked models that way. It begins when
+  this ships: earlier edits were never recorded. Protection is in the application,
+  so someone with direct database access is not stopped, and closing a school
+  removes its events.
+
+### Error reporting (`config/settings/monitoring.py`)
+
+Off until `SENTRY_DSN` is set. Reports exclude user details, cookies, stack-frame
+variables, form contents and query strings. An exception's message can still mention
+what it was about, so keep names out of messages raised in this code.
+
 ### School status (`apps/core/middleware.py`)
 
 | `School.status` | Staff can |
@@ -567,6 +600,9 @@ environment; on Railway, service variables take its place. Nothing else is read.
 | `PUBLIC_BASE_URL` | all | empty | Absolute site URL, e.g. `https://www.theschoolcord.com`, no trailing slash. Needed for links inside emails (welcome email, admissions reminders, invites). Unset → those links are omitted and the welcome email is skipped; check `schoolcord.W001` warns. |
 | `PLATFORM_OWNER_EMAIL` | all | empty | The one account (by email, case-insensitive) that can never be deactivated. Environment-only: unset means **no account is protected**, and check `schoolcord.W005` warns on every deploy. Set it in Railway. |
 | `RATE_LIMITS_ENABLED` | all | on, except under `manage.py test` | The limits on sign-in, password reset, signup and enquiries (§6). Set `false` only as an emergency off switch. |
+| `MFA_REQUIRED_FOR_PLATFORM` | all | on in production; off in dev and tests | Two-step sign-in for platform accounts (§6). Set `false` only as an emergency off switch. |
+| `SENTRY_DSN` | prod | empty | Where error reports go. Empty means nothing is sent anywhere (§6). |
+| `SENTRY_ENVIRONMENT` | prod | `production` | The name reports are filed under. |
 
 ### Database
 
@@ -757,6 +793,7 @@ the server). `--help` on each lists its options.
 | `send_enquiry_reminders [--dry-run]` | admissions | yes — nightly | Emails a parent once, `reminder_after_days` (default 7) after an enquiry that has not become an application. |
 | `expire_enquiries [--dry-run]` | admissions | yes — nightly | Marks enquiries past their validity window expired. |
 | `settle_enrolment_payment [--commit]` | admissions | yes, carefully | One-off repair: moves the term share of an old all-in admission payment onto the term ledger. **Dry run unless `--commit`.** |
+| `reset_platform_mfa --email …` | accounts | yes, carefully | Clears a platform account's authenticator when the phone and recovery codes are lost. Recorded in the audit log. |
 | `report_wrong_child_risk [--school <slug>]` | payments | yes, read-only | CSV of past payments a since-fixed picker bug may have credited to the wrong child. Says what to check, not what is wrong. Treat the output as confidential. |
 | `bootstrap_tenant --password …` | core | **NO** | Demo school + one user per role, including a superuser. Local only. |
 | `seed_academics`, `seed_fees`, `seed_students`, `seed_payments`, `seed_admission_fees` | various | **NO** | Demo data. Local only. |
@@ -832,7 +869,9 @@ Found while writing this handover.
 4. **SMS is in console mode in production** per `.env.example` until Termii
    approves Sender IDs — confirm the Railway value.
 5. **Africa's Talking** is a stub.
-6. **No CI** — there is no `.github/workflows`; tests run only by hand.
+6. **CI runs on pull requests** — `.github/workflows/ci.yml`: the suite on Postgres,
+   browser smoke tests, dependency and secret scans. GitHub has to be told to require
+   it before merging (Settings → Branches).
 7. **Backups** depend on the Supabase plan (the Free plan has no automated
    backups) and Storage objects are **not** included in Supabase database
    backups. See the backup guide for a manual routine.
