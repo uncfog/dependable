@@ -17,6 +17,7 @@ from decimal import Decimal
 
 from django.apps import apps as django_apps
 from django.contrib import messages as flash
+from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
@@ -31,12 +32,14 @@ from django.views.generic import (
 )
 
 from apps.core.files import DOCUMENT_TYPES, stream_stored_file
-from apps.core.permissions import Capability, CapabilityRequiredMixin
+from apps.core.permissions import Capability, CapabilityRequiredMixin, has_capability
 from apps.fees.models import Term
 from apps.students import fees
+from apps.students.models import Student
 
-from . import balances
+from . import balances, duplicates
 from .forms import (
+    ConfirmedPaymentNotesForm,
     PaymentFilterForm,
     PaymentForm,
     PendingConfirmForm,
@@ -202,8 +205,31 @@ class PaymentCreateView(RecordPaymentsMixin, TermMixin, CreateView):
         return context
 
     def form_valid(self, form):
-        self.object = form.save(user=self.request.user)
-        _announce(self.request, self.object, recorded=True)
+        cleaned = form.cleaned_data
+        with transaction.atomic():
+            duplicates.lock_row(Student, cleaned["student"].pk)
+            twin = duplicates.recent_twin(
+                Payment.all_objects.filter(
+                    student=cleaned["student"],
+                    amount=cleaned["amount"],
+                    date_paid=cleaned["date_paid"],
+                    label=cleaned["label"],
+                    method=cleaned["method"],
+                    reference=cleaned["reference"],
+                ),
+                recorded_by=self.request.user,
+            )
+            if twin is None:
+                self.object = form.save(user=self.request.user)
+        if twin is not None:
+            self.object = twin
+            flash.info(
+                self.request,
+                f"{_naira(twin.amount)} for {twin.student.full_name} was already "
+                f"recorded a moment ago, so it was not added again.",
+            )
+        else:
+            _announce(self.request, self.object, recorded=True)
         return HttpResponseRedirect(self.get_success_url())
 
     def get_success_url(self):
@@ -240,6 +266,9 @@ class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):
     Reached both from the pending queue and from a payment's own page. A
     voided payment is not editable -- it is a closed record, and the way to
     change it is to record the correct payment afresh.
+
+    Once confirmed, changing the money reverses it as surely as voiding does, so
+    it takes the same capability. Without it, only the description can change.
     """
 
     model = Payment
@@ -253,10 +282,22 @@ class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):
             .select_related("student", "term")
         )
 
+    def _money_is_locked(self) -> bool:
+        return self.object.status == PaymentStatus.CONFIRMED and not has_capability(
+            self.request.user, Capability.VOID_PAYMENTS
+        )
+
     def get_form_class(self):
         if self.object.status == PaymentStatus.PENDING:
             return PendingConfirmForm
+        if self._money_is_locked():
+            return ConfirmedPaymentNotesForm
         return PaymentForm
+
+    def get_template_names(self):
+        if self._money_is_locked():
+            return ["payments/payment_notes_form.html"]
+        return [self.template_name]
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -515,8 +556,13 @@ def _position_for_form(form):
     against.
     """
     # Unbound, this is the initial Student; bound, it is whatever was typed --
-    # the picker's text, which only the picker's own lookup can resolve.
-    student = student_from_picker(form["student"].value())
+    # the picker's text, which only the picker's own lookup can resolve. A form
+    # with the money locked has no picker at all, only the payment's own student.
+    student = (
+        student_from_picker(form["student"].value())
+        if "student" in form.fields
+        else None
+    )
     if student is not None:
         return fees.position_for(student)
     if getattr(form, "instance", None) is not None and form.instance.student_id:

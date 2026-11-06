@@ -14,12 +14,19 @@ of how much they matter:
 The typed value is resolved back to a ``Student`` through the tenant-scoped
 manager, so a copied-and-pasted admission number from another school finds
 nothing.
+
+Admission numbers are unique per campus, not per school, so an account that can
+see two campuses can see two children with one number. Their options name the
+campus, and the whole option decides which child is meant. A bare number that
+fits both is refused rather than guessed: this is where money meets a child, and
+crediting the wrong one looks like a perfectly good payment.
 """
 
 from __future__ import annotations
 
 import posixpath
 import re
+from collections import Counter
 from dataclasses import dataclass
 from decimal import Decimal
 
@@ -43,31 +50,64 @@ RECEIPT_MAX_BYTES = 8 * 1024 * 1024
 _PICKER = re.compile(r"^\s*([^—]+?)\s*(?:—.*)?$")
 
 
+def _admission_number_in(value: str) -> str:
+    match = _PICKER.match(value)
+    return (match.group(1) if match else value).strip()
+
+
+def _students_numbered(admission_number: str):
+    """Everyone the caller can see with this number. Tenant-scoped."""
+    return Student.objects.filter(
+        admission_number__iexact=admission_number
+    ).select_related("school_class", "branch__school")
+
+
 def student_from_picker(value) -> Student | None:
-    """The student a picker entry names, or None.
+    """The student a picker entry names, or None if it does not name exactly one.
 
     Accepts the whole datalist option or just the admission number. Tenant-scoped
     through ``Student.objects``, so another school's admission number names
-    nobody. The field's ``clean`` and the live balance lookup both read through
-    here, so the panel can never show a student the form would then refuse.
+    nobody. When the caller can see several children with that number, only their
+    full option decides. The field's ``clean`` and the live balance lookup both
+    read through here, so the panel can never show a student the form would then
+    refuse.
     """
     if isinstance(value, Student):
         return value
     value = str(value or "").strip()
     if not value:
         return None
-    match = _PICKER.match(value)
-    admission_number = (match.group(1) if match else value).strip()
-    return Student.objects.filter(admission_number__iexact=admission_number).first()
+    matches = list(_students_numbered(_admission_number_in(value)))
+    if len(matches) == 1:
+        return matches[0]
+    named = [
+        student for student in matches
+        if picker_label(student, with_campus=True) == value
+    ]
+    return named[0] if len(named) == 1 else None
 
 
-def picker_label(student: Student) -> str:
+def picker_label(student: Student, *, with_campus: bool | None = None) -> str:
     """One datalist option. The admission number leads, because that is what is
-    printed on the receipt the bursar is holding."""
-    return (
+    printed on the receipt the bursar is holding.
+
+    The campus is added when the caller can see another child with this number.
+    Left as ``None``, that is looked up; :func:`picker_options` already knows for
+    its whole list and passes it in, so a roster stays one query.
+    """
+    label = (
         f"{student.admission_number} — {student.full_name} "
         f"({student.school_class.display_name})"
     )
+    if with_campus is None:
+        with_campus = (
+            _students_numbered(student.admission_number)
+            .exclude(pk=student.pk)
+            .exists()
+        )
+    # ``str(branch)`` includes the school, which a platform account needs: two
+    # schools can both have a campus called North.
+    return f"{label} — {student.branch}" if with_campus else label
 
 
 class StudentPickerField(forms.CharField):
@@ -95,8 +135,13 @@ class StudentPickerField(forms.CharField):
 
         student = student_from_picker(value)
         if student is None:
-            match = _PICKER.match(value)
-            admission_number = (match.group(1) if match else value).strip()
+            admission_number = _admission_number_in(value)
+            if _students_numbered(admission_number).exists():
+                raise ValidationError(
+                    f'More than one student here share the admission number '
+                    f'"{admission_number}". Pick the right child and campus from '
+                    f"the list as you type."
+                )
             raise ValidationError(
                 f'No student here has the admission number "{admission_number}". '
                 f"Pick one from the list as you type."
@@ -107,7 +152,10 @@ class StudentPickerField(forms.CharField):
         """Render an existing choice the same way the datalist offers it."""
         if isinstance(value, Student):
             return picker_label(value)
-        if value and str(value).isdigit():
+        # Only a real integer is an id -- the instance's own ``student_id``. Text
+        # came from the form, and "014" is an admission number some school uses:
+        # reading it as a primary key swapped the child on a refused form.
+        if isinstance(value, int):
             student = Student.objects.filter(pk=value).first()
             if student is not None:
                 return picker_label(student)
@@ -149,11 +197,15 @@ def picker_options() -> list[str]:
     Active only: money is taken against a child who is here. Tenant-scoped, so
     the list is the caller's own campus.
     """
+    students = list(
+        Student.objects.filter(status=StudentStatus.ACTIVE).select_related(
+            "school_class", "branch__school"
+        )
+    )
+    uses = Counter(student.admission_number.upper() for student in students)
     return [
-        picker_label(student)
-        for student in Student.objects.filter(
-            status=StudentStatus.ACTIVE
-        ).select_related("school_class")
+        picker_label(student, with_campus=uses[student.admission_number.upper()] > 1)
+        for student in students
     ]
 
 
@@ -337,6 +389,34 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
 
         if commit:
             payment.save()
+        return payment
+
+
+class ConfirmedPaymentNotesForm(PaymentForm):
+    """What somebody who may not void can still correct on confirmed money.
+
+    The description of the payment, and nothing that moves a balance. Changing
+    the student or the amount, or taking it back to pending, reverses money just
+    as voiding does, so it needs the same authority. The fields are removed
+    rather than disabled, so a hand-made POST has nothing to write to.
+    """
+
+    LOCKED = ("student", "amount", "date_paid", "receipt", "confirm_now", "receipt_checked")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.student_options = []
+        for name in self.LOCKED:
+            del self.fields[name]
+
+    def save(self, commit=True, *, user=None):
+        # Past PaymentForm.save, whose handling of ``confirm_now`` would read the
+        # absent box as "take it back to pending".
+        payment = super(PaymentForm, self).save(commit=False)
+        if commit:
+            payment.save(
+                update_fields=["label", "method", "reference", "note", "updated_at"]
+            )
         return payment
 
 
