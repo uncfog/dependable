@@ -14,8 +14,16 @@ from .base import (
     is_placeholder_secret_key,
 )
 from .database import get_database_config
+from .monitoring import start as start_error_reporting
 
 DEBUG = False
+
+# Off until SENTRY_DSN is set. See config/settings/monitoring.py for what is kept
+# out of the reports.
+start_error_reporting(
+    os.environ.get("SENTRY_DSN", ""),
+    os.environ.get("SENTRY_ENVIRONMENT", "production"),
+)
 
 # --- Signing key ---------------------------------------------------------
 # A crash, not a warning. Sessions, password-reset links and CSRF tokens are all

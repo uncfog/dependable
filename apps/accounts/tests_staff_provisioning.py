@@ -20,7 +20,7 @@ import re
 
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from apps.core.permissions import Capability, capabilities_for
@@ -49,6 +49,7 @@ def form_data(**overrides) -> dict:
     return data
 
 
+@override_settings(PUBLIC_BASE_URL="https://example.test")
 class StaffProvisioningTestCase(TestCase):
     @classmethod
     def setUpTestData(cls):

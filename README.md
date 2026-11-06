@@ -288,9 +288,6 @@ DB_ENGINE=sqlite python manage.py test apps
 $env:DB_ENGINE = "sqlite"; python manage.py test apps
 ```
 
-Six staff-invitation tests also need `PUBLIC_BASE_URL` set, to any address, and
-fail without it: add `PUBLIC_BASE_URL=https://example.test` to the command.
-
 **Always set `DB_ENGINE=sqlite`.** Without it the test runner uses whatever
 `DATABASE_URL` your `.env` holds, and creates and drops a test database on that
 server. Run the suite **serially**: `--parallel` has exhausted memory on the
@@ -303,7 +300,18 @@ DB_ENGINE=sqlite python manage.py test apps.payments apps.core
 DB_ENGINE=sqlite python manage.py test apps.core.tests_auth      # one module
 ```
 
-There is no CI; run the full suite before every deploy.
+CI runs on every pull request (`.github/workflows/ci.yml`): this suite on Postgres
+with a coverage floor, the browser tests, dependency and secret scans, and the
+colour-contrast check.
+
+The browser tests in `e2e/` sign in as each role at desk and phone size. They need
+`requirements-dev.txt` and a browser, and are separate from the suite above:
+
+```bash
+pip install -r requirements-dev.txt
+playwright install chromium
+python manage.py test e2e
+```
 
 The suite has roughly 1,600 test methods (`grep -r "def test_" apps | wc -l`).
 The first of them cover the parts that must never regress:

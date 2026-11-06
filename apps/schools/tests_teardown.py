@@ -222,9 +222,10 @@ class SummariseTests(SchoolTeardownTestCase):
         )
         self.assertEqual(dict(teardown.summarise(self.alpha)).get("Student"), 1)
 
-    def test_an_empty_school_summarises_to_nothing(self):
+    def test_an_empty_school_summarises_to_only_the_record_of_its_creation(self):
+        """Closing a school takes its audit log too, so the page has to say so."""
         bare = School.all_objects.create(name="Bare", slug="bare")
-        self.assertEqual(teardown.summarise(bare), [])
+        self.assertEqual(teardown.summarise(bare), [("Audit event", 1)])
 
     def test_the_biggest_count_comes_first(self):
         for index in range(4):

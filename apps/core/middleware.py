@@ -134,6 +134,10 @@ class SchoolStatusMiddleware:
                 "read_only": school.status == SchoolStatus.PAST_DUE,
                 "support_email": SUPPORT_EMAIL,
                 "page_title": f"{school.name} is not available",
+                # A guided tour of screens they cannot open would only confuse.
+                "tour_config": {
+                    "role": user.role or "", "userId": user.pk, "autoStart": False,
+                },
             },
             status=403,
         )
