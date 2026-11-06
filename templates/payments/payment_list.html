@@ -33,7 +33,7 @@
 {% block content %}
 
   {# ===== Totals for the current filter ================================== #}
-  <div class="mb-5 grid gap-4 sm:grid-cols-3">
+  <div class="stat-row mb-5">
     <div class="card p-5">
       <div class="text-sm font-medium text-ink-600">Confirmed</div>
       <div class="numeric mt-2 text-3xl font-semibold text-paid-strong">
@@ -68,7 +68,7 @@
   </div>
 
   {# ===== Filters ======================================================== #}
-  <form method="get" class="card mb-5 p-4 sm:p-5">
+  <form method="get" class="card mb-5 p-4 sm:p-5" data-filter-sheet="Search and filter">
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(5,minmax(0,1fr))_auto]
                 lg:items-end">
       {% for field in filter_form %}

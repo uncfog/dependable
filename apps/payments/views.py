@@ -19,7 +19,7 @@ from django.apps import apps as django_apps
 from django.contrib import messages as flash
 from django.db import transaction
 from django.db.models import Count, Q, Sum
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.views.generic import (
     CreateView,
@@ -40,11 +40,13 @@ from apps.students.models import Student
 
 from . import balances, duplicates
 from .forms import (
+    SEARCH_MIN_LENGTH,
     ConfirmedPaymentNotesForm,
     PaymentFilterForm,
     PaymentForm,
     PendingConfirmForm,
     VoidForm,
+    picker_options,
     student_from_picker,
 )
 from .models import Payment, PaymentStatus
@@ -259,6 +261,19 @@ class StudentPositionView(RecordPaymentsMixin, TemplateView):
         student = student_from_picker(self.request.GET.get("student"))
         context["position"] = fees.position_for(student) if student else None
         return context
+
+
+class StudentSearchView(RecordPaymentsMixin, View):
+    """Picker options for what has been typed so far, as JSON.
+
+    Tenant-scoped through ``picker_options``, and it answers with the same text the
+    form accepts, so choosing a result always names exactly that child.
+    """
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        results = picker_options(query) if len(query) >= SEARCH_MIN_LENGTH else []
+        return JsonResponse({"results": results})
 
 
 class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):

@@ -1,0 +1,29 @@
+{% comment %}
+The bar at the bottom of a phone screen: the screens this role opens every day, and
+More for everything else, which opens the same menu the sidebar shows. The entries
+come from navigation.bottom_nav_for, so they pass the sidebar's own gates. Gone from
+the sidebar's breakpoint up.
+{% endcomment %}
+<nav class="bottom-nav lg:hidden" aria-label="Quick links">
+  {% for item in bottom_nav %}
+    <a href="{{ item.href }}" class="bottom-nav-link{% if item.active %} bottom-nav-link-active{% endif %}"
+       {% if item.active %}aria-current="page"{% endif %}>
+      <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.6"
+           stroke="currentColor" aria-hidden="true">
+        {% for d in item.icon_paths %}
+          <path stroke-linecap="round" stroke-linejoin="round" d="{{ d }}" />
+        {% endfor %}
+      </svg>
+      <span class="truncate">{{ item.label }}</span>
+    </a>
+  {% endfor %}
+  <button type="button" id="mobile-nav-open" class="bottom-nav-link"
+          aria-controls="mobile-nav" aria-expanded="false" aria-label="More: open the full menu">
+    <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.6"
+         stroke="currentColor" aria-hidden="true">
+      <path stroke-linecap="round" stroke-linejoin="round"
+            d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+    </svg>
+    <span>More</span>
+  </button>
+</nav>

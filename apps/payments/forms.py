@@ -1,15 +1,13 @@
 """Recording, confirming and voiding money.
 
 The student picker is a text input backed by a native ``<datalist>`` rather
-than a long ``<select>`` or a JavaScript autocomplete. Three reasons, in order
-of how much they matter:
+than a long ``<select>``, because it is how the job is actually done: the bursar
+has a receipt in front of them with an admission number on it, and types it.
 
-* it is how the job is actually done -- the bursar has a receipt in front of
-  them with an admission number on it, and types it;
-* the browser's own search matches on the whole option, so typing a surname
-  finds the child too;
-* it needs no endpoint and no script, so it works on the front-desk machine
-  with whatever is installed on it.
+The list is filled from a search as they type, instead of being sent with the
+form. A school's whole roster on every payment form was a heavy page on a phone
+and a slow one on a poor connection. Without scripting, typing the admission number
+still works, which is the common case anyway.
 
 The typed value is resolved back to a ``Student`` through the tenant-scoped
 manager, so a copied-and-pasted admission number from another school finds
@@ -32,6 +30,7 @@ from decimal import Decimal
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.forms import StyledFormMixin
@@ -191,18 +190,34 @@ class GatedReceiptInput(forms.ClearableFileInput):
         return context
 
 
-def picker_options() -> list[str]:
-    """Every student the caller may record a payment against.
+#: How many matches one search returns. Enough to pick from on a phone.
+SEARCH_LIMIT = 20
+SEARCH_MIN_LENGTH = 2
+
+
+def picker_options(query: str | None = None) -> list[str]:
+    """The students the caller may record a payment against, as picker options.
 
     Active only: money is taken against a child who is here. Tenant-scoped, so
-    the list is the caller's own campus.
+    the list is the caller's own campus. Given a query, the matches for it, capped:
+    every word has to appear in the name or the admission number. The campus is
+    worked out against everyone the caller can see, not just these matches, so an
+    option always names it when the number is shared.
     """
-    students = list(
-        Student.objects.filter(status=StudentStatus.ACTIVE).select_related(
-            "school_class", "branch__school"
-        )
+    students = Student.objects.filter(status=StudentStatus.ACTIVE).select_related(
+        "school_class", "branch__school"
     )
-    uses = Counter(student.admission_number.upper() for student in students)
+    numbers = Student.objects.values_list("admission_number", flat=True)
+    uses = Counter(number.upper() for number in numbers)
+    if query is not None:
+        for word in query.split():
+            students = students.filter(
+                Q(admission_number__icontains=word)
+                | Q(first_name__icontains=word)
+                | Q(last_name__icontains=word)
+                | Q(other_names__icontains=word)
+            )
+        students = students[:SEARCH_LIMIT]
     return [
         picker_label(student, with_campus=uses[student.admission_number.upper()] > 1)
         for student in students
@@ -273,7 +288,6 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
         self.fields["amount"].label = "Amount (₦)"
         self.fields["reference"].label = "Reference"
         self.fields["note"].label = "Note"
-        self.student_options = picker_options()
 
         if "receipt" in self.fields:
             self.fields["receipt"].widget.gated_url = self.instance.receipt_file_url
@@ -405,7 +419,6 @@ class ConfirmedPaymentNotesForm(PaymentForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.student_options = []
         for name in self.LOCKED:
             del self.fields[name]
 
