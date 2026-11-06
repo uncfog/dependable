@@ -288,6 +288,9 @@ DB_ENGINE=sqlite python manage.py test apps
 $env:DB_ENGINE = "sqlite"; python manage.py test apps
 ```
 
+Six staff-invitation tests also need `PUBLIC_BASE_URL` set, to any address, and
+fail without it: add `PUBLIC_BASE_URL=https://example.test` to the command.
+
 **Always set `DB_ENGINE=sqlite`.** Without it the test runner uses whatever
 `DATABASE_URL` your `.env` holds, and creates and drops a test database on that
 server. Run the suite **serially**: `--parallel` has exhausted memory on the

@@ -121,9 +121,11 @@ From `config/settings/base.py`:
 3. **`apps.core.middleware.TenantMiddleware`** — must follow authentication;
    publishes the tenant context for the request (see §5)
 4. messages, clickjacking
-5. **`apps.accounts.middleware.RequirePasswordChangeMiddleware`** — holds an
+5. **`apps.core.middleware.SchoolStatusMiddleware`** — locks out a suspended or
+   cancelled school's staff and makes a past-due school read-only (see §6)
+6. **`apps.accounts.middleware.RequirePasswordChangeMiddleware`** — holds an
    account on a temporary password at Account settings
-6. **`apps.core.middleware.ModuleAccessMiddleware`** — answers 403 for any URL
+7. **`apps.core.middleware.ModuleAccessMiddleware`** — answers 403 for any URL
    under a switched-off module's prefix (see §7)
 
 ### Context processors
@@ -345,6 +347,38 @@ records allowed) or `BranchScopedModel` (must belong to one campus). See README 
   Platform Owner → `/platform/`, School Owner → `/school/`, Principal →
   `/branch/`, Bursar → `/finance/`.
 
+### Rate limits (`apps/core/ratelimit.py`)
+
+| Door | Limit | When exceeded |
+| --- | --- | --- |
+| Sign-in, one account from one address | 10 failures in 15 minutes | 429 with a message, including the Django admin's sign-in, which refuses without the message |
+| Sign-in, one account from anywhere | 50 failures in 15 minutes | Same |
+| Sign-in, one address, any accounts | 100 failures in 15 minutes | Same |
+| Password reset, one mailbox | 3 requests an hour | Nothing sent; the page looks the same, so it reveals nothing |
+| Password reset, one address | 20 requests an hour | Same |
+| Signup, one address | 20 attempts an hour | 429 with a message |
+| Public enquiry, one address per school | 20 attempts an hour | 429 with a message |
+
+Counts live in Django's cache. No `CACHES` is configured, so that is each worker's
+own memory: with three workers the real ceiling can be up to three times these
+figures, and a restart resets them. A shared cache would make them exact with no
+code change. The client address comes from `X-Real-IP`, then `X-Forwarded-For`,
+then the socket. **After a deploy, confirm `X-Real-IP` holds real client addresses
+on Railway**: if a proxy address appears instead, everyone shares one address count.
+`RATE_LIMITS_ENABLED=false` switches every limit off.
+
+### School status (`apps/core/middleware.py`)
+
+| `School.status` | Staff can |
+| --- | --- |
+| `active`, `trialing` | Everything their role allows |
+| `past_due` | Read and export. Only their own Account settings and signing out can change anything |
+| `suspended`, `cancelled` | See a notice and sign out. Public pages still open |
+
+Platform accounts and superusers are exempt. Nothing is deleted. A school that is
+not `active` or `trialing` also has its public enquiry page hidden and sends no
+enquiry reminders.
+
 ### Roles (`apps/core/roles.py`)
 
 | Role (`User.role`) | Scope | Typical person |
@@ -532,6 +566,7 @@ environment; on Railway, service variables take its place. Nothing else is read.
 | `LOG_LEVEL` | all | `INFO` | Root logger level (console handler only). |
 | `PUBLIC_BASE_URL` | all | empty | Absolute site URL, e.g. `https://www.theschoolcord.com`, no trailing slash. Needed for links inside emails (welcome email, admissions reminders, invites). Unset → those links are omitted and the welcome email is skipped; check `schoolcord.W001` warns. |
 | `PLATFORM_OWNER_EMAIL` | all | empty | The one account (by email, case-insensitive) that can never be deactivated. Environment-only: unset means **no account is protected**, and check `schoolcord.W005` warns on every deploy. Set it in Railway. |
+| `RATE_LIMITS_ENABLED` | all | on, except under `manage.py test` | The limits on sign-in, password reset, signup and enquiries (§6). Set `false` only as an emergency off switch. |
 
 ### Database
 
@@ -722,6 +757,7 @@ the server). `--help` on each lists its options.
 | `send_enquiry_reminders [--dry-run]` | admissions | yes — nightly | Emails a parent once, `reminder_after_days` (default 7) after an enquiry that has not become an application. |
 | `expire_enquiries [--dry-run]` | admissions | yes — nightly | Marks enquiries past their validity window expired. |
 | `settle_enrolment_payment [--commit]` | admissions | yes, carefully | One-off repair: moves the term share of an old all-in admission payment onto the term ledger. **Dry run unless `--commit`.** |
+| `report_wrong_child_risk [--school <slug>]` | payments | yes, read-only | CSV of past payments a since-fixed picker bug may have credited to the wrong child. Says what to check, not what is wrong. Treat the output as confidential. |
 | `bootstrap_tenant --password …` | core | **NO** | Demo school + one user per role, including a superuser. Local only. |
 | `seed_academics`, `seed_fees`, `seed_students`, `seed_payments`, `seed_admission_fees` | various | **NO** | Demo data. Local only. |
 | `seed_messaging_identity` | messaging | only deliberately | Registers **and approves** a school's Sender ID without the UI review. |
@@ -752,7 +788,7 @@ with the admissions module on.
 
 | Task | How |
 | --- | --- |
-| Check deployment health | `python manage.py check --deploy --settings=config.settings.prod` — look for `schoolcord.W001`–`W005` and Django's `security.*` warnings. |
+| Check deployment health | `python manage.py check --deploy --settings=config.settings.prod` — look for `schoolcord.W001`–`W006` and Django's `security.*` warnings. |
 | Mail not arriving | `mailcheck` (above); then confirm `PUBLIC_BASE_URL`, `RESEND_API_KEY`, and the domain in Resend. |
 | Logos/receipts 404 or vanish after deploy | `MEDIA_BUCKET_NAME` unset in Railway → uploads went to the container's disk. Set the `MEDIA_*` variables; affected files must be re-uploaded. If the variables are set, check the S3 key pair can read the bucket (`python manage.py shell` → `default_storage.exists("<key>")`). |
 | Add a platform owner | `create_platform_owner` (above). |
@@ -760,6 +796,7 @@ with the admissions module on.
 | Lock out an account | `/staff/` (Users, at platform scope) → deactivate. Nothing is deleted; reactivating restores access. |
 | Switch a feature on for a school | `/platform/schools/<id>/` → module switches. |
 | Approve a school's Sender ID | Sidebar → Sender IDs (`/messaging/identity/`). |
+| Pause a school | Set its **status** in the admin: Past due makes it read-only, Suspended or Cancelled locks its staff out (§6). Everything is kept and changing it back restores access. |
 | Close a school | Prefer setting its **status** to Suspended/Cancelled (keeps everything). Permanent deletion: Django admin → Schools → delete (one confirmation, one transaction). Take a backup first. |
 | Upgrade dependencies | Bump pins in `requirements.txt`, run the full test suite with `DB_ENGINE=sqlite`, deploy. |
 | Backups | [BACKUP_AND_RESTORE.md](BACKUP_AND_RESTORE.md). |
