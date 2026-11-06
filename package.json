@@ -11,6 +11,6 @@
   "devDependencies": {
     "@tailwindcss/cli": "^4.1.0",
     "driver.js": "^1.8.0",
-    "tailwindcss": "^4.1.0"
+    "tailwindcss": "^4.3.4"
   }
 }
