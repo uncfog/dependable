@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    {{ offer.name }} plan &middot; reference {{ order.reference }}
+  </p>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto grid max-w-3xl gap-5">
+  <section class="card p-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div>
+        <div class="text-xs uppercase tracking-wide text-ink-500">Amount</div>
+        <div class="text-2xl font-semibold text-ink-900">
+          {{ offer.price_display }}
+          <span class="text-sm font-normal text-ink-500">per term</span>
+        </div>
+      </div>
+      {% if order.status == "paid" %}
+        <span class="status-pill status-paid">{{ order.get_status_display }}</span>
+      {% elif order.status == "cancelled" %}
+        <span class="status-pill status-unpaid">{{ order.get_status_display }}</span>
+      {% else %}
+        <span class="status-pill status-partial">{{ order.get_status_display }}</span>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if order.status == "awaiting_transfer" or order.status == "transfer_reported" %}
+    <section class="card p-5">
+      <h2 class="text-sm font-semibold text-ink-900">Pay this amount to</h2>
+      {% if bank_ready %}
+        <dl class="mt-3 grid gap-4 text-sm sm:grid-cols-2">
+          <div>
+            <dt class="text-xs text-ink-500">Bank</dt>
+            <dd class="font-medium text-ink-900">{{ bank.bank }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-ink-500">Account name</dt>
+            <dd class="font-medium text-ink-900">{{ bank.account_name }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-ink-500">Account number</dt>
+            <dd class="font-mono font-medium text-ink-900">{{ bank.account_number }}</dd>
+          </div>
+          <div>
+            <dt class="text-xs text-ink-500">Narration: put this reference on the transfer</dt>
+            <dd class="font-mono font-medium text-ink-900">{{ order.reference }}</dd>
+          </div>
+        </dl>
+      {% else %}
+        <p class="mt-3 text-sm text-ink-700">
+          Bank details aren't set up yet. Contact support before you pay.
+        </p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {% if order.status == "awaiting_transfer" %}
+    <section class="card p-5">
+      <p class="text-sm text-ink-700">
+        After you send the transfer, tap below so we know to look for it.
+      </p>
+      <form method="post" action="{% url 'billing:order_reported' order.reference %}" class="mt-3">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-primary text-sm">I have sent the transfer</button>
+      </form>
+    </section>
+  {% elif order.status == "transfer_reported" %}
+    <section class="card p-5">
+      <p class="text-sm text-ink-700">
+        Thanks. We have your note about the transfer and will switch your plan on once the
+        payment arrives.
+      </p>
+    </section>
+  {% elif order.status == "paid" %}
+    <section class="card p-5">
+      <p class="text-sm text-ink-700">
+        Paid. Your school is on the {{ offer.name }} plan.
+      </p>
+    </section>
+  {% else %}
+    <section class="card p-5">
+      <p class="text-sm text-ink-700">
+        This order was cancelled. <a class="underline" href="{% url 'billing:checkout' %}">Choose a plan</a> to start again.
+      </p>
+    </section>
+  {% endif %}
+
+  <p class="text-center text-xs text-ink-500">
+    <a class="underline" href="{% url 'billing:checkout' %}">Back to plans</a>
+  </p>
+</div>
+{% endblock %}

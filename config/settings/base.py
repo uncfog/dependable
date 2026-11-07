@@ -259,6 +259,13 @@ DEFAULT_FROM_EMAIL = os.environ.get(
 )
 PASSWORD_RESET_TIMEOUT = 60 * 60 * 24 * 3  # three days
 
+# Where a school pays for its plan by bank transfer (apps/schools/plan_views.py).
+# Left blank, the billing screen takes no orders and says why, rather than
+# showing an account nobody can pay into.
+BILLING_BANK_NAME = os.environ.get("BILLING_BANK_NAME", "")
+BILLING_ACCOUNT_NAME = os.environ.get("BILLING_ACCOUNT_NAME", "")
+BILLING_ACCOUNT_NUMBER = os.environ.get("BILLING_ACCOUNT_NUMBER", "")
+
 # --- Public links -------------------------------------------------------
 # Where this deployment answers from, e.g. https://app.schoolcord.com. Needed
 # only by mail: an email has no request to resolve a relative path against, so
