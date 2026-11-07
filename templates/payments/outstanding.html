@@ -101,7 +101,7 @@
                 <td class="card-half card-bare order-2 whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ row.student.school_class.display_name }}
                 </td>
-                <td class="card-bare order-4 whitespace-nowrap px-5 py-3">
+                <td class="card-bare order-4 px-5 py-3">
                   <span class="text-ink-700">{{ row.student.parent_name }}</span>
                   <a href="{{ row.student.parent_phone_link }}"
                      class="numeric block text-xs text-brand-800 hover:underline">
@@ -117,8 +117,9 @@
                 <td class="{% if not row.position.arrears_outstanding %}card-secondary {% endif %}order-5 numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
                   {{ row.position.arrears_outstanding|naira }}
                 </td>
+                {# Red only where the balance is past the due date; an ordinary balance is ink. #}
                 <td class="card-half order-6 numeric whitespace-nowrap px-5 py-3 text-right
-                           font-semibold text-overdue-strong">
+                           font-semibold {% if row.position.pill_class == 'status-overdue' %}text-overdue-strong{% else %}text-ink-900{% endif %}">
                   {{ row.owed|naira }}
                 </td>
                 <td class="card-half card-end card-bare order-3 whitespace-nowrap px-5 py-3">
@@ -129,7 +130,7 @@
                 {% if can_record %}
                   <td class="card-half card-end card-bare order-7 px-5 py-3 text-right">
                     <a href="{% url 'payments:record' %}?student={{ row.student.pk }}"
-                       class="btn btn-ghost text-xs">Record payment</a>
+                       class="btn btn-ghost whitespace-nowrap text-xs">Record payment</a>
                   </td>
                 {% endif %}
               </tr>

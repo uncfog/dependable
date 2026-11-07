@@ -224,20 +224,28 @@
      classroom stops being visible at all. */
   --hero-photo-dim: 0.38;
 
-  --color-panel: #0f2547;
+  /* The app's blue: the sidebar, the page header band and the primary action.
+     Approved as the SCHOOLCORD app style (blue band, lime accent). The brand
+     ramp above still drives the sign-in page and the landing page. */
+  --color-panel: #4a5fc0;
   --color-panel-fg: #ffffff;
-  --color-panel-copy: #dbe6f7;
-  --color-panel-muted: #b8cdec;
-  --color-panel-subtle: #8badde;
+  --color-panel-copy: #eef1fc;
+  --color-panel-muted: #e4eafc;
+  --color-panel-subtle: #c9d3f5;
   --color-scrim: rgb(9 23 50 / 0.6);
 
   /* The action colour. Separate from the brand ramp because the ramp inverts
      for dark mode and a primary button must not: it has to keep enough
      contrast against its own label at every step. */
-  --color-accent: #1d3f79;
-  --color-accent-hover: #1a3563;
-  --color-accent-active: #0f2547;
+  --color-accent: #4a5fc0;
+  --color-accent-hover: #3b4da6;
+  --color-accent-active: #334392;
   --color-on-accent: #ffffff;
+
+  /* Lime: the single highlight on a screen. The active sidebar item, and the
+     one action in a header band. Dark ink on it only, never lime text on white. */
+  --color-lime: #d2f04e;
+  --color-on-lime: #1c2432;
 
   /* --- Glass -----------------------------------------------------------
      A frosted surface is three values, not one: what tints the pane, what
@@ -364,18 +372,23 @@
   /* Lifted, against a darker gradient -- see the light-mode note. */
   --hero-photo-dim: 0.56;
 
-  --color-panel: #0b1524;
+  /* The blue band stays blue in dark mode, one step deeper so the page and
+     the cards read against it. */
+  --color-panel: #1f2a5c;
   --color-panel-fg: #ffffff;
-  --color-panel-copy: #cfdcf0;
-  --color-panel-muted: #a8bdda;
-  --color-panel-subtle: #8aa3c6;
+  --color-panel-copy: #e4eafc;
+  --color-panel-muted: #cdd6f7;
+  --color-panel-subtle: #9fb0e6;
   --color-scrim: rgb(3 8 16 / 0.72);
 
-  /* A mid blue, not a pale one: the label on top stays white in both themes. */
-  --color-accent: #3566b3;
-  --color-accent-hover: #3f74c4;
-  --color-accent-active: #2b5599;
+  /* The same blue as light mode: the label on top stays white in both themes. */
+  --color-accent: #4a5fc0;
+  --color-accent-hover: #5a6fcd;
+  --color-accent-active: #3b4da6;
   --color-on-accent: #ffffff;
+
+  --color-lime: #d2f04e;
+  --color-on-lime: #1c2432;
 
   /* Glass on a dark ground is a lightening pane, not a whitening one: a
      66%-white fill that reads as frost over a pale page reads as fog over a
@@ -832,6 +845,40 @@
     @apply text-ink-700 hover:bg-ink-100;
   }
 
+  /* The page header is a band in the app blue. Its one primary action is lime
+     with dark ink; the other actions turn white, so a screen has one highlight. */
+  .app-header {
+    background-color: var(--color-panel);
+    color: var(--color-panel-fg);
+    border-color: transparent;
+  }
+
+  .app-header h1 {
+    color: var(--color-panel-fg);
+  }
+
+  .app-header .btn-primary {
+    background-color: var(--color-lime);
+    color: var(--color-on-lime);
+  }
+
+  .app-header .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-lime);
+    box-shadow: 0 0 0 3px rgb(255 255 255 / 0.35);
+  }
+
+  .app-header .btn-secondary,
+  .app-header .btn-ghost {
+    background-color: transparent;
+    color: var(--color-panel-fg);
+    border-color: rgb(255 255 255 / 0.6);
+  }
+
+  .app-header .btn-secondary:hover:not(:disabled),
+  .app-header .btn-ghost:hover:not(:disabled) {
+    background-color: rgb(255 255 255 / 0.12);
+  }
+
   .btn-danger {
     @apply bg-overdue text-white hover:bg-overdue-strong;
   }
@@ -990,6 +1037,27 @@
     @apply mt-1.5 text-xs text-ink-500;
   }
 
+  /* A typed date with a calendar beside it. The text field is what is typed and
+     what is sent; the native picker is hidden and fills the text when a day is
+     chosen. The button sits inside the field's right edge, clear of the text. */
+  .date-field {
+    @apply relative;
+  }
+
+  .date-field .field-input {
+    @apply pr-12;
+  }
+
+  .date-field-button {
+    @apply absolute top-1/2 right-1 -translate-y-1/2 grid size-11 place-items-center
+           rounded-md text-ink-600 hover:bg-ink-100 hover:text-ink-900
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/40;
+  }
+
+  .date-native {
+    @apply sr-only;
+  }
+
   /* Small neutral chip, e.g. the classes listed against a subject. */
   .chip {
     @apply inline-flex items-center rounded-sm bg-ink-100 px-2.5 py-0.5
@@ -1051,6 +1119,18 @@
 
   :root[data-theme="dark"] .bottom-nav-link-active {
     @apply text-brand-200;
+  }
+
+  /* The lime "+" in the middle of the phone bar: Record a payment, for the
+     roles that record payments. It lifts above the bar's top edge. */
+  .bottom-nav-plus {
+    @apply flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-end pb-1
+           text-[11px] font-medium text-ink-600;
+    min-height: var(--bottom-nav-h);
+  }
+
+  .bottom-nav-plus-disc {
+    @apply -mt-6 grid size-14 place-items-center rounded-full bg-lime text-on-lime shadow-panel;
   }
 
   :root {
@@ -1259,8 +1339,10 @@
     transform: translateX(1px);
   }
 
+  /* The current page is the one lime highlight in the sidebar: dark ink on lime
+     in both themes, with the rail on its edge lime too. */
   .nav-link-active {
-    @apply bg-white/15 text-panel-fg;
+    @apply bg-lime text-on-lime font-semibold;
   }
 
   /* The rail. Drawn on the row rather than as a sibling so it cannot drift
@@ -1274,9 +1356,8 @@
     width: 3px;
     transform: translateY(-50%);
     border-radius: 0 3px 3px 0;
-    /* A panel token, not a brand one: this rail is on navy in both themes and
-       the brand ramp inverts underneath it. */
-    background-color: var(--color-panel-muted);
+    /* Lime, like the row it marks: it sits on the blue panel in both themes. */
+    background-color: var(--color-lime);
   }
 
   .nav-link-disabled {
@@ -1556,9 +1637,13 @@
     transition: background-color var(--duration-quick) var(--ease-out);
   }
 
-  .nav-link:hover .nav-icon,
-  .nav-link-active .nav-icon {
+  .nav-link:hover .nav-icon {
     @apply bg-white/20;
+  }
+
+  /* On the lime row the icon tile is a dark wash: the inverse of the white one. */
+  .nav-link-active .nav-icon {
+    background-color: rgb(28 36 50 / 0.14);
   }
 
   /* --- The date picker ---------------------------------------------------
@@ -3298,4 +3383,21 @@
   .lp-lattice.lp-printing #printable-receipt {
     position: absolute; left: 0; top: 0; width: 100%;
   }
+}
+
+/* The page subtitle in the header is a utility-coloured <p>. A utility sits in a
+   later cascade layer than @layer components, so this override has to sit outside
+   the layers to win over text-ink-600 on that element. */
+.app-header .text-ink-500,
+.app-header .text-ink-600,
+.app-header .text-ink-700 {
+  color: var(--color-panel-copy);
+}
+
+/* Same reason: the page title carries text-ink-900, and a link in a subtitle
+   text-brand-800. Both are dark in light mode and unreadable on the blue. Named
+   narrowly, so a light surface opened from the header keeps its dark text. */
+.app-header h1.text-ink-900,
+.app-header p a.text-brand-800 {
+  color: var(--color-panel-fg);
 }

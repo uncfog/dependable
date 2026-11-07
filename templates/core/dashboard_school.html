@@ -1,16 +1,21 @@
 {% extends "base.html" %}
+{% load money %}
 
 {% comment %}
-The proprietor's overview: how big the school is, and where its fees stand.
+The proprietor's overview: how much has come in this term, where every student
+stands, and what is waiting for a person to check.
 
-Three figures, one picture, and the two things that are alerts rather than
-breakdowns -- the setup checklist, and a campus with no current term, which
-cannot be billed at all.
+The blue band is the money: collected against what the current terms ask for, with
+what is waiting for a check and what is still owed beneath it. Four tiles give the
+roster's split across the payment states; each is a link to the outstanding list,
+which answers "who is in this state" in full.
 
-The campus-by-campus table that used to close this page is on the report at
-/reports/, where each campus now carries a collected and an outstanding column
-beside its head count, and the same split per class underneath. Managing the
-campuses themselves is a different job and lives at /branches/.
+Below the band sit the two things that need someone's attention -- the setup
+checklist and a campus with no current term, which cannot be billed at all -- then
+the receipts waiting for a check and the most recent payments.
+
+The campus-by-campus table lives on the report at /reports/, and managing the
+campuses themselves lives at /branches/.
 {% endcomment %}
 
 {% block page_subtitle %}
@@ -20,16 +25,70 @@ campuses themselves is a different job and lives at /branches/.
 {% endblock %}
 
 {% block page_actions %}
-  <a href="{% url 'reports:index' %}" class="btn btn-secondary text-sm">
-    Full report
-  </a>
+  {% if "record_payments" in capabilities %}
+    {% if receipts_waiting %}
+      <a href="{% url 'payments:pending' %}" class="btn btn-secondary text-sm">
+        Check {{ receipts_waiting }} receipt{{ receipts_waiting|pluralize }}
+      </a>
+    {% endif %}
+    <a href="{% url 'payments:record' %}" class="btn btn-primary text-sm"
+       data-tour="record-payment">
+      Record a payment
+    </a>
+  {% endif %}
   {% include "admissions/_walk_in_button.html" %}
 {% endblock %}
 
 {% block content %}
+
+{% if has_current_term %}
+  {% comment %}
+  The band runs edge to edge under the page header. The negative margins cancel
+  the <main> gutters and its top padding, so the band meets the header's bottom
+  edge; the tiles below overlap it.
+  {% endcomment %}
+  <section aria-labelledby="collected-heading"
+           class="-mx-4 -mt-6 bg-panel px-4 pb-16 pt-6 text-panel-fg
+                  sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+    <p id="collected-heading" class="text-sm text-panel-copy">Collected this term</p>
+    <p class="numeric mt-1 text-4xl font-bold tracking-tight">{{ collected_total|naira }}</p>
+    <p class="mt-1 text-sm text-panel-copy">
+      of {{ expected_total|naira }} expected &middot; {{ collected_percent }}%
+    </p>
+    <div class="mt-4 h-2.5 max-w-xl overflow-hidden rounded-full bg-white/25"
+         role="img" aria-label="{{ collected_percent }}% of expected fees collected">
+      <span class="block h-full rounded-full bg-lime" style="width: {{ collected_percent }}%"></span>
+    </div>
+    <p class="mt-3 text-sm text-panel-copy">
+      {{ pending_total|naira }} waiting for a check &middot;
+      {{ outstanding_total|naira }} still owed
+    </p>
+  </section>
+{% endif %}
+
 <div class="space-y-5">
 
-  {% include "core/_record_payment.html" %}
+  {% if has_current_term %}
+    <div class="relative -mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4"
+         role="group" aria-labelledby="fees-heading">
+      <h2 id="fees-heading" class="sr-only">Fees across every campus</h2>
+      {% for bucket in status.buckets %}
+        <a href="{% url 'payments:outstanding' %}"
+           class="card card-interactive flex flex-col gap-2 p-4
+                  {% if bucket.key == 'paid' %}bg-paid-soft
+                  {% elif bucket.key == 'partial' %}bg-partial-soft
+                  {% elif bucket.key == 'unpaid' %}bg-unpaid-soft
+                  {% elif bucket.key == 'overdue' and bucket.count %}bg-overdue-soft
+                  {% endif %}">
+          <span class="flex items-center gap-2 text-sm font-medium text-ink-700">
+            <span class="status-dot status-dot-{{ bucket.key }}" aria-hidden="true"></span>
+            {{ bucket.label }}
+          </span>
+          <span class="numeric text-3xl font-semibold text-ink-900">{{ bucket.count }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  {% endif %}
 
   {% include "core/_setup_banner.html" %}
 
@@ -62,83 +121,6 @@ campuses themselves is a different job and lives at /branches/.
     </a>
   {% endif %}
 
-  {% comment %}
-  Each figure already answers "how many"; the next question is always "which
-  ones". These were dead tiles sitting directly above the list that answers it,
-  so the whole tile is the link -- a 44px+ target with the count as its label,
-  rather than a small "view all" tacked underneath.
-  {% endcomment %}
-  <div class="grid gap-4 sm:grid-cols-3">
-    <a href="{% url 'schools:branch_list' %}" class="card card-interactive group p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-1.5 text-sm font-medium text-ink-600">
-          Campuses
-          {% include "partials/_tile_arrow.html" %}
-        </div>
-        <span class="icon-tile icon-tile-sm accent-amber">
-          <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-               stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" />
-          </svg>
-        </span>
-      </div>
-      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ branch_count }}</div>
-    </a>
-    <a href="{% url 'students:student_list' %}" class="card card-interactive group p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-1.5 text-sm font-medium text-ink-600">
-          Students enrolled
-          {% include "partials/_tile_arrow.html" %}
-        </div>
-        <span class="icon-tile icon-tile-sm accent-violet">
-          <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-               stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-          </svg>
-        </span>
-      </div>
-      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ student_count }}</div>
-    </a>
-    <a href="{% url 'academics:class_list' %}" class="card card-interactive group p-5">
-      <div class="flex items-start justify-between gap-3">
-        <div class="flex items-center gap-1.5 text-sm font-medium text-ink-600">
-          Classes running
-          {% include "partials/_tile_arrow.html" %}
-        </div>
-        <span class="icon-tile icon-tile-sm accent-teal">
-          <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8"
-               stroke="currentColor" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round"
-                  d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-          </svg>
-        </span>
-      </div>
-      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ class_count }}</div>
-    </a>
-  </div>
-
-  {% comment %}
-  The school-wide picture of the four payment states. Each campus is measured
-  against its own current term -- see status_breakdown -- so a proprietor whose
-  campuses are on different calendars still gets one honest total rather than
-  three campuses judged by a fourth one's deadline.
-  {% endcomment %}
-  {% comment %}
-  The whole picture is the link: "who is in which state" is answered in full on
-  the outstanding list.
-  {% endcomment %}
-  <a href="{% url 'payments:outstanding' %}"
-     class="glass-ground card card-glass card-interactive group block p-5 sm:p-6">
-    {% include "partials/_status_breakdown.html" with breakdown=status.buckets breakdown_total=status.total heading="Fees across every campus" linked=True %}
-  </a>
-
-  {% comment %}
-  An alert, not a breakdown, so it stays: a campus with no current term cannot be
-  priced or billed, and nothing on the report above will say so louder than
-  nothing appearing for it.
-  {% endcomment %}
   {% if branches_without_a_term %}
     <div class="card border-partial/30 bg-partial-soft px-5 py-4 text-sm text-partial-strong">
       <p class="font-semibold">
@@ -154,7 +136,56 @@ campuses themselves is a different job and lives at /branches/.
     </div>
   {% endif %}
 
-  {% include "core/_recent_payments.html" %}
+  <div class="grid gap-5 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
+
+    <div class="min-w-0 space-y-5">
+      {% include "core/_recent_payments.html" %}
+    </div>
+
+    <div class="min-w-0 space-y-5">
+      {% if "record_payments" in capabilities %}
+        <section class="card overflow-hidden" aria-labelledby="waiting-heading">
+          <div class="flex items-center justify-between gap-3 border-b border-ink-200 px-5 py-3">
+            <h2 id="waiting-heading" class="text-sm font-semibold text-ink-900">
+              Waiting for you
+            </h2>
+            <a href="{% url 'payments:pending' %}"
+               class="text-sm font-medium text-brand-800 hover:underline">
+              All receipts
+            </a>
+          </div>
+          {% if waiting_receipts %}
+            <ul class="divide-y divide-ink-200">
+              {% for payment in waiting_receipts %}
+                <li class="flex items-center gap-3 px-5 py-3">
+                  <span class="min-w-0 flex-1">
+                    <span class="block truncate text-sm font-medium text-ink-900">
+                      {{ payment.student.full_name }}
+                    </span>
+                    <span class="block text-xs text-ink-500">
+                      {{ payment.amount|naira }} &middot; paid {{ payment.date_paid|date:"j M Y" }}
+                    </span>
+                  </span>
+                  <a href="{{ payment.get_absolute_url }}"
+                     class="btn btn-primary shrink-0 text-sm">
+                    Check
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+            <p class="border-t border-ink-200 px-5 py-3 text-xs text-ink-500">
+              A receipt counts toward a balance only after someone checks it.
+            </p>
+          {% else %}
+            <p class="px-5 py-6 text-sm text-ink-500">
+              No receipts are waiting for a check.
+            </p>
+          {% endif %}
+        </section>
+      {% endif %}
+    </div>
+
+  </div>
 
   {% include "partials/_report_link.html" with blurb="Every campus side by side — expected against collected, what each class is worth, how the money came in, and who still owes — plus a PDF to send on." %}
 
