@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">{{ batch.get_status_display }}</p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'onboarding:index' %}" class="btn btn-ghost text-sm">All files</a>
+{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-5">
+
+  {% if same_file %}
+    <p class="card border-partial/30 bg-partial-soft px-5 py-3 text-sm text-partial-strong">
+      The same file was uploaded before. Anything it already imported won't be added twice, but check this is the file you meant.
+    </p>
+  {% endif %}
+
+  {% if batch.status == 'undone' %}
+    <div class="card border-overdue/30 bg-overdue-soft px-5 py-4 text-sm text-overdue-strong">
+      <p class="font-semibold">Undone{% if batch.undone_at %} on {{ batch.undone_at|date:"j F Y" }}{% endif %}.</p>
+      {% if batch.undo_reason %}<p class="mt-0.5">Reason given: {{ batch.undo_reason }}</p>{% endif %}
+      {% for note in batch.undo_notes %}<p class="mt-1">{{ note }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="card overflow-hidden">
+    <div class="border-b border-ink-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-ink-900">What this file does</h2>
+    </div>
+    <ul class="divide-y divide-ink-200">
+      {% for line in summary %}
+        <li class="px-5 py-3 text-sm">
+          <p class="font-medium text-ink-900">{{ line.sheet }}</p>
+          <p class="mt-0.5 text-ink-700">
+            {% if line.ready %}<span class="numeric">{{ line.ready }}</span> to import. {% endif %}
+            {% if line.done %}<span class="numeric">{{ line.done }}</span> imported. {% endif %}
+            {% if line.matched %}<span class="numeric">{{ line.matched }}</span> already here. {% endif %}
+            {% if line.review %}<span class="numeric font-semibold text-partial-strong">{{ line.review }}</span> need a decision. {% endif %}
+            {% if line.skip %}<span class="numeric">{{ line.skip }}</span> left out. {% endif %}
+            {% if line.problem or line.failed %}<span class="numeric font-semibold text-overdue-strong">{{ line.problem|add:line.failed }}</span> can't be imported.{% endif %}
+          </p>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  {% if money.received %}
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">The money</h2>
+      </div>
+      <dl class="divide-y divide-ink-200 text-sm">
+        <div class="flex items-baseline justify-between gap-3 px-5 py-3">
+          <dt class="text-ink-600">Confirmed money in this file</dt>
+          <dd class="numeric font-semibold text-ink-900">{{ money.received|naira }}</dd>
+        </div>
+        <div class="flex items-baseline justify-between gap-3 px-5 py-3">
+          <dt class="text-ink-600">Going to children's balances</dt>
+          <dd class="numeric text-ink-900">{{ money.allocated|naira }}</dd>
+        </div>
+        <div class="flex items-baseline justify-between gap-3 px-5 py-3">
+          <dt class="text-ink-600">Staying visible as not yet allocated</dt>
+          <dd class="numeric text-ink-900">{{ money.unallocated|naira }}</dd>
+        </div>
+        <div class="flex items-baseline justify-between gap-3 bg-ink-50 px-5 py-3">
+          <dt class="text-ink-600">All confirmed payments, school-wide</dt>
+          <dd class="numeric text-ink-900">{{ money.before|naira }} &rarr; {{ money.after|naira }}</dd>
+        </div>
+      </dl>
+    </section>
+  {% endif %}
+
+  {% if reviews %}
+    <section id="review" class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">{{ open_reviews }} row{{ open_reviews|pluralize }} need{{ open_reviews|pluralize:"s," }} a decision</h2>
+      </div>
+      <ul class="divide-y divide-ink-200">
+        {% for row in reviews %}
+          <li class="px-5 py-4 text-sm">
+            <p class="font-medium text-ink-900">{{ row.label }}</p>
+            <p class="text-xs text-ink-500">Row {{ row.number }}</p>
+            {% for message in row.messages %}<p class="mt-1 text-ink-700">{{ message }}</p>{% endfor %}
+            <div class="mt-3 flex flex-wrap gap-2">
+              {% for value, text in row.answers %}
+                <form method="post" action="{% url 'onboarding:decide' row.pk %}">
+                  {% csrf_token %}
+                  <input type="hidden" name="decision" value="{{ value }}">
+                  <button type="submit" class="btn btn-secondary text-sm">{{ text }}</button>
+                </form>
+              {% endfor %}
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if problems %}
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">Rows that can't be imported</h2>
+        <p class="text-xs text-ink-500">The others aren't held back. Correct these in your file and upload it again; what was imported won't be repeated.</p>
+      </div>
+      <ul class="divide-y divide-ink-200">
+        {% for row in problems %}
+          <li class="px-5 py-3 text-sm">
+            <p class="font-medium text-ink-900">{{ row.label }} <span class="text-xs font-normal text-ink-500">Row {{ row.number }}</span></p>
+            {% for message in row.messages %}<p class="mt-0.5 text-overdue-strong">{{ message }}</p>{% endfor %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if left_out %}
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">Rows left out</h2>
+      </div>
+      <ul class="divide-y divide-ink-200">
+        {% for row in left_out %}
+          <li class="px-5 py-3 text-sm">
+            <p class="font-medium text-ink-900">{{ row.label }}</p>
+            {% for message in row.messages %}<p class="mt-0.5 text-ink-600">{{ message }}</p>{% endfor %}
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if can_commit %}
+    <div class="card flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+      <p class="text-sm text-ink-700">No messages are sent to parents. Each row is checked again as it is written.</p>
+      <div class="flex gap-2">
+        {% if can_discard %}
+          <form method="post" action="{% url 'onboarding:discard' batch.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost text-sm">Discard file</button>
+          </form>
+        {% endif %}
+        <form method="post" action="{% url 'onboarding:commit' batch.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-primary text-sm">{% if batch.status == 'committing' %}Continue importing{% else %}Import these rows{% endif %}</button>
+        </form>
+      </div>
+    </div>
+  {% elif can_discard %}
+    <form method="post" action="{% url 'onboarding:discard' batch.pk %}" class="flex justify-end">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-ghost text-sm">Discard file</button>
+    </form>
+  {% endif %}
+
+  {% if can_undo %}
+    <form method="post" action="{% url 'onboarding:undo' batch.pk %}" class="card space-y-3 px-5 py-4">
+      {% csrf_token %}
+      <h2 class="text-sm font-semibold text-ink-900">Undo this import</h2>
+      <p class="text-sm text-ink-700">Its payments and fee records are voided and kept on record, and its family links end. New children with nothing else on them are removed; any with their own payments stay.</p>
+      <div>
+        <label for="undo-reason" class="field-label">Why?</label>
+        <input id="undo-reason" name="reason" type="text" maxlength="250" required class="field-input">
+      </div>
+      <button type="submit" class="btn btn-danger text-sm">{% if batch.status == 'undoing' %}Continue undoing{% else %}Undo this import{% endif %}</button>
+    </form>
+  {% endif %}
+</div>
+{% endblock %}

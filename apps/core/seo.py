@@ -120,6 +120,7 @@ PRIVATE_PATHS: tuple[str, ...] = (
     "/fees/",
     "/students/",
     "/families/",
+    "/onboarding/",
     "/messaging/",
     "/payments/",
     "/admissions/",

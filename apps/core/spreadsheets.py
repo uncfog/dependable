@@ -112,8 +112,31 @@ def build_template(
     """
     workbook = Workbook()
     page = workbook.active
-    page.title = sheet.name
+    _write_sheet(page, sheet)
 
+    for choice in choices:
+        _add_choice_list(sheet, page, choice)
+    for reference in references:
+        _add_reference(sheet, workbook, page, reference)
+
+    buffer = BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
+def build_workbook(sheets: tuple[Sheet, ...]) -> bytes:
+    """Several import sheets in one file, for an import that spans them."""
+    workbook = Workbook()
+    workbook.remove(workbook.active)
+    for sheet in sheets:
+        _write_sheet(workbook.create_sheet(sheet.name), sheet)
+    buffer = BytesIO()
+    workbook.save(buffer)
+    return buffer.getvalue()
+
+
+def _write_sheet(page, sheet: Sheet) -> None:
+    page.title = sheet.name
     for index, column in enumerate(sheet.columns, start=1):
         letter = get_column_letter(index)
 
@@ -136,15 +159,6 @@ def build_template(
     page.row_dimensions[2].height = 30
     # Headers stay put while the school scrolls to row 300.
     page.freeze_panes = "A2"
-
-    for choice in choices:
-        _add_choice_list(sheet, page, choice)
-    for reference in references:
-        _add_reference(sheet, workbook, page, reference)
-
-    buffer = BytesIO()
-    workbook.save(buffer)
-    return buffer.getvalue()
 
 
 def _column_index(sheet: Sheet, key: str) -> int:
@@ -235,6 +249,41 @@ def read_rows(uploaded, sheet: Sheet) -> ParsedSheet:
     )
 
 
+def read_named_sheets(uploaded, sheets: tuple[Sheet, ...]) -> dict[str, ParsedSheet]:
+    """Every sheet of ``sheets`` the file has, by name. A sheet left empty is included."""
+    try:
+        workbook = load_workbook(uploaded, read_only=True, data_only=True)
+    except Exception as exc:  # openpyxl raises half a dozen different types
+        raise WorkbookError(
+            "That file could not be opened as an Excel workbook. Save it as "
+            ".xlsx (Excel Workbook) and upload it again — .xls, .csv and PDF "
+            "files cannot be read here."
+        ) from exc
+
+    found: dict[str, ParsedSheet] = {}
+    try:
+        names = {name.strip().lower(): name for name in workbook.sheetnames}
+        for sheet in sheets:
+            name = names.get(sheet.name.lower())
+            if name is None:
+                continue
+            page = workbook[name]
+            try:
+                header_row, positions, unknown = _find_headers(page, sheet)
+                rows = _read_data_rows(page, sheet, header_row, positions, allow_empty=True)
+            except WorkbookError as problem:
+                raise WorkbookError(f"{sheet.name}: {problem}") from problem
+            found[sheet.name] = ParsedSheet(
+                rows=rows, sheet_name=name, unknown_columns=unknown,
+                absent_columns=[
+                    c.label for c in sheet.columns if c.key not in positions and not c.required
+                ],
+            )
+    finally:
+        workbook.close()
+    return found
+
+
 def _first_sheet_with_content(workbook, sheet: Sheet):
     """The sheet to read: the one named by the contract, else the first with rows.
 
@@ -301,7 +350,8 @@ def _find_headers(page, sheet: Sheet) -> tuple[int, dict[str, int], list[str]]:
     return best_row, best, sorted(set(unknown))
 
 
-def _read_data_rows(page, sheet: Sheet, header_row: int, columns: dict[str, int]):
+def _read_data_rows(page, sheet: Sheet, header_row: int, columns: dict[str, int],
+                    *, allow_empty: bool = False):
     """Every row below the headers that has something in it."""
     rows: list[SourceRow] = []
     scanned = 0
@@ -332,7 +382,7 @@ def _read_data_rows(page, sheet: Sheet, header_row: int, columns: dict[str, int]
                 f"it into smaller files and import them one at a time."
             )
 
-    if not rows:
+    if not rows and not allow_empty:
         raise WorkbookError(
             f"The columns were recognised but there are no {sheet.noun_plural} "
             f"below them. Fill in the rows and upload the file again."
