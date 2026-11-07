@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block page_actions %}
+  {% if "manage_families" in capabilities %}
+    <a href="{% url 'families:create' %}" class="btn btn-primary text-sm">New family</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <form method="get" class="card mb-5 flex flex-wrap items-end gap-3 p-4 sm:p-5">
+    <div class="min-w-48 flex-1">
+      <label for="family-search" class="field-label">Search</label>
+      <input id="family-search" type="search" name="q" value="{{ query }}" class="field-input"
+             placeholder="Family name, family ID or phone">
+    </div>
+    <button type="submit" class="btn btn-secondary text-sm">Search</button>
+  </form>
+
+  {% if families %}
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="table-head">
+            <tr>
+              <th scope="col" class="px-5 py-3 font-semibold">Family</th>
+              <th scope="col" class="px-5 py-3 font-semibold">Family ID</th>
+              <th scope="col" class="px-5 py-3 font-semibold">Contact</th>
+              <th scope="col" class="px-5 py-3 text-right font-semibold">Children</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-200">
+            {% for family in families %}
+              <tr>
+                <td class="px-5 py-3">
+                  <a href="{{ family.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">
+                    {{ family.name }}
+                  </a>
+                </td>
+                <td class="numeric px-5 py-3 text-ink-700">{{ family.family_code|default:"—" }}</td>
+                <td class="px-5 py-3 text-ink-700">{{ family.contact_name|default:"—" }}</td>
+                <td class="numeric px-5 py-3 text-right text-ink-700">{{ family.child_count }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="mt-5 flex items-center justify-between gap-3" aria-label="Pagination">
+        {% if page_obj.has_previous %}
+          <a href="{% querystring page=page_obj.previous_page_number %}" class="btn btn-secondary text-sm">Previous</a>
+        {% else %}<span></span>{% endif %}
+        <span class="text-sm text-ink-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="{% querystring page=page_obj.next_page_number %}" class="btn btn-secondary text-sm">Next</a>
+        {% else %}<span></span>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="card empty-state">
+      <p class="text-base font-medium text-ink-700">
+        {% if query %}No family matches that{% else %}No families yet{% endif %}
+      </p>
+      <p class="mx-auto mt-1 max-w-md text-sm">
+        A family groups children so one payment can cover them. Each child keeps their
+        own record and balance.
+      </p>
+    </div>
+  {% endif %}
+{% endblock %}

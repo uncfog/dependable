@@ -54,12 +54,28 @@ def _payment_action(before: dict, after: dict) -> str | None:
 TRACKED = {
     "payments.Payment": Tracked(
         "payment", Category.MONEY,
-        ("student_id", "term_id", "branch_id", "amount", "date_paid", "label", "method",
-         "reference", "receipt", "note", "status", "confirmed_by_id", "voided_by_id",
-         "void_reason"),
+        ("transaction_id", "student_id", "term_id", "branch_id", "amount", "date_paid",
+         "label", "method", "reference", "receipt", "note", "status", "confirmed_by_id",
+         "voided_by_id", "void_reason"),
         label=lambda row: row.receipt_number,
         files=("receipt",),
         actions=_payment_action,
+    ),
+    "payments.PaymentTransaction": Tracked(
+        "paymenttransaction", Category.MONEY,
+        ("kind", "family_id", "amount", "date_paid", "method", "reference", "payer_name",
+         "status", "confirmed_by_id", "voided_by_id", "void_reason"),
+        label=lambda row: row.number,
+    ),
+    "families.Family": Tracked(
+        "family", Category.ACCESS,
+        ("name", "family_code", "contact_name", "contact_phone", "contact_email"),
+        label=lambda row: row.name,
+        branch=lambda row: None,
+    ),
+    "families.FamilyMembership": Tracked(
+        "familymembership", Category.ACCESS,
+        ("family_id", "student_id", "linked_by_id", "ended_by_id"),
     ),
     "admissions.AdmissionPayment": Tracked(
         "admissionpayment", Category.MONEY,

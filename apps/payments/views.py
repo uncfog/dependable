@@ -298,6 +298,23 @@ class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):
             .select_related("student", "term")
         )
 
+    def dispatch(self, request, *args, **kwargs):
+        # One child's share of a larger sum. Correcting it alone could hand out more
+        # than came in, so it is voided and allocated again instead.
+        if request.user.is_authenticated and has_capability(
+            request.user, self.capability
+        ):
+            payment = self.get_object()
+            if payment.transaction and payment.transaction.is_shared:
+                flash.error(
+                    request,
+                    "This is a share of a larger payment, so it can't be edited on its "
+                    "own. Void it to return the money to the payment, then allocate it "
+                    "again.",
+                )
+                return HttpResponseRedirect(payment.get_absolute_url())
+        return super().dispatch(request, *args, **kwargs)
+
     def _money_is_locked(self) -> bool:
         return self.object.status == PaymentStatus.CONFIRMED and not has_capability(
             self.request.user, Capability.VOID_PAYMENTS

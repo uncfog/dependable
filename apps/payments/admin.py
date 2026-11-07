@@ -80,4 +80,8 @@ class PaymentAdmin(TenantScopedAdminMixin):
                 f.name for f in self.model._meta.fields
                 if f.name not in readonly and f.editable
             ]
+        elif obj is not None and obj.transaction and obj.transaction.is_shared:
+            # A share of a larger sum. Changing it here could hand out more than came
+            # in, so it goes through apps.payments.allocation like every other change.
+            readonly += ["student", "term", "branch", "amount", "status"]
         return readonly

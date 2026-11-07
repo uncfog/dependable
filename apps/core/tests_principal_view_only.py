@@ -263,6 +263,7 @@ class BursarUnchangedTests(SetupFixtures):
             frozenset({
                 Capability.VIEW_ACADEMICS,
                 Capability.VIEW_FEES,
+                Capability.VIEW_FAMILIES,
                 Capability.VIEW_STUDENTS,
                 Capability.VIEW_MESSAGES,
                 Capability.SEND_MESSAGES,

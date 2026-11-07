@@ -117,6 +117,14 @@
           <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Name</dt>
           <dd class="mt-1 text-sm text-ink-900">{{ student.parent_name }}</dd>
         </div>
+        {% if family_membership and "view_families" in capabilities %}
+          <div>
+            <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Family</dt>
+            <dd class="mt-1 text-sm">
+              <a href="{{ family_membership.family.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">{{ family_membership.family.name }}</a>
+            </dd>
+          </div>
+        {% endif %}
         <div>
           <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Phone</dt>
           <dd class="mt-1 text-sm">

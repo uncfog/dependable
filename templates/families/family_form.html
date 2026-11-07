@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block page_actions %}
+  <a href="{% if form.instance.pk %}{{ form.instance.get_absolute_url }}{% else %}{% url 'families:list' %}{% endif %}"
+     class="btn btn-ghost text-sm">Cancel</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" class="mx-auto max-w-2xl">
+  {% csrf_token %}
+  <section class="card overflow-hidden">
+    {% if form.non_field_errors %}
+      <div class="border-b border-overdue/30 bg-overdue-soft px-5 py-3 text-sm text-overdue-strong">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.name %}
+      {% include "partials/_field.html" with field=form.family_code %}
+      {% include "partials/_field.html" with field=form.contact_name %}
+      {% include "partials/_field.html" with field=form.contact_phone %}
+      {% include "partials/_field.html" with field=form.contact_email %}
+      {% include "partials/_field.html" with field=form.note %}
+    </div>
+    <div class="border-t border-ink-200 px-5 py-4">
+      <button type="submit" class="btn btn-primary text-sm">{{ verb }}</button>
+    </div>
+  </section>
+</form>
+{% endblock %}
