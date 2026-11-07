@@ -16,12 +16,17 @@
   </a>
   {% if can_record %}
     <a href="{% url 'payments:record' %}" class="btn btn-primary text-sm">
-      <span class="hidden sm:inline">Record a</span> payment
+      Record a payment
     </a>
   {% endif %}
 {% endblock %}
 
 {% block content %}
+  {% if shared_pending %}
+    <a href="{% url 'payments:shared_list' %}" class="card mb-5 block border-partial/30 bg-partial-soft px-5 py-4 text-sm text-partial-strong">
+      {{ shared_pending }} family payment{{ shared_pending|pluralize }} waiting to be checked. <span class="font-medium underline">Open</span>
+    </a>
+  {% endif %}
 
   {% comment %}
   The queue is where a person checks each slip -- nothing in the system reads

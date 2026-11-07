@@ -17,6 +17,12 @@
 {% endblock %}
 
 {% block content %}
+{% if "view_families" in capabilities and not form.instance.pk %}
+  <p class="mb-4 text-sm text-ink-600">
+    Paying for several children at once?
+    <a href="{% url 'payments:shared_record' %}" class="font-medium text-brand-800 hover:underline">Record a family payment</a>.
+  </p>
+{% endif %}
 <form method="post" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-3">
   {% csrf_token %}
 
@@ -37,13 +43,10 @@
       <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
         <div class="sm:col-span-2">
           {% include "partials/_field.html" with field=form.student %}
-          {% comment %} Native search: the browser matches on the whole option, so an
+          {% comment %} Filled from a search as they type, by the script below. An
              admission number or a surname both find the child. {% endcomment %}
-          <datalist id="student-options">
-            {% for option in form.student_options %}
-              <option value="{{ option }}"></option>
-            {% endfor %}
-          </datalist>
+          <datalist id="student-options"
+                    data-search-url="{% url 'payments:student_search' %}"></datalist>
         </div>
         {% include "partials/_field.html" with field=form.amount %}
         {% include "partials/_field.html" with field=form.date_paid %}
@@ -183,6 +186,49 @@
 
 {% block extra_body %}
 <script>
+  // The picker's options, from a search as they type. A dropped request leaves the
+  // last list in place, and the admission number can still simply be typed.
+  (function () {
+    var list = document.getElementById('student-options');
+    var picker = document.querySelector('input[name="student"]');
+    if (!list || !picker || !window.fetch) return;
+    var url = list.getAttribute('data-search-url');
+    var inFlight = null;
+    var timer = null;
+
+    function fill(results) {
+      list.textContent = '';
+      results.forEach(function (label) {
+        var option = document.createElement('option');
+        option.value = label;
+        list.appendChild(option);
+      });
+    }
+
+    function search() {
+      var value = picker.value.trim();
+      if (value.length < 2) { fill([]); return; }
+      if (inFlight) inFlight.abort();
+      inFlight = new AbortController();
+      fetch(url + '?q=' + encodeURIComponent(value), {
+        signal: inFlight.signal,
+        headers: { 'X-Requested-With': 'fetch' },
+        credentials: 'same-origin'
+      })
+        .then(function (response) {
+          if (!response.ok) throw new Error(response.status);
+          return response.json();
+        })
+        .then(function (data) { fill(data.results); })
+        .catch(function () {});
+    }
+
+    picker.addEventListener('input', function () {
+      clearTimeout(timer);
+      timer = setTimeout(search, 250);
+    });
+  })();
+
   // "Where they stand": refetch the panel whenever the picker names a student.
   // Without scripting the panel still renders on load and after a submit.
   (function () {

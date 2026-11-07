@@ -1046,14 +1046,14 @@ class PlatformSidebarTests(UITestCase):
                 ]
                 self.assertEqual(len(active), 1, f"{path}: {active}")
 
-    def test_the_rendered_sidebar_highlights_one_row_per_copy(self):
-        """base.html renders the nav twice -- the desktop rail and the mobile
-        drawer -- so the page carries one active row per copy and no more."""
+    def test_the_rendered_sidebar_highlights_one_row(self):
+        """The menu is sent once: the phone drawer copies it from the sidebar when
+        opened, so the page carries exactly one active row."""
         self.client.force_login(self.platform)
         body = self.client.get(reverse("core:platform_overview")).content.decode()
         self.assertEqual(body.count('aria-label="Main"'), 1)
-        self.assertEqual(body.count('aria-label="Mobile"'), 1)
-        self.assertEqual(body.count("nav-link-active"), 2)
+        self.assertEqual(body.count('aria-label="Mobile"'), 0)
+        self.assertEqual(body.count("nav-link nav-link-active"), 1)
 
 
 # ===========================================================================

@@ -10,6 +10,16 @@ urlpatterns = [
     path("terms/new/", views.TermCreateView.as_view(), name="term_create"),
     path("terms/<int:pk>/edit/", views.TermUpdateView.as_view(), name="term_update"),
     path("new/", views.FeeStructureCreateView.as_view(), name="structure_create"),
+    path(
+        "students/<int:student>/adjustments/new/",
+        views.AdjustmentCreateView.as_view(),
+        name="adjustment_create",
+    ),
+    path(
+        "adjustments/<int:pk>/void/",
+        views.AdjustmentVoidView.as_view(),
+        name="adjustment_void",
+    ),
     # Before the <int:pk> patterns, so "import" is never read as a structure id.
     path("import/", views.FeeImportView.as_view(), name="structure_import"),
     path(

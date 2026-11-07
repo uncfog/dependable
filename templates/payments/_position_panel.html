@@ -4,8 +4,14 @@
 and fetched again from payments:student_position each time the student picker
 changes, so the panel the bursar sees is always this one template.
 {% endcomment %}
-{% if position and position.is_priced %}
+{% if position and position.is_priced or position.arrears %}
   <dl class="divide-y divide-ink-200">
+    {% if position.arrears_outstanding %}
+      <div class="flex items-baseline justify-between gap-3 px-5 py-3">
+        <dt class="text-sm text-ink-600">From earlier terms</dt>
+        <dd class="numeric text-sm text-overdue-strong">{{ position.arrears_outstanding|naira }}</dd>
+      </div>
+    {% endif %}
     <div class="flex items-baseline justify-between gap-3 px-5 py-3">
       <dt class="text-sm text-ink-600">Expected this term</dt>
       <dd class="numeric text-sm text-ink-900">{{ position.expected|naira }}</dd>
@@ -17,11 +23,17 @@ changes, so the panel the bursar sees is always this one template.
     <div class="flex items-baseline justify-between gap-3 bg-ink-50 px-5 py-3">
       <dt class="text-sm font-semibold text-ink-900">Outstanding</dt>
       <dd class="numeric text-lg font-semibold
-                 {% if position.outstanding %}text-overdue-strong
+                 {% if position.total_owed %}text-overdue-strong
                  {% else %}text-paid-strong{% endif %}">
-        {{ position.outstanding|naira }}
+        {{ position.total_owed|naira }}
       </dd>
     </div>
+    {% if position.credit %}
+      <div class="flex items-baseline justify-between gap-3 px-5 py-3">
+        <dt class="text-sm text-ink-600">Credit</dt>
+        <dd class="numeric text-sm text-paid-strong">{{ position.credit|naira }}</dd>
+      </div>
+    {% endif %}
   </dl>
   <div class="border-t border-ink-200 px-5 py-3">
     <span class="status-pill {{ position.pill_class }}">

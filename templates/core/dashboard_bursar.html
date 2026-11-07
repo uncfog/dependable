@@ -28,13 +28,13 @@ bar, so the page is readable without reading a picture.
 
 {% block page_actions %}
   <a href="{% url 'reports:index' %}" class="btn btn-secondary text-sm">
-    <span class="hidden sm:inline">Full</span> report
+    Full report
   </a>
   {# The bursar's core outbound job, one click from the figures that prompt it. #}
   {% if "send_messages" in capabilities %}
     <a href="{% url 'messaging:fee_reminder' %}"
        class="btn {% if 'enrol_walk_ins' in capabilities %}btn-secondary{% else %}btn-primary{% endif %} text-sm">
-      <span class="hidden sm:inline">Fee</span> reminder
+      Fee reminder
     </a>
   {% endif %}
   {% include "admissions/_walk_in_button.html" %}

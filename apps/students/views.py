@@ -40,6 +40,8 @@ from apps.core.import_flow import (
     ImportUploadView,
 )
 from apps.core.permissions import Capability, CapabilityRequiredMixin
+from apps.families.models import FamilyMembership
+from apps.fees.models import REDUCING_KINDS
 from apps.schools.models import Branch
 
 from . import fees, importer, workbook
@@ -145,8 +147,11 @@ class StudentDetailView(ReadStudentsMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         student = self.object
-        position = fees.position_for(student)
+        schedule = fees.load([student])
+        position = schedule.position_for(student)
         context["position"] = position
+        context["statement"] = schedule.statement_for(student)
+        context["reducing_kinds"] = REDUCING_KINDS
         # The line items behind the expected figure: a parent asking "what am I
         # paying for?" is answered on this page, not by hopping to /fees/.
         context["fee_components"] = (
@@ -160,6 +165,11 @@ class StudentDetailView(ReadStudentsMixin, DetailView):
             .count()
         )
         context.update(payment_history(student, self.request))
+        context["family_membership"] = (
+            FamilyMembership.objects.filter(student=student, ended_at__isnull=True)
+            .select_related("family")
+            .first()
+        )
         context["page_title"] = student.full_name
         return context
 

@@ -296,6 +296,8 @@ NAVIGATION: tuple[NavSection, ...] = (
             # so every role gets the link.
             NavItem("Students", "students:student_list", "students", ALL_ROLES,
                     tour="nav-students"),
+            NavItem("Families", "families:list", "users", _SCHOOL_SIDE,
+                    capability="view_families", module="families"),
         ),
     ),
     NavSection(
@@ -320,6 +322,8 @@ NAVIGATION: tuple[NavSection, ...] = (
             # the link.
             NavItem("Payments", "payments:index", "money", ALL_ROLES,
                     tour="nav-payments"),
+            NavItem("Family payments", "payments:shared_list", "money", ALL_ROLES,
+                    capability="view_payments", module="families"),
             NavItem("Outstanding", "payments:outstanding", "chart", ALL_ROLES),
         ),
     ),
@@ -446,6 +450,38 @@ def nav_for(
             sections.append(ResolvedSection(label=section.label, items=items))
     _keep_only_the_closest_match(sections)
     return sections
+
+
+#: What goes in the bar at the bottom of a phone screen, per role, in order. The
+#: screens that role opens every day; everything else is under More.
+BOTTOM_NAV: dict[str, tuple[str, ...]] = {
+    Role.PLATFORM_OWNER: (
+        HOME, "core:platform_schools", "staff:list", "students:student_list",
+    ),
+    Role.SCHOOL_OWNER: (HOME, "students:student_list", "payments:index", "reports:index"),
+    Role.PRINCIPAL: (HOME, "students:student_list", "payments:index", "reports:index"),
+    Role.BURSAR: (HOME, "payments:index", "payments:outstanding", "students:student_list"),
+}
+
+
+def bottom_nav_for(role: str | None, sections: list[ResolvedSection]) -> list[ResolvedItem]:
+    """The phone bar's entries, taken from what :func:`nav_for` already allowed.
+
+    Looked up in the resolved menu rather than resolved again, so a shortcut passes
+    the same role, capability and module gates and keeps the sidebar's highlighting.
+    An entry this account did not get is simply left out.
+    """
+    by_href = {item.href: item for section in sections for item in section.items}
+    found = []
+    for url_name in BOTTOM_NAV.get(role, ()):
+        name = home_url_name(role) if url_name == HOME else url_name
+        try:
+            item = by_href.get(reverse(name))
+        except NoReverseMatch:
+            item = None
+        if item is not None:
+            found.append(item)
+    return found
 
 
 def _keep_only_the_closest_match(sections: list[ResolvedSection]) -> None:

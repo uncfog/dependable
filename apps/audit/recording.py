@@ -51,15 +51,42 @@ def _payment_action(before: dict, after: dict) -> str | None:
     }.get(new)
 
 
+def _transaction_action(before: dict, after: dict) -> str | None:
+    if before["status"] == after["status"]:
+        return None
+    return {
+        "confirmed": "paymenttransaction.confirmed",
+        "void": "paymenttransaction.voided",
+    }.get(after["status"])
+
+
 TRACKED = {
     "payments.Payment": Tracked(
         "payment", Category.MONEY,
-        ("student_id", "term_id", "branch_id", "amount", "date_paid", "label", "method",
-         "reference", "receipt", "note", "status", "confirmed_by_id", "voided_by_id",
-         "void_reason"),
+        ("transaction_id", "student_id", "term_id", "branch_id", "amount", "date_paid",
+         "label", "method", "reference", "receipt", "note", "status", "confirmed_by_id",
+         "voided_by_id", "void_reason"),
         label=lambda row: row.receipt_number,
         files=("receipt",),
         actions=_payment_action,
+    ),
+    "payments.PaymentTransaction": Tracked(
+        "paymenttransaction", Category.MONEY,
+        ("kind", "family_id", "amount", "date_paid", "method", "reference", "payer_name",
+         "receipt", "status", "confirmed_by_id", "voided_by_id", "void_reason"),
+        label=lambda row: row.number,
+        files=("receipt",),
+        actions=_transaction_action,
+    ),
+    "families.Family": Tracked(
+        "family", Category.ACCESS,
+        ("name", "family_code", "contact_name", "contact_phone", "contact_email"),
+        label=lambda row: row.name,
+        branch=lambda row: None,
+    ),
+    "families.FamilyMembership": Tracked(
+        "familymembership", Category.ACCESS,
+        ("family_id", "student_id", "linked_by_id", "ended_by_id"),
     ),
     "admissions.AdmissionPayment": Tracked(
         "admissionpayment", Category.MONEY,
@@ -69,6 +96,17 @@ TRACKED = {
     "fees.FeeComponent": Tracked(
         "feecomponent", Category.MONEY, ("fee_structure_id", "name", "amount"),
         label=lambda row: row.name,
+    ),
+    "fees.StudentFeeAdjustment": Tracked(
+        "studentfeeadjustment", Category.MONEY,
+        ("student_id", "term_id", "kind", "amount", "description", "voided_by_id",
+         "void_reason"),
+        label=lambda row: row.get_kind_display(),
+        actions=lambda before, after: (
+            "studentfeeadjustment.voided"
+            if after["voided_by_id"] and not before["voided_by_id"]
+            else None
+        ),
     ),
     "accounts.User": Tracked(
         "user", Category.ACCESS,

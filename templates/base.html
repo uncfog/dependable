@@ -2,7 +2,7 @@
 <html lang="en" class="h-full"{% block html_attrs %}{% endblock %}>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   {% comment %}
   The public pages' titles live in apps/core/seo.py with their descriptions, so
   the tab, the search result and the link preview all say the same thing. Every
@@ -22,14 +22,7 @@
   <link rel="alternate icon" href="{% static 'img/schoolcord-logo.png' %}" type="image/png">
   <link rel="apple-touch-icon" href="{% static 'img/schoolcord-logo.png' %}">
 
-  {# Public Sans for UI, IBM Plex Mono for money, IDs and codes. #}
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  {% block fonts %}
-  <link rel="stylesheet"
-        href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
-  {% endblock %}
-
+  {# Fonts are ours, in static/fonts/ and declared in the stylesheet. #}
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
 
   {% comment %}
@@ -142,8 +135,12 @@
           </svg>
         </button>
       </div>
-      {% include "partials/_nav.html" with nav_label="Mobile" %}
-      {% include "partials/_sidebar_footer.html" %}
+      {% comment %}
+      Filled from the sidebar the first time it opens, by the script below. The menu
+      is sent once rather than twice, which is a good part of every page's weight on
+      a phone that may never open it.
+      {% endcomment %}
+      <div id="mobile-nav-content" class="flex min-h-0 flex-1 flex-col"></div>
     </div>
   </div>
 
@@ -155,31 +152,28 @@
     content that scrolls under it, which is the case glass is actually for.
     `[data-perf="lite"]` drops the blur on low-end devices and the tint stays.
     {% endcomment %}
-    <header class="sticky top-0 z-30 flex min-h-touch items-center gap-3 border-b
-                   border-ink-200 bg-surface/85 px-4 py-2.5 backdrop-blur-lg sm:px-6">
-      <button type="button" id="mobile-nav-open"
-              class="grid size-touch shrink-0 place-items-center rounded-md text-ink-700
-                     hover:bg-ink-100 lg:hidden"
-              aria-controls="mobile-nav" aria-expanded="false" aria-label="Open navigation">
-        <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-             stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round"
-                d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-        </svg>
-      </button>
-
-      <div class="min-w-0 flex-1">
+    {% comment %}
+    On a phone the title keeps its own row and the page's actions wrap onto the next,
+    so buttons can never squeeze the title away. It stays in place on a phone rather
+    than sticking, because two rows held on screen would cost too much of it; the bar
+    at the bottom is what stays in reach there.
+    {% endcomment %}
+    <header class="z-30 flex min-h-touch flex-wrap items-center gap-x-3 gap-y-2 border-b
+                   border-ink-200 bg-surface/85 px-4 py-2.5 backdrop-blur-lg sm:px-6
+                   lg:sticky lg:top-0">
+      <div class="min-w-40 flex-1 basis-0">
         <h1 class="truncate text-base font-semibold text-ink-900 sm:text-lg">
           {% block page_title %}{{ page_title|default:"Dashboard" }}{% endblock %}
         </h1>
         {% block page_subtitle %}{% endblock %}
       </div>
 
-      <div class="flex shrink-0 items-center gap-2">
+      <span class="shrink-0 sm:order-last" data-tour="theme-toggle">
+        {% include "partials/_theme_toggle.html" %}
+      </span>
+
+      <div class="page-actions flex w-full flex-wrap items-center gap-2 sm:w-auto">
         {% block page_actions %}{% endblock %}
-        <span data-tour="theme-toggle">
-          {% include "partials/_theme_toggle.html" %}
-        </span>
       </div>
     </header>
 
@@ -195,6 +189,8 @@
   </div>
 </div>
 
+{% include "partials/_bottom_nav.html" %}
+
 <script>
   // Off-canvas navigation for small screens. Deliberately dependency-free:
   // the shell should not need a JS framework to open a drawer.
@@ -205,8 +201,25 @@
     var panel = document.getElementById('mobile-nav-panel');
     var openBtn = document.getElementById('mobile-nav-open');
     var closeBtn = document.getElementById('mobile-nav-close');
+    var content = document.getElementById('mobile-nav-content');
+
+    // The menu and account footer, copied from the sidebar on first use.
+    function fill() {
+      if (content.childElementCount) return;
+      var sidebar = document.getElementById('app-sidebar');
+      ['nav', '.sidebar-footer'].forEach(function (selector) {
+        var part = sidebar.querySelector(selector);
+        if (!part) return;
+        var copy = part.cloneNode(true);
+        copy.querySelectorAll('[data-tour]').forEach(function (el) {
+          el.removeAttribute('data-tour');
+        });
+        content.appendChild(copy);
+      });
+    }
 
     function open() {
+      fill();
       root.classList.remove('hidden');
       // Next frame, so the browser has a chance to paint the start state and
       // actually run the transition.

@@ -144,6 +144,14 @@ nothing else.
         </span>
       </div>
 
+      {% if shared_txn %}
+        <p class="mt-3 px-4 text-sm text-ink-600">
+          This child's share of a family payment of
+          <span class="numeric font-semibold text-ink-800">{{ shared_txn.amount|naira }}</span>,
+          <span class="numeric">{{ shared_txn.number }}</span>.
+        </p>
+      {% endif %}
+
       {% comment %}
       An enrolment payment: one sum, divided between the term's fees (this
       payment, which counts toward the balance below) and the admission fee and
@@ -215,33 +223,7 @@ nothing else.
 </div>
 {% endblock %}
 
-{% block extra_head %}
-<style>
-  @media print {
-    /* Everything but the sheet goes: no sidebar, no header, no buttons. */
-    body * { visibility: hidden; }
-    .receipt-sheet, .receipt-sheet * { visibility: visible; }
-    .receipt-sheet {
-      position: absolute;
-      inset: 0 auto auto 0;
-      width: 100%;
-      max-width: none;
-    }
-    .receipt-sheet .card {
-      border: 1px solid #999;
-      box-shadow: none;
-    }
-    /* Printers drop background colours by default, which would blank the
-       initial-square fallback. Force it, and the logo image with it. */
-    .receipt-sheet img,
-    .receipt-sheet [aria-hidden="true"] {
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    @page { margin: 14mm; }
-  }
-</style>
-{% endblock %}
+{% block extra_head %}{% include "payments/_receipt_print.html" %}{% endblock %}
 
 {% block extra_body %}
 <script>

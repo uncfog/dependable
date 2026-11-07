@@ -27,6 +27,9 @@ from apps.academics.models import Class, Level
 from apps.core.roles import Role
 from apps.fees.models import FeeComponent, FeeStructure, Term, TermSequence
 from apps.payments.models import Payment
+from apps.families.models import Family
+from apps.families.services import link
+from apps.payments.models import PaymentTransaction
 from apps.schools.models import Branch, School, SchoolModule, SchoolStatus
 from apps.students.models import Sex, Student
 
@@ -48,8 +51,16 @@ ROLES = {
     "platform": ("/platform/", ["/platform/schools/", "/staff/"]),
     "owner": ("/school/", ["/students/", "/payments/", "/reports/", "/fees/"]),
     "principal": ("/branch/", ["/students/", "/payments/", "/reports/"]),
-    "bursar": ("/finance/", ["/payments/", "/payments/record/", "/payments/outstanding/"]),
+    "bursar": ("/finance/", ["/payments/", "/payments/record/", "/payments/outstanding/",
+                             "/payments/family/", "/payments/family/record/", "/families/"]),
 }
+
+
+#: Open to every role, and the screens most likely to be wide.
+EVERY_ROLE_ALSO_OPENS = ["/students/", "/payments/", "/payments/record/",
+                         "/payments/outstanding/", "/payments/pending/", "/fees/",
+                         "/academics/classes/", "/academics/subjects/",
+                         "/accounts/settings/"]
 
 
 @unittest.skipIf(sync_playwright is None, "Playwright is not installed.")
@@ -74,7 +85,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         )
         # With the paid modules on: they add buttons to the page headers, and that is
         # the layout real schools have to fit on a phone.
-        for key in ("messaging", "admissions"):
+        for key in ("messaging", "admissions", "families"):
             SchoolModule.all_objects.create(school=school, key=key, enabled=True)
         branch = Branch.all_objects.create(school=school, name="Main Campus")
         klass = Class.all_objects.create(
@@ -123,8 +134,6 @@ class BrowserTestCase(StaticLiveServerTestCase):
     def page_for(self, viewport):
         context = self.browser.new_context(viewport=viewport)
         self.addCleanup(context.close)
-        # No third-party fonts: CI should not depend on them, and text falls back.
-        context.route("**/fonts.g*/**", lambda route: route.abort())
         page = context.new_page()
         page.script_errors = []
         page.on("pageerror", lambda error: page.script_errors.append(str(error)))
@@ -137,13 +146,49 @@ class BrowserTestCase(StaticLiveServerTestCase):
         user = self.users[role]
         # The tour would otherwise open over the first screen.
         page.add_init_script(
-            f"try {{ localStorage.setItem('schoolcord-tour-seen:{user.pk}', '1'); }} catch (e) {{}}"
+            f"try {{ localStorage.setItem('schoolcord-tour-seen:{user.pk}', 'yes'); }} catch (e) {{}}"
         )
         self.go(page, "/accounts/login/")
         page.fill('input[name="username"]', user.username)
         page.fill('input[name="password"]', PASSWORD)
         page.click('button[type="submit"]:has-text("Sign in")')
         page.wait_for_url(f"**{ROLES[role][0]}")
+
+
+class FamilyPaymentTests(BrowserTestCase):
+    def test_a_bursar_shares_a_payment_on_a_phone(self):
+        school = self.users["bursar"].school
+        family = Family.all_objects.create(school=school, name="The Adeyemis")
+        for student in self.students[1:3]:
+            link(family, student)
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+
+        self.go(page, f"/payments/family/record/?family={family.pk}")
+        page.fill('input[name="amount"]', "70000")
+        page.click('button:has-text("Record and share")')
+        page.wait_for_selector("[data-share-form]")
+        txn = PaymentTransaction.all_objects.get(family=family)
+
+        # The helper fills what each child owes, and never more than is left.
+        page.locator("[data-fill]").nth(0).click()
+        page.locator("[data-fill]").nth(1).click()
+        boxes = page.locator('[data-share-form] input[type="number"]')
+        self.assertEqual(boxes.nth(0).input_value(), "50000.00")
+        self.assertEqual(boxes.nth(1).input_value(), "20000.00")
+        self.assertIn("0", page.locator("[data-left-after]").inner_text())
+
+        page.click('button:has-text("Share payment")')
+        page.wait_for_selector("[data-share-form]", state="detached")
+
+        self.assertEqual(txn.unallocated, Decimal("0"))
+        self.assertEqual(
+            page.evaluate(
+                "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+            ),
+            0,
+        )
+        self.assertEqual(page.script_errors, [])
 
 
 class EveryRoleTests(BrowserTestCase):
@@ -207,37 +252,126 @@ class TakingAPaymentTests(BrowserTestCase):
 
 
 class PhoneLayoutTests(BrowserTestCase):
-    """What a phone-sized page must not do.
+    """What a phone-sized page must not do, on every screen each role uses."""
 
-    The expected failures are the known breaks recorded in the assessment, which
-    Phase 2 fixes. When one is fixed this reports an "unexpected success": remove its
-    decorator then, so it can never quietly break again.
-    """
+    def setUp(self):
+        super().setUp()
+        self.page = self.page_for(PHONE)
 
-    def overflow(self, role, path) -> int:
-        page = self.page_for(PHONE)
-        self.sign_in(page, role)
-        self.go(page, path)
-        return page.evaluate(
+    def open(self, role, path):
+        self.sign_in(self.page, role)
+        self.go(self.page, path)
+        return self.page
+
+    def overflow(self) -> int:
+        return self.page.evaluate(
             "document.documentElement.scrollWidth - document.documentElement.clientWidth"
         )
 
-    def test_the_dashboard_fits(self):
-        self.assertLessEqual(self.overflow("owner", "/school/"), 0)
+    def check_every_screen(self, role):
+        self.sign_in(self.page, role)
+        home, screens = ROLES[role]
+        for path in [home, *screens, *EVERY_ROLE_ALSO_OPENS]:
+            with self.subTest(role=role, path=path):
+                self.assertLess(self.go(self.page, path).status, 400)
+                self.assertLessEqual(self.overflow(), 0)
+                # The title used to be squeezed away to nothing by the buttons.
+                self.assertGreater(
+                    self.page.locator("header h1").bounding_box()["width"], 100
+                )
 
-    def test_the_reports_page_fits(self):
-        self.assertLessEqual(self.overflow("owner", "/reports/"), 0)
+    def test_nothing_overflows_for_the_platform(self):
+        self.check_every_screen("platform")
 
-    @unittest.expectedFailure
-    def test_the_students_page_fits(self):
-        self.assertLessEqual(self.overflow("owner", "/students/"), 0)
+    def test_nothing_overflows_for_the_owner(self):
+        self.check_every_screen("owner")
 
-    @unittest.expectedFailure
-    def test_the_payments_page_fits(self):
-        self.assertLessEqual(self.overflow("bursar", "/payments/"), 0)
+    def test_nothing_overflows_for_the_principal(self):
+        self.check_every_screen("principal")
 
-    # Skipped rather than an expected failure, because it depends on the font: 30px
-    # too wide on CI's Linux fonts, while it fits in Edge on Windows. Remove in Phase 2.
-    @unittest.skip("Known overflow on some fonts; Phase 2 fixes it.")
-    def test_the_record_payment_page_fits(self):
-        self.assertLessEqual(self.overflow("owner", "/payments/record/"), 0)
+    def test_nothing_overflows_for_the_bursar(self):
+        self.check_every_screen("bursar")
+
+    def test_a_table_becomes_labelled_cards(self):
+        page = self.open("bursar", "/students/")
+
+        # Kept for screen readers, in a one-pixel box, rather than removed.
+        self.assertLessEqual(page.locator("#main thead").bounding_box()["height"], 1)
+        cell = page.locator('#main td[data-label="Class"]').first
+        self.assertTrue(cell.is_visible())
+        self.assertEqual(
+            page.evaluate(
+                "getComputedStyle(document.querySelector('#main tbody tr')).display"
+            ),
+            "block",
+        )
+
+    def test_filters_start_closed_and_open_on_a_press(self):
+        page = self.open("bursar", "/students/")
+        search = page.locator('input[name="q"]')
+
+        self.assertFalse(search.is_visible())
+        page.get_by_role("button", name="Search and filter").click()
+        self.assertTrue(search.is_visible())
+
+    def test_filters_stay_open_when_a_search_is_applied(self):
+        page = self.open("bursar", "/students/?q=Adeyemi1")
+
+        self.assertTrue(page.locator('input[name="q"]').is_visible())
+
+    def test_the_bottom_bar_is_there_and_more_opens_the_menu(self):
+        page = self.open("bursar", "/finance/")
+
+        self.assertTrue(page.locator(".bottom-nav").is_visible())
+        page.locator("#mobile-nav-open").click()
+        link = page.locator('#mobile-nav-content a[href="/fees/"]')
+        link.wait_for(state="visible")
+        self.assertTrue(link.is_visible())
+
+    def test_the_bottom_bar_does_not_hide_the_end_of_a_page(self):
+        page = self.open("bursar", "/payments/record/")
+        page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
+        button = page.locator('button[type="submit"]:has-text("Record payment")')
+
+        self.assertLessEqual(
+            button.bounding_box()["y"] + button.bounding_box()["height"],
+            page.locator(".bottom-nav").bounding_box()["y"],
+        )
+
+
+class DeskLayoutTests(BrowserTestCase):
+    def test_the_phone_only_parts_are_gone_at_a_desk(self):
+        page = self.page_for(DESKTOP)
+        self.sign_in(page, "bursar")
+        self.go(page, "/students/")
+
+        self.assertFalse(page.locator(".bottom-nav").is_visible())
+        self.assertTrue(page.locator("#main thead th").first.is_visible())
+        self.assertTrue(page.locator('input[name="q"]').is_visible())
+        self.assertFalse(page.get_by_role("button", name="Search and filter").is_visible())
+
+
+class StudentSearchInTheBrowserTests(BrowserTestCase):
+    def test_typing_a_name_offers_that_child(self):
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+        self.go(page, "/payments/record/")
+
+        page.locator('input[name="student"]').press_sequentially("Adeyemi3", delay=20)
+        option = page.locator("#student-options option").first
+        option.wait_for(state="attached")
+
+        self.assertIn(self.students[2].admission_number, option.get_attribute("value"))
+
+
+class FontTests(BrowserTestCase):
+    def test_our_fonts_load_and_nothing_asks_a_third_party(self):
+        page = self.page_for(PHONE)
+        hosts = []
+        page.on("request", lambda request: hosts.append(request.url.split("/")[2]))
+        self.sign_in(page, "bursar")
+        self.go(page, "/payments/")
+        page.wait_for_load_state("networkidle")
+
+        self.assertEqual(set(hosts), {self.live_server_url.split("/")[2]})
+        self.assertTrue(page.evaluate("document.fonts.check('16px \"Public Sans\"')"))

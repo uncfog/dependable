@@ -6,3 +6,8 @@ class FeesConfig(AppConfig):
     name = "apps.fees"
     label = "fees"
     verbose_name = "Fees"
+
+    def ready(self):
+        from .enrolment import connect
+
+        connect()

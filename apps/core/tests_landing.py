@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import re
 
+from pathlib import Path
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
@@ -103,9 +106,11 @@ class DesignCleanupTests(LandingTestCase):
 
     def test_no_cdn_tailwind_and_the_designs_fonts_are_loaded(self):
         self.assertNotIn("cdn.tailwindcss.com", self.html)
-        self.assertIn("family=Plus+Jakarta+Sans", self.html)
-        self.assertIn("Playfair+Display", self.html)
-        self.assertNotIn("family=Public+Sans", self.html)
+        # Served by us now, and declared in the stylesheet rather than the page.
+        self.assertNotIn("fonts.googleapis.com", self.html)
+        source = Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
+        self.assertIn('font-family: "Plus Jakarta Sans"', source)
+        self.assertIn('font-family: "Playfair Display"', source)
 
     def test_the_testimonial_is_readable_size(self):
         quote = re.search(r'<blockquote class="([^"]*)"', self.html).group(1)

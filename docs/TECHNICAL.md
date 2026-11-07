@@ -224,6 +224,20 @@ students 2, messaging 5, payments 1, admissions 3.
   checklist), `datepicker.js`, `tour.js` (guided tour on Driver.js).
   Driver.js is vendored at `static/js/vendor/` and `static/css/vendor/`.
 - **Charts are CSS**, not a chart library (`apps/core/templatetags/charts.py`).
+- **Phones.** Below `lg` the sidebar gives way to a bottom bar
+  (`partials/_bottom_nav.html`; `BOTTOM_NAV` in `apps/core/navigation.py` chooses each
+  role's screens) with More opening the full menu, which is copied from the sidebar
+  on first use so it is only sent once. Below `sm`, every table in `#main` becomes a
+  stack of labelled cards: `ui.js` copies the column headings onto the cells, so a
+  new table is covered automatically. Opt out with `data-no-cards`, as the report
+  grids do because they exist to be compared down a column. Add
+  `data-filter-sheet="Label"` to a filter form to fold it behind a button below `lg`.
+  With scripting off, tables scroll sideways and filters stay open.
+- **Fonts are self-hosted** in `static/fonts/` (SIL Open Font License) and declared at
+  the top of `assets/app.css`. No page requests anything from a font host.
+- **Error pages** `404.html`, `500.html` and `403_csrf.html` extend
+  `_error_page.html`, which is styled inline and uses no database, because it may be
+  showing because one of those is down.
 - **Design-system notes** — tokens, dark mode, toasts, navigation, layout — are
   in README → [Design tokens](../README.md#design-tokens) and following sections.
 - `SCHOOLCORD_Landing_Page.html` in the repo root is the **design reference**
@@ -393,6 +407,72 @@ from. Add a model with one entry in `TRACKED` in `apps/audit/recording.py`.
   this ships: earlier edits were never recorded. Protection is in the application,
   so someone with direct database access is not stopped, and closing a school
   removes its events.
+
+### Each child's ledger (`apps/students/fees.py`)
+
+A child's balance is calculated on request from these, and stored nowhere:
+
+| Source | What it gives |
+| --- | --- |
+| `StudentTermEnrolment` | Which class the child was in for a term, and that the term counts for them |
+| `FeeStructure` for that class and term | The fees |
+| `StudentFeeAdjustment` | Opening balances, charges, discounts, scholarships and waivers for one child |
+| Confirmed `Payment` rows | The money |
+
+`FeePosition` gives `expected` and `outstanding` for this term, `arrears` (from earlier
+terms; negative is credit), `arrears_outstanding`, `credit` and `total_owed`. The rules:
+
+- **Money settles the oldest debt first.** A payment is always credited to the current
+  term, then the position works out what it covers.
+- **Arrears start from the first term change after this ships.** An earlier term only
+  counts with an enrolment or adjustment on record, and the migration creates enrolments
+  for the current term alone. So no figure moves on deploy, and history nobody can vouch
+  for is neither a debt nor a credit. A balance from before that goes in as an opening
+  balance.
+- **Enrolments maintain themselves** (`apps/fees/enrolment.py`): starting a term records
+  every active child there, and a change of class updates the current term only.
+  **Promote after starting the new term.** Moving a child before that changes the class
+  recorded for the term that is ending, and so its fees.
+- **Earlier terms' fees are locked**, on the screens and the import, once the campus has
+  moved on (`Term.is_past`). Correct one child with an adjustment.
+- **Adjustments are never edited.** The owner adds or voids them from the child's page,
+  and every change is in the audit log.
+- **Reports keep their meaning.** Expected, collected, outstanding and collection rate
+  are still this term's, with arrears as their own figure. The Outstanding screen and
+  fee reminders use `total_owed`, so a child whose only debt is from last term is chased.
+
+### Shared payments and families (`apps/payments/allocation.py`, `apps/families/`)
+
+`PaymentTransaction` is the money received. `Payment` is still one child's row and the
+only thing balances read, so a family payment changes nothing about how a balance is
+worked out, and no figure can be counted twice.
+
+- **Individual payments work as before.** `Payment.save()` wraps a new payment in a
+  one-child transaction and keeps the two in step, so every existing writer stays correct.
+  `0003_backfill_transactions` did this for old payments and checks its own totals.
+- **Shared money changes only through `allocation.py`.** Each change locks the
+  transaction row first, so allocations can never exceed the amount received. What is
+  left is worked out each time and shown: on the family page, and as "Not yet allocated"
+  in reports. It is not part of "Collected".
+- **The rules.** Paying a child more than they owe needs `allow_credit=True`. Moving money
+  between siblings is `reallocate()`, a logged void and a new allocation in one step.
+  Campus staff allocate only to children at their campus; a school owner can reach any.
+  A share cannot be edited on its own.
+- **A family groups records and owns nothing.** A person always makes the link; nothing
+  matches on surname or guardian name. Removing a child ends the membership and moves no
+  money. Family totals add up each child's position, and one child's credit is not set
+  against a sibling's debt. Campus staff see their own campus's children and a note that
+  others exist.
+- **Off by default.** The `families` module is enabled per school, and covers
+  `/families/` and `/payments/family/`. Individual payments don't depend on it. Bursars
+  can read families; owners and principals can change them.
+- **The screens (`apps/payments/shared_views.py`).** A bursar records the money, then
+  shares it on the next page. All of a form's shares save or none do. A page opened
+  before the shares changed is refused, which also stops a second press repeating them.
+  What is left waits under Family payments, and the Payments page says when anything
+  is. Voiding or moving a share, or voiding the whole payment, needs `void_payments`.
+  One sheet covers the sum the parent handed over, and each child still has a receipt.
+- **Checking it.** `check_payment_transactions` exits 1 if anything disagrees.
 
 ### Error reporting (`config/settings/monitoring.py`)
 
@@ -795,6 +875,7 @@ the server). `--help` on each lists its options.
 | `settle_enrolment_payment [--commit]` | admissions | yes, carefully | One-off repair: moves the term share of an old all-in admission payment onto the term ledger. **Dry run unless `--commit`.** |
 | `reset_platform_mfa --email …` | accounts | yes, carefully | Clears a platform account's authenticator when the phone and recovery codes are lost. Recorded in the audit log. |
 | `report_wrong_child_risk [--school <slug>]` | payments | yes, read-only | CSV of past payments a since-fixed picker bug may have credited to the wrong child. Says what to check, not what is wrong. Treat the output as confidential. |
+| `check_payment_transactions` | payments | yes, read-only | Checks every payment has a transaction, one-child transactions match their payment, and no shared transaction has handed out more than it received. Exits 1 and names the rows if not. |
 | `bootstrap_tenant --password …` | core | **NO** | Demo school + one user per role, including a superuser. Local only. |
 | `seed_academics`, `seed_fees`, `seed_students`, `seed_payments`, `seed_admission_fees` | various | **NO** | Demo data. Local only. |
 | `seed_messaging_identity` | messaging | only deliberately | Registers **and approves** a school's Sender ID without the UI review. |

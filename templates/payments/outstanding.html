@@ -11,7 +11,7 @@
 
 {% block page_actions %}
   <a href="{% url 'payments:index' %}" class="btn btn-ghost text-sm">
-    <span class="hidden sm:inline">All</span> payments
+    All payments
   </a>
   {% if can_send %}
     {% comment %} The same derivation this page uses, so the reminder reaches exactly the
@@ -37,7 +37,7 @@
 {% block content %}
 
   {% if rows %}
-    <div class="mb-5 grid gap-4 sm:grid-cols-3">
+    <div class="stat-row mb-5">
       <div class="card p-5">
         <div class="text-sm font-medium text-ink-600">Still owed</div>
         <div class="numeric mt-2 text-3xl font-semibold text-overdue-strong">
@@ -78,6 +78,7 @@
               <th scope="col" class="px-5 py-3 font-semibold">Parent</th>
               <th scope="col" class="px-5 py-3 text-right font-semibold">Expected</th>
               <th scope="col" class="px-5 py-3 text-right font-semibold">Paid</th>
+              <th scope="col" class="px-5 py-3 text-right font-semibold">Arrears</th>
               <th scope="col" class="px-5 py-3 text-right font-semibold">Owed</th>
               <th scope="col" class="px-5 py-3 font-semibold">Status</th>
               {% if can_record %}
@@ -113,6 +114,9 @@
                 <td class="numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
                   {{ row.position.paid|naira }}
                 </td>
+                <td class="numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
+                  {{ row.position.arrears_outstanding|naira }}
+                </td>
                 <td class="numeric whitespace-nowrap px-5 py-3 text-right
                            font-semibold text-overdue-strong">
                   {{ row.owed|naira }}
@@ -134,9 +138,10 @@
         </table>
       </div>
       <p class="border-t border-ink-200 px-5 py-3 text-xs text-ink-500">
-        Expected is the class's fee structure for the term; paid is confirmed
-        payments only. A class with no fee structure this term is not listed —
-        there is nothing yet to owe.
+        Expected is the class's fee structure for the term, with any adjustments for
+        that child; paid is confirmed payments only. Arrears are what is still owed
+        from earlier terms, and payments settle those first. A class with no fee
+        structure this term is listed only for its arrears.
       </p>
     </div>
 

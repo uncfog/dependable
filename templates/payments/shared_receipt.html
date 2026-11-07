@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">{{ txn.family.name }} &middot; {{ txn.date_paid|date:"j F Y" }}</p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{{ txn.get_absolute_url }}" class="btn btn-ghost text-sm">Details</a>
+  <button type="button" class="btn btn-primary text-sm" data-print>Print or save as PDF</button>
+{% endblock %}
+
+{% block content %}
+{% if txn.status == 'void' %}
+  <div class="card mb-5 border-overdue/30 bg-overdue-soft px-4 py-3 text-sm text-overdue-strong">
+    <span class="font-semibold">This payment was voided.</span> Do not issue this receipt.
+  </div>
+{% elif txn.status == 'pending' %}
+  <div class="card mb-5 border-partial/30 bg-partial-soft px-4 py-3 text-sm text-partial-strong">
+    <span class="font-semibold">This payment is still pending.</span> Nothing below counts toward a balance until it is confirmed.
+  </div>
+{% endif %}
+
+<div class="receipt-sheet mx-auto max-w-2xl">
+  <article class="card overflow-hidden">
+    <header class="flex flex-wrap items-start justify-between gap-4 border-b border-ink-200 px-6 py-5">
+      <div class="flex items-start gap-3">
+        {% include "partials/_school_logo.html" with school=school size="size-12" %}
+        <div>
+          <h2 class="text-lg font-semibold text-brand-900">{{ school.name }}</h2>
+          <p class="text-sm text-ink-600">{{ txn.branch.name }}</p>
+          {% if txn.branch.address %}
+            <p class="mt-0.5 whitespace-pre-line text-xs text-ink-500">{{ txn.branch.address }}</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="text-right">
+        <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">Family payment receipt</p>
+        <p class="numeric text-lg font-semibold text-ink-900">{{ txn.number }}</p>
+        <p class="text-xs text-ink-500">{{ txn.date_paid|date:"j F Y" }}</p>
+      </div>
+    </header>
+
+    <div class="px-6 py-5">
+      <dl class="grid gap-x-8 gap-y-4 sm:grid-cols-2">
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Received from</dt>
+          <dd class="mt-1 text-sm text-ink-900">{{ received_from }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Family</dt>
+          <dd class="mt-1 text-sm text-ink-900">{{ txn.family.name }}{% if txn.family.family_code %} <span class="numeric text-xs text-ink-500">({{ txn.family.family_code }})</span>{% endif %}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Method</dt>
+          <dd class="mt-1 text-sm text-ink-900">{{ txn.get_method_display }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Reference</dt>
+          <dd class="numeric mt-1 text-sm text-ink-900">{{ txn.reference|default:"—" }}</dd>
+        </div>
+      </dl>
+
+      <div class="mt-6 flex items-baseline justify-between gap-4 rounded-md bg-ink-50 px-4 py-4">
+        <span class="text-sm font-semibold text-ink-900">Amount received</span>
+        <span class="numeric text-3xl font-semibold text-brand-900">{{ txn.amount|naira }}</span>
+      </div>
+
+      <h3 class="mt-6 text-sm font-semibold text-ink-900">How it was shared</h3>
+      <ul class="mt-2 divide-y divide-ink-200 text-sm">
+        {% for share, balance in lines %}
+          <li class="py-3">
+            <div class="flex items-baseline justify-between gap-3">
+              <span class="font-medium text-ink-900">{{ share.student.formal_name }}</span>
+              <span class="numeric font-semibold text-ink-900">{{ share.amount|naira }}</span>
+            </div>
+            <div class="mt-0.5 flex flex-wrap items-baseline justify-between gap-x-3 text-xs text-ink-500">
+              <span><span class="numeric">{{ share.receipt_number }}</span> &middot; {{ share.student.school_class.display_name }}</span>
+              <span>Balance after this: <span class="numeric">{{ balance|naira }}</span></span>
+            </div>
+          </li>
+        {% endfor %}
+        {% if elsewhere %}
+          <li class="flex items-baseline justify-between gap-3 py-3">
+            <span class="text-ink-700">Children at another campus</span>
+            <span class="numeric font-semibold text-ink-900">{{ elsewhere|naira }}</span>
+          </li>
+        {% endif %}
+        {% if txn.unallocated %}
+          <li class="flex items-baseline justify-between gap-3 py-3">
+            <span class="text-ink-700">Not yet allocated</span>
+            <span class="numeric font-semibold text-ink-900">{{ txn.unallocated|naira }}</span>
+          </li>
+        {% endif %}
+      </ul>
+    </div>
+
+    <footer class="border-t border-ink-200 px-6 py-4">
+      <div class="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p class="text-xs text-ink-500">Received by</p>
+          <p class="text-sm text-ink-900">{{ txn.confirmed_by|default:txn.recorded_by|default:"—" }}</p>
+        </div>
+        <div class="text-right">
+          <p class="border-t border-ink-300 pt-1 text-xs text-ink-500">Authorised signature</p>
+        </div>
+      </div>
+      <p class="mt-4 text-center text-xs text-ink-400">Issued by {{ school.name }} &middot; {{ txn.number }} &middot; via {{ product_name }}</p>
+    </footer>
+  </article>
+</div>
+{% endblock %}
+
+{% block extra_head %}{% include "payments/_receipt_print.html" %}{% endblock %}
+
+{% block extra_body %}
+<script>
+  document.querySelectorAll('[data-print]').forEach(function (button) {
+    button.addEventListener('click', function () { window.print(); });
+  });
+</script>
+{% endblock %}

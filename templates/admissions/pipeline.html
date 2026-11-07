@@ -22,7 +22,7 @@
            stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      <span class="hidden sm:inline">New enquiry</span>
+      <span>New enquiry</span>
     </a>
   {% endif %}
   {% include "admissions/_walk_in_button.html" %}
@@ -42,7 +42,7 @@
   {% endif %}
 
   {# ===== Filters ======================================================== #}
-  <form method="get" class="card mb-5 p-4 sm:p-5">
+  <form method="get" class="card mb-5 p-4 sm:p-5" data-filter-sheet="Search and filter">
     <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,2fr)_repeat(4,minmax(0,1fr))_auto]
                 lg:items-end">
       {% for field in filter_form %}

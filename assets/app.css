@@ -8,6 +8,54 @@
 @source "../templates";
 @source "../apps";
 
+/* Our own copies, in static/fonts/, under the SIL Open Font License. No request to
+   a third party, so pages load the same on a poor connection and tell nobody who is
+   reading them. Browsers fetch a file only when the page uses it, and only the
+   range it needs. The Naira sign lives in the latin-ext range of each UI family. */
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("../fonts/public-sans-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Public Sans"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url("../fonts/public-sans-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Public Sans"; font-style: italic; font-weight: 100 900; font-display: swap;
+  src: url("../fonts/public-sans-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("../fonts/ibm-plex-mono-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("../fonts/ibm-plex-mono-latin-500-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("../fonts/ibm-plex-mono-latin-ext-500-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("../fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "IBM Plex Mono"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("../fonts/ibm-plex-mono-latin-ext-600-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+/* The landing page's own two families. */
+@font-face { font-family: "Plus Jakarta Sans"; font-style: normal; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/plus-jakarta-sans-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Plus Jakarta Sans"; font-style: normal; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/plus-jakarta-sans-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Plus Jakarta Sans"; font-style: italic; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/plus-jakarta-sans-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Playfair Display"; font-style: normal; font-weight: 400 900; font-display: swap;
+  src: url("../fonts/playfair-display-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Playfair Display"; font-style: italic; font-weight: 400 900; font-display: swap;
+  src: url("../fonts/playfair-display-latin-wght-italic.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
 /* ==========================================================================
    SCHOOLCORD design tokens
    Declared in @theme so every token is available both as a Tailwind utility
@@ -969,6 +1017,180 @@
 
   .empty-state {
     @apply px-5 py-12 text-center text-ink-500;
+  }
+
+  /* Phones ---------------------------------------------------------------
+     A grid item will not shrink below its content by default, so one long word or
+     a date input could push a whole form past the edge of the screen. */
+  #main .grid > * {
+    min-width: 0;
+  }
+
+  /* The header's action row, on a page that has no actions. */
+  .page-actions:not(:has(*)) {
+    display: none;
+  }
+
+  /* The bar at the bottom of a phone screen. `.app-content` makes room for it, and
+     toasts and sticky form footers sit above it. */
+  .bottom-nav {
+    @apply fixed inset-x-0 bottom-0 z-30 flex border-t border-ink-200 bg-surface;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .bottom-nav-link {
+    @apply flex min-w-0 flex-1 cursor-pointer flex-col items-center justify-center gap-0.5
+           px-1 text-[11px] font-medium text-ink-600;
+    min-height: var(--bottom-nav-h);
+  }
+
+  .bottom-nav-link-active {
+    @apply text-brand-700;
+    box-shadow: inset 0 2px 0 var(--color-brand-600);
+  }
+
+  :root[data-theme="dark"] .bottom-nav-link-active {
+    @apply text-brand-200;
+  }
+
+  :root {
+    --bottom-nav-h: 3.5rem;
+  }
+
+  @media (max-width: 1023.98px) {
+    .app-content {
+      padding-bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+    }
+
+    .toast-region {
+      bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
+    }
+
+    .row-actions {
+      bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom)) !important;
+    }
+  }
+
+  @media print {
+    .bottom-nav {
+      display: none;
+    }
+  }
+
+  /* Summary figures. Compact on a phone, so the list is not a screen and a half away. */
+  .stat-row {
+    @apply grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4;
+  }
+
+  .stat-row > :last-child {
+    @apply col-span-2 sm:col-span-1;
+  }
+
+  @media (max-width: 639.98px) {
+    .stat-row > .card {
+      padding: 0.875rem;
+    }
+
+    /* !important because it has to beat the text-3xl utility, which sits in a later
+       layer. A figure must never break across lines, so it stays on one and shrinks
+       enough to fit half a phone screen. */
+    .stat-row .numeric {
+      font-size: 1.0625rem !important;
+      line-height: 1.5rem !important;
+      white-space: nowrap;
+      letter-spacing: -0.02em;
+    }
+  }
+
+  /* Filters are folded away on a phone, behind the button ui.js adds. Without
+     scripting the class is never set and the form simply stays open. */
+  @media (max-width: 1023.98px) {
+    .filter-sheet-closed {
+      display: none;
+    }
+  }
+
+  .filter-sheet-toggle {
+    @apply mb-3 w-full justify-between lg:hidden;
+  }
+
+  /* Tables become a stack of cards on a phone. ui.js adds the class and copies each
+     column's heading onto its cells, so every table gets this without its template
+     changing. Without scripting it stays an ordinary table that scrolls sideways. */
+  @media (max-width: 639.98px) {
+    .table-cards,
+    .table-cards tbody,
+    .table-cards tfoot,
+    .table-cards tr {
+      display: block;
+      width: 100%;
+    }
+
+    .table-cards thead {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+    }
+
+    .table-cards tr {
+      padding: 0.625rem 0;
+    }
+
+    .table-cards tr + tr {
+      border-top: 1px solid var(--color-ink-200);
+    }
+
+    .table-cards td,
+    .table-cards tbody th,
+    .table-cards tfoot th {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 0.125rem 0.75rem;
+      width: 100%;
+      padding: 0.25rem 1rem !important;
+      text-align: right;
+      white-space: normal !important;
+      overflow-wrap: anywhere;
+    }
+
+    .table-cards td[data-label]::before,
+    .table-cards th[data-label]::before {
+      content: attr(data-label);
+      flex: none;
+      font-family: var(--font-sans);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: normal;
+      color: var(--color-ink-500);
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    /* Thumb-sized. Plain links get room too, without making every row a tall one. */
+    .table-cards .btn {
+      min-height: var(--spacing-touch);
+    }
+
+    .table-cards td a:not(.btn) {
+      display: inline-block;
+      padding-block: 0.375rem;
+    }
+
+    /* A cell with no heading to show, such as a row of buttons or a group title. */
+    .table-cards td:not([data-label]),
+    .table-cards th:not([data-label]) {
+      justify-content: flex-end;
+    }
+
+    .table-cards .table-card-span {
+      justify-content: flex-start;
+      font-weight: 600;
+      text-align: left;
+    }
   }
 
   /* Navigation ----------------------------------------------------------
