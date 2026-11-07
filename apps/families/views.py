@@ -9,7 +9,8 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 
-from apps.core.permissions import Capability, CapabilityRequiredMixin
+from apps.core.permissions import Capability, CapabilityRequiredMixin, has_capability
+from apps.payments import shared
 
 from .balances import summary_for
 from .forms import AddChildForm, FamilyForm
@@ -64,6 +65,10 @@ class FamilyDetailView(ViewFamiliesMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["summary"] = summary_for(self.object)
         context["add_form"] = AddChildForm()
+        if has_capability(self.request.user, Capability.VIEW_PAYMENTS):
+            context["payments"] = shared.transactions().filter(family=self.object).order_by(
+                "-date_paid", "-id"
+            )[:10]
         context["page_title"] = self.object.name
         return context
 

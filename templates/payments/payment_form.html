@@ -17,6 +17,12 @@
 {% endblock %}
 
 {% block content %}
+{% if "view_families" in capabilities and not form.instance.pk %}
+  <p class="mb-4 text-sm text-ink-600">
+    Paying for several children at once?
+    <a href="{% url 'payments:shared_record' %}" class="font-medium text-brand-800 hover:underline">Record a family payment</a>.
+  </p>
+{% endif %}
 <form method="post" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-3">
   {% csrf_token %}
 

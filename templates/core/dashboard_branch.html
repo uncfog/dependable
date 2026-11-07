@@ -24,7 +24,7 @@ and lives at /academics/classes/.
   {% if "manage_students" in capabilities %}
     <a href="{% url 'students:student_create' %}"
        class="btn {% if 'enrol_walk_ins' in capabilities %}btn-secondary{% else %}btn-primary{% endif %} text-sm">
-      <span class="hidden sm:inline">New</span> student
+      New student
     </a>
   {% endif %}
   {% include "admissions/_walk_in_button.html" %}

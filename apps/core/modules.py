@@ -144,7 +144,7 @@ MODULES += (
         description="Group children into households, so one payment can be shared "
                     "between siblings. Each child keeps their own record and balance. "
                     "Off until a school is ready to use it.",
-        paths=("/families/",),
+        paths=("/families/", "/payments/family/"),
         capabilities=("view_families", "manage_families"),
         default_on=False,
     ),

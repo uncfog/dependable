@@ -41,6 +41,11 @@ ACTION_LABELS = {
     "payment.unconfirmed": "Taken back to pending",
     "payment.voided": "Voided",
     "payment.deleted": "Deleted",
+    "paymenttransaction.created": "Recorded",
+    "paymenttransaction.changed": "Corrected",
+    "paymenttransaction.confirmed": "Confirmed",
+    "paymenttransaction.voided": "Voided",
+    "paymenttransaction.deleted": "Deleted",
 }
 
 

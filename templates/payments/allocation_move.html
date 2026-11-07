@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_actions %}
+  <a href="{{ payment.get_absolute_url }}" class="btn btn-ghost text-sm">Cancel</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" class="card mx-auto max-w-xl overflow-hidden">
+  {% csrf_token %}
+  <div class="border-b border-ink-200 px-5 py-4">
+    <p class="numeric text-3xl font-semibold text-brand-900">{{ payment.amount|naira }}</p>
+    <p class="mt-1 text-sm text-ink-600">{{ payment.receipt_number }} &middot; {{ payment.student.formal_name }}</p>
+  </div>
+  {% if form.non_field_errors %}
+    <div class="border-b border-overdue/30 bg-overdue-soft px-5 py-3 text-sm text-overdue-strong" role="alert">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+  <p class="px-5 pt-4 text-sm text-ink-700">
+    This voids {{ payment.student.first_name }}'s receipt and gives the other child a new one. Both stay on the record.
+  </p>
+  <div class="space-y-4 px-5 py-4">
+    {% include "partials/_field.html" with field=form.to_student %}
+    {% include "partials/_field.html" with field=form.reason %}
+    {% if offer_credit %}
+      <label class="check-row px-0">
+        {{ form.allow_credit }}
+        <span class="text-sm font-medium text-ink-900">{{ form.allow_credit.label }}</span>
+      </label>
+    {% endif %}
+  </div>
+  <div class="border-t border-ink-200 px-5 py-4">
+    <button type="submit" class="btn btn-primary text-sm">Move this share</button>
+  </div>
+</form>
+{% endblock %}

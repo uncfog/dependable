@@ -322,6 +322,8 @@ NAVIGATION: tuple[NavSection, ...] = (
             # the link.
             NavItem("Payments", "payments:index", "money", ALL_ROLES,
                     tour="nav-payments"),
+            NavItem("Family payments", "payments:shared_list", "money", ALL_ROLES,
+                    capability="view_payments", module="families"),
             NavItem("Outstanding", "payments:outstanding", "chart", ALL_ROLES),
         ),
     ),

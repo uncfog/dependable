@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    {{ txn.family.name }} &middot; {{ txn.date_paid|date:"j F Y" }}
+  </p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'payments:shared_list' %}" class="btn btn-ghost text-sm">Family payments</a>
+  {% if txn.status != 'void' %}
+    <a href="{% url 'payments:shared_receipt' txn.pk %}" class="btn btn-secondary text-sm">Receipt</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="space-y-5">
+
+  {% if notice %}
+    <div class="card border-partial/30 bg-partial-soft px-5 py-4 text-sm text-partial-strong" role="alert">{{ notice }}</div>
+  {% endif %}
+
+  {% if txn.status == 'void' %}
+    <div class="card border-overdue/30 bg-overdue-soft px-5 py-4 text-sm text-overdue-strong">
+      <p class="font-semibold">
+        Voided{% if txn.voided_at %} on {{ txn.voided_at|date:"j F Y" }}{% endif %}{% if txn.voided_by %} by {{ txn.voided_by }}{% endif %}.
+      </p>
+      {% if txn.void_reason %}<p class="mt-0.5">Reason given: {{ txn.void_reason }}</p>{% endif %}
+    </div>
+  {% elif txn.status == 'pending' %}
+    <div class="card border-partial/30 bg-partial-soft px-5 py-4 text-sm text-partial-strong">
+      <p class="font-semibold">This payment is waiting to be checked.</p>
+      <p class="mt-0.5">You can share it now, but nothing counts toward a balance until it is confirmed.</p>
+      {% if can_record %}
+        <form method="post" action="{% url 'payments:shared_confirm' txn.pk %}" class="mt-3">
+          {% csrf_token %}
+          {% if txn.has_attachment %}
+            <label class="check-row mb-2 px-0">
+              <input type="checkbox" name="receipt_checked">
+              <span class="text-sm font-medium">I have checked the slip against the family and the amount</span>
+            </label>
+          {% endif %}
+          <button type="submit" class="btn btn-primary text-sm">Confirm payment</button>
+        </form>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div class="stat-row">
+    <div class="card p-5">
+      <div class="text-sm font-medium text-ink-600">Received</div>
+      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ txn.amount|naira }}</div>
+      <div class="numeric mt-1 text-xs text-ink-500">{{ txn.number }}</div>
+    </div>
+    <div class="card p-5">
+      <div class="text-sm font-medium text-ink-600">Shared</div>
+      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ txn.allocated|naira }}</div>
+    </div>
+    <div class="card p-5">
+      <div class="text-sm font-medium text-ink-600">Not yet allocated</div>
+      <div class="numeric mt-2 text-3xl font-semibold {% if txn.unallocated %}text-partial-strong{% else %}text-paid-strong{% endif %}">{{ txn.unallocated|naira }}</div>
+    </div>
+  </div>
+
+  {% if summary.has_children_elsewhere or elsewhere %}
+    <p class="card px-5 py-3 text-sm text-ink-700">
+      {% if summary.has_children_elsewhere %}This family also has children at another campus. They aren't shown here. A school owner can share money with them.{% endif %}
+      {% if elsewhere %}<span class="numeric font-semibold">{{ elsewhere|naira }}</span> of this payment has gone to children at another campus.{% endif %}
+    </p>
+  {% endif %}
+
+  {% if share_form and txn.unallocated %}
+    <form method="post" class="card overflow-hidden" data-share-form data-left="{{ txn.unallocated|stringformat:'s' }}" novalidate>
+      {% csrf_token %}
+      {{ share_form.seen }}
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">Share between the children</h2>
+      </div>
+      {% if share_form.non_field_errors %}
+        <div class="border-b border-overdue/30 bg-overdue-soft px-5 py-3 text-sm text-overdue-strong" role="alert">
+          {% for error in share_form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+      {% if share_form.rows %}
+        <ul class="divide-y divide-ink-200">
+          {% for row, field in share_form.rows %}
+            <li class="px-5 py-4">
+              <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+                <label for="{{ field.id_for_label }}" class="text-sm font-medium text-ink-900">{{ row.student.formal_name }}</label>
+                <span class="text-xs text-ink-500">{{ row.student.school_class.display_name }}{% if not user.branch_id %} &middot; {{ row.student.branch.name }}{% endif %}</span>
+              </div>
+              <div class="mt-2 flex items-center gap-2">
+                <div class="min-w-0 flex-1">{{ field }}</div>
+                <button type="button" class="btn btn-secondary text-sm" data-fill="{{ row.position.total_owed|stringformat:'s' }}" {% if not row.position.total_owed %}disabled{% endif %}>Fill</button>
+              </div>
+              <p class="mt-1 text-xs text-ink-600">Owes <span class="numeric font-semibold">{{ row.position.total_owed|naira }}</span>{% if row.position.credit %} &middot; in credit <span class="numeric">{{ row.position.credit|naira }}</span>{% endif %}</p>
+              {% for error in field.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+            </li>
+          {% endfor %}
+        </ul>
+        <div class="border-t border-ink-200 px-5 py-4">
+          {% include "partials/_field.html" with field=share_form.label %}
+          {% if offer_credit %}
+            <label class="check-row mt-3 px-0">
+              {{ share_form.allow_credit }}
+              <span class="text-sm font-medium text-ink-900">{{ share_form.allow_credit.label }}</span>
+            </label>
+          {% endif %}
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 border-t border-ink-200 bg-ink-50 px-5 py-4">
+          <p class="text-sm text-ink-700" aria-live="polite">Left after this: <span class="numeric font-semibold" data-left-after>{{ txn.unallocated|naira }}</span></p>
+          <button type="submit" class="btn btn-primary text-sm">Share payment</button>
+        </div>
+      {% else %}
+        <p class="empty-state text-sm">No children you can share this with.</p>
+      {% endif %}
+    </form>
+  {% endif %}
+
+  <section class="card overflow-hidden">
+    <div class="border-b border-ink-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-ink-900">Each child's share</h2>
+    </div>
+    {% if shares %}
+      <ul class="divide-y divide-ink-200">
+        {% for share in shares %}
+          <li class="px-5 py-4">
+            <div class="flex flex-wrap items-baseline justify-between gap-x-3">
+              <a href="{{ share.get_absolute_url }}" class="text-sm font-medium text-brand-800 hover:underline">{{ share.student.formal_name }}</a>
+              <span class="numeric text-sm font-semibold {% if share.status == 'void' %}text-ink-400 line-through{% else %}text-ink-900{% endif %}">{{ share.amount|naira }}</span>
+            </div>
+            <div class="mt-1 flex flex-wrap items-center justify-between gap-2">
+              <span class="numeric text-xs text-ink-500">{{ share.receipt_number }}</span>
+              <span class="status-pill {{ share.pill_class }}">{{ share.get_status_display }}</span>
+            </div>
+            {% if share.status != 'void' %}
+              <div class="mt-2 flex flex-wrap gap-2">
+                <a href="{% url 'payments:receipt' share.pk %}" class="btn btn-ghost text-xs">Their receipt</a>
+                {% if can_void %}
+                  <a href="{% url 'payments:allocation_move' share.pk %}" class="btn btn-ghost text-xs">Move to another child</a>
+                  <a href="{% url 'payments:payment_void' share.pk %}" class="btn btn-ghost text-xs text-overdue-strong">Void this share</a>
+                {% endif %}
+              </div>
+            {% elif share.void_reason %}
+              <p class="mt-1 text-xs text-ink-500">Voided: {{ share.void_reason }}</p>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty-state text-sm">Nothing has been shared yet.</p>
+    {% endif %}
+  </section>
+
+  <section class="card overflow-hidden">
+    <div class="border-b border-ink-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-ink-900">Details</h2>
+    </div>
+    <dl class="grid gap-x-6 gap-y-4 px-5 py-5 sm:grid-cols-2">
+      <div>
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Family</dt>
+        <dd class="mt-1 text-sm"><a href="{{ txn.family.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">{{ txn.family.name }}</a></dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Paid by</dt>
+        <dd class="mt-1 text-sm text-ink-900">{{ txn.payer_name|default:"—" }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Method</dt>
+        <dd class="mt-1 text-sm text-ink-900">{{ txn.get_method_display }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Reference</dt>
+        <dd class="numeric mt-1 text-sm text-ink-900">{{ txn.reference|default:"—" }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Campus</dt>
+        <dd class="mt-1 text-sm text-ink-900">{{ txn.branch.name }}</dd>
+      </div>
+      <div>
+        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Recorded by</dt>
+        <dd class="mt-1 text-sm text-ink-900">{{ txn.recorded_by|default:"—" }}</dd>
+      </div>
+      {% if txn.note %}
+        <div class="sm:col-span-2">
+          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Note</dt>
+          <dd class="mt-1 text-sm text-ink-900">{{ txn.note }}</dd>
+        </div>
+      {% endif %}
+      {% if txn.has_attachment %}
+        <div class="sm:col-span-2">
+          <a href="{{ txn.receipt_file_url }}" target="_blank" rel="noopener" class="btn btn-secondary text-sm">View attached slip</a>
+        </div>
+      {% endif %}
+    </dl>
+  </section>
+
+  {% if history %}
+    <section class="card overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">History</h2>
+      </div>
+      <ol class="divide-y divide-ink-200 text-sm">
+        {% for event in history %}
+          <li class="px-5 py-3">
+            <p class="font-medium text-ink-900">{{ event.action_label }}</p>
+            <p class="text-xs text-ink-500">{{ event.actor_name|default:"System" }} &middot; {{ event.created_at|date:"j F Y, H:i" }}</p>
+          </li>
+        {% endfor %}
+      </ol>
+    </section>
+  {% endif %}
+
+  {% if can_void and txn.status != 'void' %}
+    <div class="flex justify-end">
+      <a href="{% url 'payments:shared_void' txn.pk %}" class="btn btn-ghost text-sm text-overdue-strong hover:bg-overdue-soft">Void the whole payment</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_body %}
+<script>
+  // Comfort only: fills a box and keeps the running figure. Every rule is on the server.
+  document.querySelectorAll('[data-share-form]').forEach(function (form) {
+    var start = parseFloat(form.dataset.left);
+    var out = form.querySelector('[data-left-after]');
+    var inputs = form.querySelectorAll('input[type="number"]');
+    var used = function () {
+      var total = 0;
+      inputs.forEach(function (input) { total += parseFloat(input.value) || 0; });
+      return total;
+    };
+    var show = function () {
+      if (!out) return;
+      var left = start - used();
+      out.textContent = (left < 0 ? '-' : '') + '₦' + Math.abs(left).toLocaleString('en-NG', { maximumFractionDigits: 2 });
+      out.classList.toggle('text-overdue-strong', left < 0);
+    };
+    inputs.forEach(function (input) { input.addEventListener('input', show); });
+    form.querySelectorAll('[data-fill]').forEach(function (button) {
+      button.addEventListener('click', function () {
+        var input = button.parentElement.querySelector('input');
+        input.value = '';
+        var fill = Math.min(parseFloat(button.dataset.fill), Math.max(start - used(), 0));
+        input.value = fill > 0 ? fill.toFixed(2) : '';
+        show();
+      });
+    });
+    show();
+  });
+</script>
+{% endblock %}

@@ -51,6 +51,15 @@ def _payment_action(before: dict, after: dict) -> str | None:
     }.get(new)
 
 
+def _transaction_action(before: dict, after: dict) -> str | None:
+    if before["status"] == after["status"]:
+        return None
+    return {
+        "confirmed": "paymenttransaction.confirmed",
+        "void": "paymenttransaction.voided",
+    }.get(after["status"])
+
+
 TRACKED = {
     "payments.Payment": Tracked(
         "payment", Category.MONEY,
@@ -64,8 +73,10 @@ TRACKED = {
     "payments.PaymentTransaction": Tracked(
         "paymenttransaction", Category.MONEY,
         ("kind", "family_id", "amount", "date_paid", "method", "reference", "payer_name",
-         "status", "confirmed_by_id", "voided_by_id", "void_reason"),
+         "receipt", "status", "confirmed_by_id", "voided_by_id", "void_reason"),
         label=lambda row: row.number,
+        files=("receipt",),
+        actions=_transaction_action,
     ),
     "families.Family": Tracked(
         "family", Category.ACCESS,

@@ -463,9 +463,15 @@ worked out, and no figure can be counted twice.
   money. Family totals add up each child's position, and one child's credit is not set
   against a sibling's debt. Campus staff see their own campus's children and a note that
   others exist.
-- **Off by default.** The `families` module is enabled per school. Bursars can read
-  families; owners and principals can change them. The screens for receiving and sharing
-  a payment arrive with the bursar flow.
+- **Off by default.** The `families` module is enabled per school, and covers
+  `/families/` and `/payments/family/`. Individual payments don't depend on it. Bursars
+  can read families; owners and principals can change them.
+- **The screens (`apps/payments/shared_views.py`).** A bursar records the money, then
+  shares it on the next page. All of a form's shares save or none do. A page opened
+  before the shares changed is refused, which also stops a second press repeating them.
+  What is left waits under Family payments, and the Payments page says when anything
+  is. Voiding or moving a share, or voiding the whole payment, needs `void_payments`.
+  One sheet covers the sum the parent handed over, and each child still has a receipt.
 - **Checking it.** `check_payment_transactions` exits 1 if anything disagrees.
 
 ### Error reporting (`config/settings/monitoring.py`)

@@ -154,6 +154,10 @@ class PaymentTransaction(BranchScopedModel):
         max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.CONFIRMED
     )
     note = models.CharField(max_length=250, blank=True)
+    receipt = models.FileField(
+        "receipt attachment", upload_to=receipt_upload_to, blank=True,
+        help_text="The parent's bank slip or POS receipt. Image or PDF.",
+    )
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
         related_name="payment_transactions_recorded",
@@ -190,6 +194,27 @@ class PaymentTransaction(BranchScopedModel):
     @property
     def is_shared(self) -> bool:
         return self.kind == TransactionKind.FAMILY
+
+    def get_absolute_url(self) -> str:
+        return reverse("payments:shared_detail", args=[self.pk])
+
+    @property
+    def pill_class(self) -> str:
+        return {
+            PaymentStatus.CONFIRMED: "status-paid",
+            PaymentStatus.PENDING: "status-partial",
+        }.get(self.status, "status-unpaid")
+
+    @property
+    def has_attachment(self) -> bool:
+        return bool(self.receipt)
+
+    @property
+    def receipt_file_url(self) -> str:
+        """Behind the sign-in and tenant checks, not the storage URL."""
+        if not (self.pk and self.receipt):
+            return ""
+        return reverse("payments:shared_receipt_file", args=[self.pk])
 
     def shares(self):
         """Every child's row, at every campus.

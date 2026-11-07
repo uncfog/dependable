@@ -82,7 +82,7 @@ def may_allocate_to(actor, student) -> bool:
 
 def receive(*, amount, date_paid, method, actor=None, branch, family=None, reference="",
             payer_name="", note="", status=PaymentStatus.CONFIRMED,
-            source=PaymentSource.MANUAL) -> PaymentTransaction:
+            source=PaymentSource.MANUAL, receipt=None) -> PaymentTransaction:
     """Record money that came in, ready to be shared out."""
     if amount <= ZERO:
         raise AllocationError("A payment has to be more than nothing.")
@@ -99,6 +99,7 @@ def receive(*, amount, date_paid, method, actor=None, branch, family=None, refer
         reference=reference,
         payer_name=payer_name,
         note=note,
+        receipt=receipt or "",
         source=source,
         status=status,
         recorded_by=actor,
