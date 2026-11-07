@@ -244,6 +244,28 @@ students 2, messaging 5, payments 1, admissions 3.
   the landing page (`templates/core/landing.html`) was rebuilt from. It is not
   served.
 
+### Long lists on a phone
+
+Tables become cards through `ui.js` and the `table-cards` styles. A long list can be
+marked up to read as compact rows, on the table's own cells, with no effect at a desk:
+`card-row` on the row, `card-title` for what leads it, `card-half` to share a line,
+`card-end` to align right, `card-bare` to drop a label the value makes obvious, and
+`card-secondary` for what waits on the record's own page. Use Tailwind's `order-*` to
+rearrange. The browser tests set a limit on row height for Outstanding, Payments and
+Students, and require 44px links in those lists.
+
+### Installing to a phone (`apps/core/pwa.py`)
+
+`/manifest.webmanifest` and `/sw.js` let a phone add the app to its home screen. The service
+worker stores static files and `static/offline.html`, and nothing else. Pages always come
+from the network, and without one the offline page appears, so no record or payment is kept
+on a device and signing out has nothing to clear. Signed-in responses also carry
+`Cache-Control: private, no-store`. There is no offline mode for records or money.
+
+`PWA_ENABLED=false` is the off switch: `/sw.js` then removes itself and its caches from
+every device on its next check. It is off by default in `dev.py`. A release changes the
+cache name, because the name comes from the versioned static file names.
+
 ## 5. Database and multi-tenancy
 
 ### Engine selection
@@ -473,6 +495,38 @@ worked out, and no figure can be counted twice.
   is. Voiding or moving a share, or voiding the whole payment, needs `void_payments`.
   One sheet covers the sum the parent handed over, and each child still has a receipt.
 - **Checking it.** `check_payment_transactions` exits 1 if anything disagrees.
+
+### Records import (`apps/onboarding/`)
+
+One workbook brings a school's existing records in. Any of its six sheets can be left
+out: Families, Students, Family Links, Fee Records, Payment Records, Payment Allocations.
+It is off per school (the `onboarding` module), and only a school owner can run it,
+because it writes money across campuses.
+
+- **Staged in tables.** `ImportBatch` and `ImportRow` hold the file and rows, so review can
+  take days. Nothing else is written until someone presses Import, and every row is judged
+  again as it is written.
+- **Nothing here overwrites.** A row adds a record or points at one already there. The only
+  thing a matched child can gain is a family.
+- **What goes to a person.** The same number with different details, the same name and
+  birthday under another number, a Family ID with other contact details, and a payment with
+  the same date, amount and reference. Rows are never merged, and answers are remembered in
+  `MatchDecision`. Surnames and guardian names are never used.
+- **Money.** A payment and its shares save together or not at all. Shares above the payment
+  refuse it; shares below leave the rest visibly unallocated. `legacy_reference` stops a
+  second run adding it again. Imported rows use `source=import`, keep their date as the
+  confirmation date, keep the old receipt number, and send no messages.
+- **Large files.** `commit_batch` and `undo_batch` work to a time budget and resume, because
+  of gunicorn's 60-second limit. `busy_until` stops a second press writing the same rows.
+- **Undo.** Payments and fee records are voided and kept, and family links end. A new child
+  with nothing else on them is removed. One with only voided imported records is marked
+  withdrawn, and one with other payments stays on the roll. A corrected file can then be
+  imported, though a withdrawn child has to be made active again by hand.
+- **Personal data.** `purge_import_files` removes old files and copied rows. Questions are
+  stored as hashes, so `MatchDecision` keeps no names.
+
+`/families/suggestions/` asks about children sharing a phone or email, among all children
+without a family. It flags a number with more than five children, and remembers a "no".
 
 ### Error reporting (`config/settings/monitoring.py`)
 
@@ -876,6 +930,7 @@ the server). `--help` on each lists its options.
 | `reset_platform_mfa --email …` | accounts | yes, carefully | Clears a platform account's authenticator when the phone and recovery codes are lost. Recorded in the audit log. |
 | `report_wrong_child_risk [--school <slug>]` | payments | yes, read-only | CSV of past payments a since-fixed picker bug may have credited to the wrong child. Says what to check, not what is wrong. Treat the output as confidential. |
 | `check_payment_transactions` | payments | yes, read-only | Checks every payment has a transaction, one-child transactions match their payment, and no shared transaction has handed out more than it received. Exits 1 and names the rows if not. |
+| `purge_import_files [--days 30]` | onboarding | yes — nightly | Removes uploaded workbooks and their copied rows from imports finished that long ago, and deletes abandoned drafts. Imported records are kept. |
 | `bootstrap_tenant --password …` | core | **NO** | Demo school + one user per role, including a superuser. Local only. |
 | `seed_academics`, `seed_fees`, `seed_students`, `seed_payments`, `seed_admission_fees` | various | **NO** | Demo data. Local only. |
 | `seed_messaging_identity` | messaging | only deliberately | Registers **and approves** a school's Sender ID without the UI review. |

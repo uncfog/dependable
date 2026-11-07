@@ -88,11 +88,11 @@
           </thead>
           <tbody class="divide-y divide-ink-200">
             {% for row in rows %}
-              <tr class="{% if not row.student.is_enrolled %}bg-ink-50/60{% endif %}">
-                <td class="numeric whitespace-nowrap px-5 py-3 text-ink-700">
+              <tr class="card-row {% if not row.student.is_enrolled %}bg-ink-50/60{% endif %}">
+                <td class="card-half card-bare order-2 numeric whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ row.student.admission_number }}
                 </td>
-                <td class="px-5 py-3">
+                <td class="card-title order-1 px-5 py-3">
                   <a href="{{ row.student.get_absolute_url }}"
                      class="font-medium text-brand-800 hover:underline">
                     {{ row.student.formal_name }}
@@ -103,16 +103,16 @@
                     </span>
                   {% endif %}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3 text-ink-700">
+                <td class="card-half card-end card-bare order-3 whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ row.student.school_class.display_name }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3">
+                <td class="card-half card-bare order-4 whitespace-nowrap px-5 py-3">
                   <a href="{{ row.student.parent_phone_link }}"
                      class="numeric text-ink-700 hover:underline">
                     {{ row.student.parent_phone_display }}
                   </a>
                 </td>
-                <td class="whitespace-nowrap px-5 py-3">
+                <td class="card-half card-end card-bare order-5 whitespace-nowrap px-5 py-3">
                   <div class="flex items-center gap-2">
                     <span class="status-pill {{ row.position.pill_class }}">
                       {{ row.position.pill_label }}
@@ -123,7 +123,7 @@
                   </div>
                 </td>
                 {% if "manage_students" in capabilities %}
-                  <td class="px-5 py-3">
+                  <td class="card-bare order-6 px-5 py-3">
                     <div class="flex justify-end gap-1">
                       <a href="{% url 'students:student_update' row.student.pk %}"
                          class="btn btn-ghost text-xs">Edit</a>

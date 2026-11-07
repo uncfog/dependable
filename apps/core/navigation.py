@@ -298,6 +298,8 @@ NAVIGATION: tuple[NavSection, ...] = (
                     tour="nav-students"),
             NavItem("Families", "families:list", "users", _SCHOOL_SIDE,
                     capability="view_families", module="families"),
+            NavItem("Import records", "onboarding:index", "clipboard", _SCHOOL_SIDE,
+                    capability="import_records", module="onboarding"),
         ),
     ),
     NavSection(

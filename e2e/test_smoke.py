@@ -27,6 +27,8 @@ from apps.academics.models import Class, Level
 from apps.core.roles import Role
 from apps.fees.models import FeeComponent, FeeStructure, Term, TermSequence
 from apps.payments.models import Payment
+from django.test import override_settings
+
 from apps.families.models import Family
 from apps.families.services import link
 from apps.payments.models import PaymentTransaction
@@ -191,6 +193,58 @@ class FamilyPaymentTests(BrowserTestCase):
         self.assertEqual(page.script_errors, [])
 
 
+@override_settings(PWA_ENABLED=True)
+class InstalledAppTests(BrowserTestCase):
+    def ready(self, page):
+        """Wait until the service worker controls the page, then load through it."""
+        page.evaluate("navigator.serviceWorker.ready.then(() => true)")
+        page.wait_for_function("navigator.serviceWorker.controller !== null")
+
+    def test_a_private_page_is_never_stored_and_offline_shows_nothing_of_it(self):
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+        self.ready(page)
+        self.go(page, "/payments/")
+        self.go(page, f"/students/{self.students[0].pk}/")
+
+        stored = page.evaluate(
+            """async () => {
+                const urls = [];
+                for (const name of await caches.keys()) {
+                    for (const request of await (await caches.open(name)).keys()) {
+                        urls.push(new URL(request.url).pathname);
+                    }
+                }
+                return urls;
+            }"""
+        )
+        self.assertTrue(stored)
+        self.assertEqual([url for url in stored if not url.startswith("/static/")], [])
+
+        page.context.set_offline(True)
+        self.addCleanup(page.context.set_offline, False)
+        page.goto(self.live_server_url + "/payments/", wait_until="domcontentloaded")
+        self.assertIn("offline", page.locator("h1").inner_text().lower())
+        self.assertNotIn("TELLER-0001", page.content())
+        self.assertNotIn("Adeyemi", page.content())
+
+    def test_the_install_offer_can_be_dismissed_for_good(self):
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+        offer = page.locator("[data-install-prompt]")
+        self.assertFalse(offer.is_visible())
+
+        page.evaluate("window.dispatchEvent(new Event('beforeinstallprompt'))")
+        self.assertTrue(offer.is_visible())
+
+        page.click("[data-install-dismiss]")
+        self.assertFalse(offer.is_visible())
+
+        self.go(page, "/students/")
+        page.evaluate("window.dispatchEvent(new Event('beforeinstallprompt'))")
+        self.assertFalse(page.locator("[data-install-prompt]").is_visible())
+
+
 class EveryRoleTests(BrowserTestCase):
     def check_role(self, role, viewport):
         page = self.page_for(viewport)
@@ -303,8 +357,46 @@ class PhoneLayoutTests(BrowserTestCase):
             page.evaluate(
                 "getComputedStyle(document.querySelector('#main tbody tr')).display"
             ),
-            "block",
+            "grid",
         )
+
+    def row_height(self) -> float:
+        return self.page.evaluate(
+            """() => {
+                const rows = [...document.querySelectorAll('#main tbody tr')];
+                return rows.reduce((total, row) => total + row.getBoundingClientRect().height, 0)
+                    / rows.length;
+            }"""
+        )
+
+    def test_long_lists_stay_short_enough_to_work_through(self):
+        self.sign_in(self.page, "bursar")
+        for path, most in (("/payments/outstanding/", 220), ("/payments/", 160), ("/students/", 190)):
+            with self.subTest(path=path):
+                self.go(self.page, path)
+                self.assertLessEqual(self.row_height(), most)
+
+    def test_what_a_list_hides_on_a_phone_is_still_there_at_a_desk(self):
+        page = self.page_for(DESKTOP)
+        self.sign_in(page, "bursar")
+        self.go(page, "/payments/")
+        self.assertTrue(page.locator('th:has-text("Method")').is_visible())
+        self.assertEqual(
+            page.evaluate("getComputedStyle(document.querySelector('#main tbody tr')).display"),
+            "table-row",
+        )
+
+    def test_links_in_a_list_are_big_enough_to_press(self):
+        self.sign_in(self.page, "bursar")
+        for path in ("/payments/outstanding/", "/payments/", "/students/"):
+            with self.subTest(path=path):
+                self.go(self.page, path)
+                smallest = self.page.evaluate(
+                    """() => Math.min(...[...document.querySelectorAll('#main td a')]
+                        .filter(a => a.getBoundingClientRect().height > 0)
+                        .map(a => a.getBoundingClientRect().height))"""
+                )
+                self.assertGreaterEqual(smallest, 44)
 
     def test_filters_start_closed_and_open_on_a_press(self):
         page = self.open("bursar", "/students/")

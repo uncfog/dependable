@@ -37,6 +37,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from django.db import models, transaction as db_transaction
+from django.db.models import Q
+from django.db.models.functions import Upper
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from django.urls import reverse
@@ -80,6 +82,7 @@ class PaymentSource(models.TextChoices):
     MANUAL = "manual", "Recorded by staff"
     GATEWAY = "gateway", "Online payment"
     BANK_IMPORT = "bank_import", "Bank import"
+    IMPORT = "import", "Imported from the school's records"
 
 
 class PaymentStatus(models.TextChoices):
@@ -173,6 +176,11 @@ class PaymentTransaction(BranchScopedModel):
     )
     voided_at = models.DateTimeField(null=True, blank=True)
     void_reason = models.CharField(max_length=250, blank=True)
+    #: The school's own number for this payment, from before it came here. It stops
+    #: the same file adding it twice. A voided one doesn't count, so a corrected file
+    #: can be imported after an undo.
+    legacy_reference = models.CharField(max_length=120, blank=True)
+    legacy_receipt_number = models.CharField(max_length=60, blank=True)
 
     class Meta(BranchScopedModel.Meta):
         abstract = False
@@ -181,6 +189,14 @@ class PaymentTransaction(BranchScopedModel):
             models.Index(fields=["school", "branch"]),
             models.Index(fields=["family", "status"]),
             models.Index(fields=["kind", "status"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                Upper("legacy_reference"),
+                "school",
+                condition=~Q(legacy_reference="") & ~Q(status="void"),
+                name="unique_live_legacy_reference_per_school",
+            )
         ]
 
     def __str__(self) -> str:

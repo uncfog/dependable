@@ -115,14 +115,14 @@
           </thead>
           <tbody class="divide-y divide-ink-200">
             {% for payment in payments %}
-              <tr class="{% if payment.status == 'void' %}bg-ink-50/60{% endif %}">
-                <td class="numeric whitespace-nowrap px-5 py-3">
+              <tr class="card-row {% if payment.status == 'void' %}bg-ink-50/60{% endif %}">
+                <td class="card-half card-bare order-4 numeric whitespace-nowrap px-5 py-3">
                   <a href="{{ payment.get_absolute_url }}"
                      class="text-brand-800 hover:underline">
                     {{ payment.receipt_number }}
                   </a>
                 </td>
-                <td class="px-5 py-3">
+                <td class="card-title order-1 px-5 py-3">
                   <a href="{{ payment.student.get_absolute_url }}"
                      class="font-medium text-brand-800 hover:underline">
                     {{ payment.student.formal_name }}
@@ -131,24 +131,24 @@
                     {{ payment.student.school_class.display_name }}
                   </span>
                 </td>
-                <td class="numeric whitespace-nowrap px-5 py-3 text-right
+                <td class="card-half card-bare order-2 numeric whitespace-nowrap px-5 py-3 text-right
                            {% if payment.status == 'void' %}text-ink-400 line-through
                            {% else %}font-medium text-ink-900{% endif %}">
                   {{ payment.amount|naira }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3 text-ink-700">
+                <td class="card-secondary whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ payment.get_label_display }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3 text-ink-700">
+                <td class="card-secondary whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ payment.get_method_display }}
                 </td>
-                <td class="numeric max-w-40 truncate px-5 py-3 text-xs text-ink-500">
+                <td class="card-secondary numeric max-w-40 truncate px-5 py-3 text-xs text-ink-500">
                   {{ payment.reference|default:"—" }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3 text-ink-700">
+                <td class="card-half card-end card-bare order-5 whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ payment.date_paid|date:"j M Y" }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3">
+                <td class="card-half card-end card-bare order-3 whitespace-nowrap px-5 py-3">
                   <span class="status-pill {{ payment.pill_class }}">
                     {{ payment.get_status_display }}
                   </span>
