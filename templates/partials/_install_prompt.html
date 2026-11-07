@@ -1,0 +1,13 @@
+{% comment %}
+Offers to add the app to the home screen. Hidden until ui.js finds this phone can, and
+stays away once dismissed. Android gets a button; iPhones have no prompt to trigger, so
+they get the steps.
+{% endcomment %}
+<div data-install-prompt hidden class="card mb-5 px-4 py-3 text-sm text-ink-700 sm:hidden">
+  <p data-install-text>Add {{ product_name }} to your home screen, to open it like an app.</p>
+  <p data-install-ios hidden>To add {{ product_name }} to your home screen, tap Share, then Add to Home Screen.</p>
+  <div class="mt-2 flex gap-2">
+    <button type="button" class="btn btn-primary text-sm" data-install-accept>Install</button>
+    <button type="button" class="btn btn-ghost text-sm" data-install-dismiss>Not now</button>
+  </div>
+</div>

@@ -27,6 +27,8 @@ from apps.academics.models import Class, Level
 from apps.core.roles import Role
 from apps.fees.models import FeeComponent, FeeStructure, Term, TermSequence
 from apps.payments.models import Payment
+from django.test import override_settings
+
 from apps.families.models import Family
 from apps.families.services import link
 from apps.payments.models import PaymentTransaction
@@ -189,6 +191,58 @@ class FamilyPaymentTests(BrowserTestCase):
             0,
         )
         self.assertEqual(page.script_errors, [])
+
+
+@override_settings(PWA_ENABLED=True)
+class InstalledAppTests(BrowserTestCase):
+    def ready(self, page):
+        """Wait until the service worker controls the page, then load through it."""
+        page.evaluate("navigator.serviceWorker.ready.then(() => true)")
+        page.wait_for_function("navigator.serviceWorker.controller !== null")
+
+    def test_a_private_page_is_never_stored_and_offline_shows_nothing_of_it(self):
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+        self.ready(page)
+        self.go(page, "/payments/")
+        self.go(page, f"/students/{self.students[0].pk}/")
+
+        stored = page.evaluate(
+            """async () => {
+                const urls = [];
+                for (const name of await caches.keys()) {
+                    for (const request of await (await caches.open(name)).keys()) {
+                        urls.push(new URL(request.url).pathname);
+                    }
+                }
+                return urls;
+            }"""
+        )
+        self.assertTrue(stored)
+        self.assertEqual([url for url in stored if not url.startswith("/static/")], [])
+
+        page.context.set_offline(True)
+        self.addCleanup(page.context.set_offline, False)
+        page.goto(self.live_server_url + "/payments/", wait_until="domcontentloaded")
+        self.assertIn("offline", page.locator("h1").inner_text().lower())
+        self.assertNotIn("TELLER-0001", page.content())
+        self.assertNotIn("Adeyemi", page.content())
+
+    def test_the_install_offer_can_be_dismissed_for_good(self):
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+        offer = page.locator("[data-install-prompt]")
+        self.assertFalse(offer.is_visible())
+
+        page.evaluate("window.dispatchEvent(new Event('beforeinstallprompt'))")
+        self.assertTrue(offer.is_visible())
+
+        page.click("[data-install-dismiss]")
+        self.assertFalse(offer.is_visible())
+
+        self.go(page, "/students/")
+        page.evaluate("window.dispatchEvent(new Event('beforeinstallprompt'))")
+        self.assertFalse(page.locator("[data-install-prompt]").is_visible())
 
 
 class EveryRoleTests(BrowserTestCase):

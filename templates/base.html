@@ -21,6 +21,11 @@
   <link rel="icon" href="{% static 'img/schoolcord-logo.svg' %}" type="image/svg+xml">
   <link rel="alternate icon" href="{% static 'img/schoolcord-logo.png' %}" type="image/png">
   <link rel="apple-touch-icon" href="{% static 'img/schoolcord-logo.png' %}">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="SCHOOLCORD">
+  {% if pwa_enabled %}<meta name="schoolcord-pwa" content="on">{% endif %}
 
   {# Fonts are ours, in static/fonts/ and declared in the stylesheet. #}
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
@@ -184,6 +189,7 @@
     region serves the shell and the signed-out pages alike.
     {% endcomment %}
     <main id="main" class="vt-page flex-1 px-4 py-6 sm:px-6 lg:px-8">
+      {% include "partials/_install_prompt.html" %}
       {% block content %}{% endblock %}
     </main>
   </div>

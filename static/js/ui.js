@@ -1360,6 +1360,65 @@
    * that with scripting off it stays an ordinary table that scrolls. A table opts
    * out with `data-no-cards`.
    * ====================================================================== */
+  function initServiceWorker() {
+    if (!document.querySelector('meta[name="schoolcord-pwa"]')) return;
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('/sw.js').catch(function () {
+      /* The site works exactly the same without it. */
+    });
+  }
+
+  /* ====================================================================== *
+   * Offering the home screen
+   *
+   * Android hands us a prompt to show when we choose. iPhones have none, so they
+   * get the steps. Once dismissed it stays away, and it never shows inside the
+   * installed app.
+   * ====================================================================== */
+  var INSTALL_DISMISSED_KEY = 'schoolcord-install-dismissed';
+
+  function initInstallPrompt() {
+    var box = document.querySelector('[data-install-prompt]');
+    if (!box) return;
+    var installed = window.navigator.standalone === true ||
+      (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+    if (installed) return;
+    try {
+      if (window.localStorage.getItem(INSTALL_DISMISSED_KEY)) return;
+    } catch (e) { /* Blocked storage only means it may be offered again. */ }
+
+    var accept = box.querySelector('[data-install-accept]');
+    var offer = null;
+    function hide() { box.hidden = true; }
+    function dismiss() {
+      hide();
+      try { window.localStorage.setItem(INSTALL_DISMISSED_KEY, 'yes'); } catch (e) { /* as above */ }
+    }
+
+    box.querySelector('[data-install-dismiss]').addEventListener('click', dismiss);
+    accept.addEventListener('click', function () {
+      if (!offer) return;
+      offer.prompt();
+      offer = null;
+      hide();
+    });
+
+    window.addEventListener('beforeinstallprompt', function (event) {
+      event.preventDefault();
+      offer = event;
+      box.hidden = false;
+    });
+    window.addEventListener('appinstalled', dismiss);
+
+    var isIos = /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+    if (isIos) {
+      box.querySelector('[data-install-text]').hidden = true;
+      box.querySelector('[data-install-ios]').hidden = false;
+      accept.hidden = true;
+      box.hidden = false;
+    }
+  }
+
   function initCardTables() {
     var main = document.getElementById('main');
     if (!main) return;
@@ -1450,6 +1509,8 @@
     initPresets();
     initTotals();
     initCardTables();
+    initServiceWorker();
+    initInstallPrompt();
     initFilterSheets();
   }
 

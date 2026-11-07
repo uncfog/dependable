@@ -5,6 +5,7 @@ from .base import BASE_DIR, env_bool
 from .database import get_database_config
 
 DEBUG = env_bool("DEBUG", True)
+PWA_ENABLED = env_bool("PWA_ENABLED", False)
 ALLOWED_HOSTS = ["*"]
 
 # Nobody needs an authenticator to run this on their own machine.

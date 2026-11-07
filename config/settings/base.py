@@ -121,6 +121,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.core.pwa.PrivatePagesMiddleware",
     # Adds request.user.is_verified(), for two-step sign-in. Follows authentication.
     "django_otp.middleware.OTPMiddleware",
     # Must follow AuthenticationMiddleware: it reads request.user.
@@ -164,6 +165,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.tenancy",
+                "apps.core.pwa.pwa_context",
                 # The product's own name, on signed-out pages too -- which is
                 # where it matters most.
                 "apps.core.branding.branding",
@@ -318,6 +320,10 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+#: Setting it to false removes the service worker from every device. Off in
+#: development (see dev.py), where static files aren't versioned and would go stale.
+PWA_ENABLED = env_bool("PWA_ENABLED", default=True)
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 # ---------------------------------------------------------------------------
