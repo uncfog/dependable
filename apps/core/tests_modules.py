@@ -125,7 +125,7 @@ class RegistryTests(ModuleTestCase):
 
     def test_only_the_toggleable_modules_are_offered_as_switches(self):
         offered = {row["module"].key for row in modules.state_for_school(self.alpha.pk)}
-        self.assertEqual(offered, {"messaging", "admissions", "families"})
+        self.assertEqual(offered, {"messaging", "admissions", "families", "onboarding"})
 
     def test_a_switch_knows_whether_it_is_a_decision_or_a_default(self):
         rows = {r["module"].key: r for r in modules.state_for_school(self.alpha.pk)}

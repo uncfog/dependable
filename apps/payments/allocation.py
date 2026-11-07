@@ -82,7 +82,8 @@ def may_allocate_to(actor, student) -> bool:
 
 def receive(*, amount, date_paid, method, actor=None, branch, family=None, reference="",
             payer_name="", note="", status=PaymentStatus.CONFIRMED,
-            source=PaymentSource.MANUAL, receipt=None) -> PaymentTransaction:
+            source=PaymentSource.MANUAL, receipt=None, legacy_reference="",
+            legacy_receipt_number="", confirmed_at=None) -> PaymentTransaction:
     """Record money that came in, ready to be shared out."""
     if amount <= ZERO:
         raise AllocationError("A payment has to be more than nothing.")
@@ -104,8 +105,53 @@ def receive(*, amount, date_paid, method, actor=None, branch, family=None, refer
         status=status,
         recorded_by=actor,
         confirmed_by=actor if confirmed else None,
-        confirmed_at=now if confirmed else None,
+        confirmed_at=(confirmed_at or now) if confirmed else None,
+        legacy_reference=legacy_reference,
+        legacy_receipt_number=legacy_receipt_number,
     )
+
+
+def receive_for_one_child(student, term, *, amount, date_paid, method, actor=None, reference="",
+                          payer_name="", status=PaymentStatus.CONFIRMED,
+                          source=PaymentSource.MANUAL, legacy_reference="",
+                          legacy_receipt_number="", confirmed_at=None) -> PaymentTransaction:
+    """A past payment for one child, keeping when it was actually confirmed."""
+    confirmed = status == PaymentStatus.CONFIRMED
+    stamp = (confirmed_at or timezone.now()) if confirmed else None
+    txn = PaymentTransaction.all_objects.create(
+        school_id=student.school_id,
+        branch_id=student.branch_id,
+        kind=TransactionKind.INDIVIDUAL,
+        amount=amount,
+        date_paid=date_paid,
+        method=method,
+        reference=reference,
+        payer_name=payer_name,
+        source=source,
+        status=status,
+        recorded_by=actor,
+        confirmed_by=actor if confirmed else None,
+        confirmed_at=stamp,
+        legacy_reference=legacy_reference,
+        legacy_receipt_number=legacy_receipt_number,
+    )
+    Payment(
+        school_id=student.school_id,
+        branch_id=student.branch_id,
+        transaction=txn,
+        student=student,
+        term=term,
+        amount=amount,
+        date_paid=date_paid,
+        method=method,
+        reference=reference,
+        source=source,
+        status=status,
+        recorded_by=actor,
+        confirmed_by=actor if confirmed else None,
+        confirmed_at=stamp,
+    ).save()
+    return txn
 
 
 def _locked(txn: PaymentTransaction) -> PaymentTransaction:
@@ -114,8 +160,8 @@ def _locked(txn: PaymentTransaction) -> PaymentTransaction:
 
 @transaction.atomic
 def allocate(txn: PaymentTransaction, student, amount, *, actor=None,
-             label=PaymentLabel.SCHOOL_FEES, note="", allow_credit=False) -> Payment:
-    """Give ``student`` a share. It is credited to their campus's current term."""
+             label=PaymentLabel.SCHOOL_FEES, note="", allow_credit=False, term=None) -> Payment:
+    """Give ``student`` a share, credited to ``term`` or else their campus's current one."""
     txn = _locked(txn)
     amount = Decimal(amount)
 
@@ -138,7 +184,7 @@ def allocate(txn: PaymentTransaction, student, amount, *, actor=None,
     if amount > left:
         raise ExceedsReceived(left)
 
-    term = Term.all_objects.filter(branch_id=student.branch_id, is_current=True).first()
+    term = term or Term.all_objects.filter(branch_id=student.branch_id, is_current=True).first()
     if term is None:
         raise AllocationError(
             f"{student.branch.name} has no current term to credit this payment to."
@@ -174,6 +220,8 @@ def allocate(txn: PaymentTransaction, student, amount, *, actor=None,
     )
     if txn.status == PaymentStatus.CONFIRMED:
         payment.confirmed_by = actor
+        if txn.source == PaymentSource.IMPORT:
+            payment.confirmed_at = txn.confirmed_at
     payment.save()
     return payment
 

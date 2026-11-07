@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from django.contrib import messages
+from django.db import transaction
 from django.db.models import Count, Q
 from django.http import Http404, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.views.generic import CreateView, DetailView, ListView, UpdateView, View
 
@@ -15,6 +16,7 @@ from apps.payments import shared
 from .balances import summary_for
 from .forms import AddChildForm, FamilyForm
 from .models import Family, FamilyMembership
+from . import suggestions
 from .services import FamilyLinkError, link, unlink
 
 
@@ -97,6 +99,46 @@ class FamilyUpdateView(ManageFamiliesMixin, UpdateView):
     form_class = FamilyForm
     template_name = "families/family_form.html"
     extra_context = {"page_title": "Edit family", "verb": "Save"}
+
+
+class FamilySuggestionsView(ManageFamiliesMixin, View):
+    """Children who share a phone or email. Only ever a question; staff decide."""
+
+    def get(self, request):
+        return render(request, "families/suggestions.html", {
+            "groups": suggestions.groups(),
+            "page_title": "Suggested families",
+        })
+
+    def post(self, request):
+        signature = request.POST.get("signature", "")
+        group = next((g for g in suggestions.groups() if g.signature == signature), None)
+        if group is None:
+            messages.info(request, "That suggestion has already been dealt with.")
+        elif request.POST.get("action") == "reject":
+            suggestions.reject(group, by=request.user, school=group.students[0].school)
+            messages.success(request, "Understood. This won't be suggested again.")
+        else:
+            self._confirm(request, group)
+        return HttpResponseRedirect(reverse("families:suggestions"))
+
+    def _confirm(self, request, group):
+        chosen = set(request.POST.getlist("students"))
+        # Only children in the group, whatever the request names.
+        students = [s for s in group.students if str(s.pk) in chosen]
+        name = request.POST.get("name", "").strip()
+        if not name or len(students) < 2:
+            messages.error(request, "Give the family a name and choose at least two children.")
+            return
+        with transaction.atomic():
+            family = Family.all_objects.create(
+                school_id=students[0].school_id, name=name[:160],
+                contact_name=students[0].parent_name[:160],
+                contact_phone=students[0].parent_phone,
+            )
+            for student in students:
+                link(family, student, by=request.user)
+        messages.success(request, f"{family.name} created with {len(students)} children.")
 
 
 class AddChildView(ManageFamiliesMixin, View):

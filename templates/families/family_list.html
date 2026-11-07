@@ -2,6 +2,9 @@
 
 {% block page_actions %}
   {% if "manage_families" in capabilities %}
+    <a href="{% url 'families:suggestions' %}" class="btn btn-secondary text-sm">Suggested families</a>
+  {% endif %}
+  {% if "manage_families" in capabilities %}
     <a href="{% url 'families:create' %}" class="btn btn-primary text-sm">New family</a>
   {% endif %}
 {% endblock %}

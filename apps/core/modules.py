@@ -150,6 +150,19 @@ MODULES += (
     ),
 )
 
+MODULES += (
+    Module(
+        key="onboarding",
+        label="Records import",
+        description="Bring a school's existing students, fee records and payments in "
+                    "from one workbook, with a review before anything is written. "
+                    "Off until a school is being brought on.",
+        paths=("/onboarding/",),
+        capabilities=("import_records",),
+        default_on=False,
+    ),
+)
+
 BY_KEY: dict[str, Module] = {module.key: module for module in MODULES}
 ALL_KEYS: frozenset[str] = frozenset(BY_KEY)
 #: The ones the platform owner is offered a switch for.

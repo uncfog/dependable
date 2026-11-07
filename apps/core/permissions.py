@@ -70,6 +70,9 @@ class Capability(str, Enum):
     # belongs with the roster: a bursar reads families and does not change them.
     VIEW_FAMILIES = "view_families"
     MANAGE_FAMILIES = "manage_families"
+    # Bringing a school's past records in. It can write money across every campus,
+    # so it sits with the school owner.
+    IMPORT_RECORDS = "import_records"
     # Which features a school has. The platform's decision and nobody else's:
     # a proprietor who could switch on their own paid add-ons would be writing
     # their own invoice. Granted only in _PLATFORM below, and it is the one
@@ -137,6 +140,7 @@ _SCHOOL_ADMIN = frozenset(
         Capability.MANAGE_STAFF,
         Capability.MANAGE_ADMISSION_REQUIREMENTS,
         Capability.MANAGE_SCHOOL_LOGO,
+        Capability.IMPORT_RECORDS,
     }
 )
 
