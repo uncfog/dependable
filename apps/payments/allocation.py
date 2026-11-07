@@ -185,7 +185,7 @@ def confirm(txn: PaymentTransaction, *, actor=None) -> PaymentTransaction:
         raise AllocationError("This payment has been voided.")
     if txn.status == PaymentStatus.CONFIRMED:
         return txn
-    for payment in txn.allocations.filter(status=PaymentStatus.PENDING):
+    for payment in txn.shares().filter(status=PaymentStatus.PENDING):
         payment.confirm(by=actor)
     txn.status = PaymentStatus.CONFIRMED
     txn.confirmed_by = actor
@@ -234,7 +234,7 @@ def void_transaction(txn: PaymentTransaction, *, actor=None, reason: str) -> Pay
     txn = _locked(txn)
     if txn.status == PaymentStatus.VOID:
         return txn
-    for payment in txn.allocations.exclude(status=PaymentStatus.VOID):
+    for payment in txn.shares().exclude(status=PaymentStatus.VOID):
         payment.void(by=actor, reason=reason)
     txn.status = PaymentStatus.VOID
     txn.voided_by = actor

@@ -191,10 +191,19 @@ class PaymentTransaction(BranchScopedModel):
     def is_shared(self) -> bool:
         return self.kind == TransactionKind.FAMILY
 
+    def shares(self):
+        """Every child's row, at every campus.
+
+        Not ``self.allocations``, which only shows what the caller's campus can see.
+        One campus can take money that a school owner shares with another, and the
+        ceiling has to count all of it whoever is asking.
+        """
+        return Payment.all_objects.filter(transaction=self)
+
     @property
     def allocated(self) -> Decimal:
         """What its children's rows are using. A voided share gives its money back."""
-        total = self.allocations.exclude(status=PaymentStatus.VOID).aggregate(
+        total = self.shares().exclude(status=PaymentStatus.VOID).aggregate(
             total=models.Sum("amount")
         )["total"]
         return total or ZERO

@@ -24,6 +24,7 @@ from django.utils import timezone
 from apps.academics.models import Class, Level
 from apps.audit.models import AuditEvent
 from apps.core.roles import Role
+from apps.core.tenancy import scope_to
 from apps.families.models import Family, FamilyMembership
 from apps.families.services import link
 from apps.fees.models import FeeComponent, FeeStructure, Term, TermSequence
@@ -607,6 +608,41 @@ class ClosingASchoolTests(AllocationTestCase):
         self.assertFalse(School.all_objects.filter(pk=self.school.pk).exists())
         self.assertFalse(PaymentTransaction.all_objects.exists())
         self.assertFalse(Family.all_objects.exists())
+
+
+class SignedInAtOneCampusTests(AllocationTestCase):
+    """Campus staff cannot see another campus's shares, but the money still counts."""
+
+    def setUp(self):
+        self.txn = self.receive()
+        self.sades = allocation.allocate(self.txn, self.sade, D("50000"), actor=self.owner)
+
+    def at_north(self):
+        return scope_to(school_id=self.school.pk, branch_id=self.north.pk, role=Role.BURSAR)
+
+    def test_what_is_left_counts_shares_at_other_campuses(self):
+        with self.at_north():
+            self.assertEqual(self.txn.allocated, D("50000"))
+            self.assertEqual(self.txn.unallocated, D("100000"))
+
+    def test_the_ceiling_counts_shares_at_other_campuses(self):
+        with self.at_north():
+            with self.assertRaises(allocation.ExceedsReceived):
+                allocation.allocate(
+                    self.txn, self.ada, D("100001"), actor=self.bursar, allow_credit=True
+                )
+
+    def test_voiding_the_payment_takes_every_share_with_it(self):
+        with self.at_north():
+            allocation.void_transaction(self.txn, actor=self.principal, reason="Bounced")
+        self.assertEqual(Payment.all_objects.get(pk=self.sades.pk).status, PaymentStatus.VOID)
+
+    def test_confirming_the_payment_confirms_every_share(self):
+        pending = self.receive(status=PaymentStatus.PENDING)
+        share = allocation.allocate(pending, self.sade, D("10000"), actor=self.owner)
+        with self.at_north():
+            allocation.confirm(pending, actor=self.bursar)
+        self.assertEqual(Payment.all_objects.get(pk=share.pk).status, PaymentStatus.CONFIRMED)
 
 
 class TenancyTests(AllocationTestCase):
