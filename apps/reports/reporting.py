@@ -300,7 +300,8 @@ def build(scope: ReportScope, *, prepared_for: str = "") -> Report:
         generated_at=timezone.localtime(),
         prepared_for=prepared_for,
         stats=_stats(summary, expected_total, students, states)
-        + _arrears_stat(positions),
+        + _arrears_stat(positions)
+        + _unallocated_stat(branch_ids),
         charts=(_collection_chart(summary, expected_total), _states_chart(states)),
         tables=_tables(scope, by_school, by_branch, by_class, terms, ledger, students),
         notes=_notes(scope, terms, students, positions, summary, expected_total),
@@ -377,7 +378,7 @@ def _ledger(branch_ids, terms) -> dict:
                 "payments": row["payments"],
             }
             for row in confirmed.values(column)
-            .annotate(amount=Sum("amount"), payments=Count("id"))
+            .annotate(amount=Sum("amount"), payments=Count("transaction", distinct=True))
             .order_by("-amount")
         ]
 
@@ -404,7 +405,7 @@ def _ledger(branch_ids, terms) -> dict:
             # term's cash flow, and sorting it by size would destroy that.
             for row in confirmed.annotate(month=TruncMonth("date_paid"))
             .values("month")
-            .annotate(amount=Sum("amount"), payments=Count("id"))
+            .annotate(amount=Sum("amount"), payments=Count("transaction", distinct=True))
             .order_by("month")
         ],
     }
@@ -436,6 +437,31 @@ def _arrears_stat(positions) -> tuple[Stat, ...]:
             value=Cell.money(total),
             note=f"Still owed by {_plural(owing, 'student')}",
             tone="overdue",
+        ),
+    )
+
+
+def _unallocated_stat(branch_ids) -> tuple[Stat, ...]:
+    """Money received and not yet shared between children.
+
+    Not in "Collected", which answers what has reached a child's balance. Beside it,
+    so what was banked still reconciles: received is collected plus this.
+    """
+    if not django_apps.is_installed("apps.payments"):
+        return ()
+    from apps.payments.models import PaymentStatus, PaymentTransaction, TransactionKind
+
+    shared = PaymentTransaction.objects.filter(
+        kind=TransactionKind.FAMILY, status=PaymentStatus.CONFIRMED, branch_id__in=branch_ids
+    )
+    total = sum((txn.unallocated for txn in shared), ZERO)
+    if not total:
+        return ()
+    return (
+        Stat(
+            label="Not yet allocated",
+            value=Cell.money(total),
+            note="Received, not yet shared between children",
         ),
     )
 

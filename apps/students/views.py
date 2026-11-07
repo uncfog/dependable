@@ -40,6 +40,7 @@ from apps.core.import_flow import (
     ImportUploadView,
 )
 from apps.core.permissions import Capability, CapabilityRequiredMixin
+from apps.families.models import FamilyMembership
 from apps.fees.models import REDUCING_KINDS
 from apps.schools.models import Branch
 
@@ -164,6 +165,11 @@ class StudentDetailView(ReadStudentsMixin, DetailView):
             .count()
         )
         context.update(payment_history(student, self.request))
+        context["family_membership"] = (
+            FamilyMembership.objects.filter(student=student, ended_at__isnull=True)
+            .select_related("family")
+            .first()
+        )
         context["page_title"] = student.full_name
         return context
 
