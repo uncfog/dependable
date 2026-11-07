@@ -10,9 +10,9 @@ This repo is server-rendered Django with Tailwind CSS v4. There is no React, no 
 ## 0. Read first
 
 - `docs/TECHNICAL.md` section 4 (frontend) and the README section "Design tokens".
-- The references in `docs/design-references/`:
-  - `task-management-reference.jpeg`: the phone sign-in, the Today screen and the Create New sheet. Source for the sign-in look and the list and create patterns.
-  - `student-portal-reference.jpeg`: the phone home. Source for the layout of the mobile home for school owner, principal and platform owner. It is a student-facing portal, so take its layout, not its tiles (see section 6).
+- The references in `docs/design-references/` are **pointers for the kind of interface, not screens to copy.** Take the type of UI: a gradient header band, a search field overlapping that band, a tile grid for quick access, a date strip, progress cards, a bottom sheet with a segmented control, and a bottom bar. Do not take their content: names, greetings, dates, events, tile labels, numbers, accent colours or copy. Every word, number and tile on a SCHOOLCORD screen comes from SCHOOLCORD's own data and navigation.
+  - `task-management-reference.jpeg`: pointer for the sign-in look, the list patterns and the Create New sheet.
+  - `student-portal-reference.jpeg`: pointer for the mobile home layout. It is a student portal, so its tiles and items do not carry over (see sections 4 and 6).
 - `assets/app.css`: the `@theme` block and the component classes. Use the tokens that already exist. Do not invent new ones.
 
 ## 1. Non-negotiables
@@ -46,7 +46,7 @@ To close it:
 
 ## 4. Mobile home: school owner, principal, platform owner
 
-Reference: `student-portal-reference.jpeg`. This is the phone view of three dashboards:
+Pointer: `student-portal-reference.jpeg` for the layout. This is the phone view of three dashboards:
 
 | Role | Template | Route (from `ROLE_HOME`) |
 | --- | --- | --- |
@@ -76,7 +76,7 @@ A tile for a feature that is not built uses the existing "soon" treatment (`nav-
 
 ## 5. Task-management patterns (lists and create flows)
 
-Reference: `task-management-reference.jpeg`.
+Pointer: `task-management-reference.jpeg` for the patterns. Every label, field and value below is SCHOOLCORD's.
 
 - **Date strip:** seven day chips. The selected day is `brand-700` with white text. Use it on any due-date view.
 - **Progress cards:** title, one line of meta, a progress bar, a status chip and a chevron. Use them for progress lists such as a class's or a family's fee progress.
@@ -94,7 +94,7 @@ Take each URL from `nav_for()`. Do not type URL names from memory.
 
 **Nav entry with no app:** Plans & Billing (`billing:index`, platform owner). There is no billing app, so it shows as disabled. Leave it that way until billing exists.
 
-**Reference tile mapping** for owner, principal and platform owner:
+**Reference tiles and where SCHOOLCORD's equivalent lives** (the reference's labels are not used; only the nav's labels are):
 - Profile: Account settings.
 - Staffs: Staff.
 - Fees Details: Payments.
@@ -124,7 +124,7 @@ Keep the sidebar and the current content width. Use the same tokens and card pat
 ## 10. Do not
 
 - Add a role, a parent or student login, or a module without an explicit request. A module needs an entry in `apps/core/modules.py`, and a role needs `apps/core/roles.py` plus capabilities.
-- Use sample names or data from the references ("Hello Alex", "Science Exhibition", "Homework at Exited Summer Academy") in templates. Use real data or an empty state.
+- Copy reference content: its names ("Hello Alex"), events ("Science Exhibition"), tasks ("Homework at Exited Summer Academy"), dates, numbers, tile labels or the lime and blue accents. The pattern comes from the reference; the content comes from SCHOOLCORD. In templates, use real data or an empty state.
 - Add a bell, profile photos, a Calendar link or a Messages link before the feature exists.
 - Commit straight to `main`. Railway deploys pushes to `main` to production. Work on a branch and open a pull request.
 
