@@ -70,6 +70,17 @@ TRACKED = {
         "feecomponent", Category.MONEY, ("fee_structure_id", "name", "amount"),
         label=lambda row: row.name,
     ),
+    "fees.StudentFeeAdjustment": Tracked(
+        "studentfeeadjustment", Category.MONEY,
+        ("student_id", "term_id", "kind", "amount", "description", "voided_by_id",
+         "void_reason"),
+        label=lambda row: row.get_kind_display(),
+        actions=lambda before, after: (
+            "studentfeeadjustment.voided"
+            if after["voided_by_id"] and not before["voided_by_id"]
+            else None
+        ),
+    ),
     "accounts.User": Tracked(
         "user", Category.ACCESS,
         ("role", "school_id", "branch_id", "is_active", "is_staff", "is_superuser",

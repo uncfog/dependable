@@ -13,8 +13,9 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Count
 from django.http import HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
+from django.views.generic import CreateView, DeleteView, FormView, ListView, UpdateView
 
 from apps.academics.lookup import ClassIndex
 from apps.academics.models import Class, Level
@@ -26,15 +27,18 @@ from apps.core.import_flow import (
 )
 from apps.core.permissions import Capability, CapabilityRequiredMixin
 from apps.core.spreadsheets import Reference
+from apps.students.models import Student
 
 from . import importers
 from .forms import (
     FeeComponentFormSet,
     FeeStructureForm,
     NewFeeComponentFormSet,
+    StudentFeeAdjustmentForm,
     TermForm,
+    VoidAdjustmentForm,
 )
-from .models import FeeStructure, Term
+from .models import FeeStructure, StudentFeeAdjustment, Term, not_past
 
 
 class ReadFeesMixin(CapabilityRequiredMixin):
@@ -201,7 +205,38 @@ class FeeStructureCreateView(
         return initial
 
 
-class FeeStructureUpdateView(ManageFeesMixin, ComponentFormsetMixin, UpdateView):
+class RefusePastTermMixin:
+    """Keep an earlier term's fees as they were billed.
+
+    Children's balances for that term are read from these figures, so changing them
+    would quietly change what families owe. A correction for one child is an
+    adjustment. Listed after the capability mixin, whose check runs first, so a bursar
+    still gets their 403.
+    """
+
+    def get(self, request, *args, **kwargs):
+        return self._refusal() or super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        return self._refusal() or super().post(request, *args, **kwargs)
+
+    def _refusal(self):
+        structure = self.get_object()
+        if not structure.term.is_past:
+            return None
+        messages.error(
+            self.request,
+            f"{structure.term.name} has ended, so its fees can't be changed. To correct "
+            f"one child's bill, add an adjustment on their page.",
+        )
+        return HttpResponseRedirect(
+            f"{reverse('fees:structure_list')}?term={structure.term_id}"
+        )
+
+
+class FeeStructureUpdateView(
+    ManageFeesMixin, RefusePastTermMixin, ComponentFormsetMixin, UpdateView
+):
     model = FeeStructure
     form_class = FeeStructureForm
     template_name = "fees/structure_form.html"
@@ -217,7 +252,7 @@ class FeeStructureUpdateView(ManageFeesMixin, ComponentFormsetMixin, UpdateView)
         return context
 
 
-class FeeStructureDeleteView(ManageFeesMixin, DeleteView):
+class FeeStructureDeleteView(ManageFeesMixin, RefusePastTermMixin, DeleteView):
     model = FeeStructure
     template_name = "fees/structure_confirm_delete.html"
     success_url = reverse_lazy("fees:structure_list")
@@ -296,6 +331,79 @@ class TermUpdateView(ManageFeesMixin, UpdateView):
 
 
 # ---------------------------------------------------------------------------
+# One child's bill
+# ---------------------------------------------------------------------------
+
+
+class AdjustmentCreateView(ManageFeesMixin, CreateView):
+    """A discount, scholarship, charge or opening balance for one child."""
+
+    model = StudentFeeAdjustment
+    form_class = StudentFeeAdjustmentForm
+    template_name = "fees/adjustment_form.html"
+
+    def get_student(self):
+        if not hasattr(self, "_student"):
+            # Scoped manager: another school's child is a 404.
+            self._student = get_object_or_404(Student.objects, pk=self.kwargs["student"])
+        return self._student
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["student"] = self.get_student()
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["student"] = self.get_student()
+        context["page_title"] = f"Adjustment — {self.get_student().full_name}"
+        return context
+
+    def form_valid(self, form):
+        form.instance.created_by = self.request.user
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            f"{self.object.get_kind_display()} recorded for "
+            f"{self.get_student().full_name}.",
+        )
+        return response
+
+    def get_success_url(self):
+        return self.get_student().get_absolute_url()
+
+
+class AdjustmentVoidView(ManageFeesMixin, FormView):
+    """Take an adjustment back. It stays on record, with who did it and why."""
+
+    form_class = VoidAdjustmentForm
+    template_name = "fees/adjustment_void.html"
+
+    def get_adjustment(self):
+        if not hasattr(self, "_adjustment"):
+            self._adjustment = get_object_or_404(
+                StudentFeeAdjustment.objects.select_related("student", "term"),
+                pk=self.kwargs["pk"],
+            )
+        return self._adjustment
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["adjustment"] = self.get_adjustment()
+        context["page_title"] = "Void adjustment"
+        return context
+
+    def form_valid(self, form):
+        adjustment = self.get_adjustment()
+        if adjustment.is_void:
+            messages.info(self.request, "That adjustment was already voided.")
+        else:
+            adjustment.void(by=self.request.user, reason=form.cleaned_data["reason"])
+            messages.warning(self.request, "Adjustment voided.")
+        return HttpResponseRedirect(adjustment.student.get_absolute_url())
+
+
+# ---------------------------------------------------------------------------
 # Excel import
 #
 # Pricing nineteen classes by hand is nineteen trips through the structure form,
@@ -338,7 +446,7 @@ class FeeImportFlow(ImportFlow):
     back_label = "fees"
 
     def scope_queryset(self):
-        return Term.objects.select_related("branch")
+        return not_past(Term.objects.select_related("branch"))
 
     def requested_scope(self, request):
         """The term a download is for, defaulting to the one the school is in.

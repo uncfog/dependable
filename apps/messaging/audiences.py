@@ -109,7 +109,8 @@ def owing_students(
 
 
 def _owes(position: fees.FeePosition) -> bool:
-    return position.is_priced and position.outstanding > ZERO
+    # Earlier terms included: a child whose only debt is from last term still owes.
+    return position.total_owed > ZERO
 
 
 def resolve(

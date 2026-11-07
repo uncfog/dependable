@@ -206,6 +206,12 @@
                 <dd class="numeric text-ink-800">{{ component.amount|naira }}</dd>
               </div>
             {% endfor %}
+            {% if position.adjustment %}
+              <div class="flex items-baseline justify-between gap-3">
+                <dt class="text-ink-600">Adjustments for this child</dt>
+                <dd class="numeric text-ink-800">{% if position.adjustment < 0 %}&minus;{% endif %}{{ position.adjustment_size|naira }}</dd>
+              </div>
+            {% endif %}
           </dl>
           <div class="mt-3 flex items-baseline justify-between gap-3 border-t
                       border-ink-200 pt-3">
@@ -215,7 +221,7 @@
             </span>
           </div>
           <p class="field-hint">
-            The total of {{ student.school_class.display_name }}'s fee structure.
+            The total of {{ student.school_class.display_name }}'s fee structure{% if position.adjustment %}, with this child's adjustments{% endif %}.
             It is read from the structure every time, never copied onto the
             student &mdash; repricing the class updates this page.
           </p>
@@ -229,14 +235,30 @@
               <dt class="text-ink-600">Confirmed payments</dt>
               <dd class="numeric text-ink-800">{{ position.paid|naira }}</dd>
             </div>
+            {% if position.arrears_outstanding %}
+              <div class="flex items-baseline justify-between gap-3">
+                <dt class="text-ink-600">From earlier terms</dt>
+                <dd class="numeric text-overdue-strong">{{ position.arrears_outstanding|naira }}</dd>
+              </div>
+              <div class="flex items-baseline justify-between gap-3">
+                <dt class="text-ink-600">This term</dt>
+                <dd class="numeric text-ink-800">{{ position.outstanding|naira }}</dd>
+              </div>
+            {% endif %}
             <div class="flex items-baseline justify-between gap-3">
               <dt class="font-semibold text-ink-900">Outstanding</dt>
               <dd class="numeric text-lg font-semibold
-                         {% if position.outstanding %}text-overdue-strong
+                         {% if position.total_owed %}text-overdue-strong
                          {% else %}text-paid-strong{% endif %}">
-                {{ position.outstanding|naira }}
+                {{ position.total_owed|naira }}
               </dd>
             </div>
+            {% if position.credit %}
+              <div class="flex items-baseline justify-between gap-3">
+                <dt class="text-ink-600">Credit</dt>
+                <dd class="numeric text-paid-strong">{{ position.credit|naira }}</dd>
+              </div>
+            {% endif %}
           </dl>
           <div class="mt-3 flex flex-wrap items-center gap-2">
             <span class="status-pill {{ position.pill_class }}">{{ position.pill_label }}</span>
@@ -251,6 +273,26 @@
               </span>
             {% endif %}
           </div>
+          {% if "record_payments" in capabilities %}
+            <a href="{% url 'payments:record' %}?student={{ student.pk }}"
+               class="btn btn-primary mt-4 w-full text-sm">Record a payment</a>
+          {% endif %}
+        </div>
+
+      {% elif position.arrears_outstanding %}
+        <div class="px-5 py-4">
+          <dl class="text-sm">
+            <div class="flex items-baseline justify-between gap-3">
+              <dt class="font-semibold text-ink-900">From earlier terms</dt>
+              <dd class="numeric text-lg font-semibold text-overdue-strong">
+                {{ position.arrears_outstanding|naira }}
+              </dd>
+            </div>
+          </dl>
+          <p class="field-hint">
+            {{ student.school_class.display_name }} has no fees set for
+            {{ position.term.name }} yet.
+          </p>
           {% if "record_payments" in capabilities %}
             <a href="{% url 'payments:record' %}?student={{ student.pk }}"
                class="btn btn-primary mt-4 w-full text-sm">Record a payment</a>
@@ -280,6 +322,77 @@
         </div>
       {% endif %}
     </section>
+
+    {% comment %}
+    Each term on this child's record, one card rather than a table so it reads the
+    same at a desk and on a phone. Voided adjustments stay visible, struck through.
+    {% endcomment %}
+    {% if statement %}
+      <section class="card overflow-hidden">
+        <div class="flex items-center justify-between gap-3 border-b border-ink-200 px-5 py-3">
+          <h2 class="text-sm font-semibold text-ink-900">Fee history</h2>
+          {% if "manage_fees" in capabilities %}
+            <a href="{% url 'fees:adjustment_create' student.pk %}"
+               class="btn btn-secondary text-xs">Add adjustment</a>
+          {% endif %}
+        </div>
+        <ol class="divide-y divide-ink-200 text-sm">
+          {% for line in statement %}
+            <li class="px-5 py-3">
+              <p class="font-medium text-ink-900">
+                {{ line.term.name }}{% if line.is_current %}
+                  <span class="status-pill status-partial ml-1">Current</span>{% endif %}
+              </p>
+              {% if line.school_class %}
+                <p class="text-xs text-ink-500">{{ line.school_class.display_name }}</p>
+              {% endif %}
+              <dl class="mt-2 space-y-1">
+                <div class="flex justify-between gap-3">
+                  <dt class="text-ink-600">Fees</dt>
+                  <dd class="numeric text-ink-800">{{ line.fees|naira }}</dd>
+                </div>
+                {% for adjustment in line.adjustments %}
+                  <div class="flex items-baseline justify-between gap-3">
+                    <dt class="min-w-0 text-ink-600">
+                      <span class="{% if adjustment.is_void %}line-through{% endif %}">
+                        {{ adjustment.get_kind_display }}: {{ adjustment.description }}
+                      </span>
+                      {% if adjustment.is_void %}
+                        <span class="block text-xs text-ink-500">
+                          Voided: {{ adjustment.void_reason }}
+                        </span>
+                      {% elif "manage_fees" in capabilities %}
+                        <a href="{% url 'fees:adjustment_void' adjustment.pk %}"
+                           class="block py-1 text-xs text-overdue-strong hover:underline">Void</a>
+                      {% endif %}
+                    </dt>
+                    <dd class="numeric shrink-0 text-ink-800
+                               {% if adjustment.is_void %}line-through{% endif %}">
+                      {% if adjustment.kind in reducing_kinds %}&minus;{% endif %}{{ adjustment.amount|naira }}
+                    </dd>
+                  </div>
+                {% endfor %}
+                <div class="flex justify-between gap-3">
+                  <dt class="text-ink-600">Paid</dt>
+                  <dd class="numeric text-ink-800">{{ line.paid|naira }}</dd>
+                </div>
+                <div class="flex justify-between gap-3 font-medium">
+                  {% if line.overpaid %}
+                    <dt class="text-ink-900">Overpaid</dt>
+                    <dd class="numeric text-paid-strong">{{ line.overpaid|naira }}</dd>
+                  {% else %}
+                    <dt class="text-ink-900">Balance</dt>
+                    <dd class="numeric {% if line.owing %}text-overdue-strong{% else %}text-paid-strong{% endif %}">
+                      {{ line.owing|naira }}
+                    </dd>
+                  {% endif %}
+                </div>
+              </dl>
+            </li>
+          {% endfor %}
+        </ol>
+      </section>
+    {% endif %}
 
     {% if "manage_students" in capabilities %}
       <section class="card p-5">
