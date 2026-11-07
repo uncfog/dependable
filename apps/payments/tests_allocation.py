@@ -639,7 +639,9 @@ class SignedInAtOneCampusTests(AllocationTestCase):
 
     def test_confirming_the_payment_confirms_every_share(self):
         pending = self.receive(status=PaymentStatus.PENDING)
-        share = allocation.allocate(pending, self.sade, D("10000"), actor=self.owner)
+        share = allocation.allocate(
+            pending, self.sade, D("10000"), actor=self.owner, allow_credit=True
+        )
         with self.at_north():
             allocation.confirm(pending, actor=self.bursar)
         self.assertEqual(Payment.all_objects.get(pk=share.pk).status, PaymentStatus.CONFIRMED)
