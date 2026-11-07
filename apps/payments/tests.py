@@ -350,11 +350,11 @@ class StatusColourTests(PaymentsTestCase):
         )
         self.assertEqual(
             self.pay(self.bola, "1000", status=PaymentStatus.PENDING).pill_class,
-            "status-partial",
+            "status-pending",
         )
         voided = self.pay(self.chidi, "1000")
         voided.void(reason="x")
-        self.assertEqual(voided.pill_class, "status-unpaid")
+        self.assertEqual(voided.pill_class, "status-void")
 
 
 # ===========================================================================

@@ -198,6 +198,11 @@ class StudentFilterForm(forms.Form):
         # roster that has been running for years is mostly former students.
         choices=[("", "All statuses")] + list(StudentStatus.choices),
     )
+    # The chips above the roster. Worked out from each child's ledger, not stored.
+    balance = forms.ChoiceField(
+        required=False,
+        choices=[("", "All"), ("owes", "Owes"), ("paid", "Paid in full")],
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

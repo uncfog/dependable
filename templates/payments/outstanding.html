@@ -3,147 +3,110 @@
 
 {% block page_subtitle %}
   <p class="truncate text-sm text-ink-600">
-    {{ page_obj.paginator.count }} student{{ page_obj.paginator.count|pluralize }}
-    still owe{{ page_obj.paginator.count|pluralize:"s," }}
+    {{ owing_count }} student{{ owing_count|pluralize }} still owe{{ owing_count|pluralize:"s," }}
     {% if term %}&middot; {{ term.name }}{% endif %}
   </p>
 {% endblock %}
 
 {% block page_actions %}
-  <a href="{% url 'payments:index' %}" class="btn btn-ghost text-sm">
-    All payments
-  </a>
   {% if can_send %}
     {% comment %} The same derivation this page uses, so the reminder reaches exactly the
        families listed below. {% endcomment %}
-    <a href="{% url 'messaging:fee_reminder' %}" class="btn btn-primary text-sm">
-      <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-           stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round"
-              d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.375
-                 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375
-                 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03
-                 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41
-                 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457
-                 -.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25
-                 9-8.25s9 3.694 9 8.25Z" />
-      </svg>
-      <span class="hidden sm:inline">Message these parents</span>
-      <span class="sm:hidden">Remind</span>
-    </a>
+    <a href="{% url 'messaging:fee_reminder' %}" class="btn btn-secondary text-sm">Message these parents</a>
+  {% endif %}
+  {% if can_record %}
+    <a href="{% url 'payments:record' %}" class="btn btn-primary text-sm max-sm:hidden">Record a payment</a>
   {% endif %}
 {% endblock %}
 
 {% block content %}
 
   {% if rows %}
-    <div class="stat-row mb-5">
-      <div class="card p-5">
-        <div class="text-sm font-medium text-ink-600">Still owed</div>
-        <div class="numeric mt-2 text-3xl font-semibold text-overdue-strong">
-          {{ owed_total|naira }}
-        </div>
-        <div class="mt-1 text-xs text-ink-500">Across this page's students</div>
+    {% if term and not term.due_date %}
+      <div class="note-banner mb-4">
+        <span>
+          No due date is set for {{ term.name }},
+          {% if any_overdue %}so this term's balances are not overdue yet.{% else %}so nothing is overdue yet.{% endif %}
+        </span>
+        {% if can_set_due_date %}
+          <a href="{% url 'fees:term_update' term.pk %}" class="btn btn-primary btn-sm">Set due date</a>
+        {% endif %}
       </div>
-      <div class="card p-5">
-        <div class="text-sm font-medium text-ink-600">Expected from them</div>
-        <div class="numeric mt-2 text-3xl font-semibold text-brand-900">
-          {{ expected_total|naira }}
-        </div>
-        <div class="mt-1 text-xs text-ink-500">Their classes' fee structures</div>
-      </div>
-      <div class="card p-5">
-        <div class="text-sm font-medium text-ink-600">Due by</div>
-        <div class="mt-2 text-lg font-semibold text-brand-900">
-          {% if term.due_date %}{{ term.due_date|date:"j F Y" }}
-          {% else %}Not set{% endif %}
-        </div>
-        <div class="mt-1 text-xs text-ink-500">
-          {% if term.due_date %}
-            Balances past this date read as overdue
-          {% else %}
-            Set one on the term and unpaid balances start showing as overdue
-          {% endif %}
-        </div>
-      </div>
+    {% endif %}
+
+    <div class="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-3.5">
+      <div class="tile tint-blue"><span>Still owed</span><b>{{ owed_total|naira }}</b></div>
+      <div class="tile tint-blue"><span>Students who owe</span><b>{{ owing_count }}</b></div>
+      <div class="tile tint-grey"><span>Paid nothing</span><b>{{ paid_nothing_count }}</b></div>
+      <div class="tile tint-amber"><span>Part paid</span><b>{{ part_paid_count }}</b></div>
     </div>
 
-    <div class="card overflow-hidden">
+    <div class="card card-apart overflow-hidden">
       <div class="overflow-x-auto">
-        <table class="w-full text-sm">
+        <table class="table-tight w-full text-sm">
           <thead class="table-head">
             <tr>
-              <th scope="col" class="px-5 py-3 font-semibold">Student</th>
-              <th scope="col" class="px-5 py-3 font-semibold">Class</th>
-              <th scope="col" class="px-5 py-3 font-semibold">Parent</th>
-              <th scope="col" class="px-5 py-3 text-right font-semibold">Expected</th>
-              <th scope="col" class="px-5 py-3 text-right font-semibold">Paid</th>
-              <th scope="col" class="px-5 py-3 text-right font-semibold">Arrears</th>
-              <th scope="col" class="px-5 py-3 text-right font-semibold">Owed</th>
-              <th scope="col" class="px-5 py-3 font-semibold">Status</th>
-              {% if can_record %}
-                <th scope="col" class="px-5 py-3 text-right font-semibold">Actions</th>
-              {% endif %}
+              <th scope="col" class="px-5 py-3">Student</th>
+              <th scope="col" class="px-5 py-3">Parent</th>
+              <th scope="col" class="px-5 py-3 text-right">Expected</th>
+              <th scope="col" class="px-5 py-3 text-right">Paid</th>
+              {% if shows_arrears %}<th scope="col" class="px-5 py-3 text-right">Arrears</th>{% endif %}
+              <th scope="col" class="px-5 py-3 text-right">Owed</th>
+              <th scope="col" class="min-w-20 px-5 py-3">Paid so far</th>
+              <th scope="col" class="px-5 py-3">Status</th>
+              {% if can_record %}<th scope="col" class="px-5 py-3"><span class="sr-only">Action</span></th>{% endif %}
             </tr>
           </thead>
-          <tbody class="divide-y divide-ink-200">
-            {% for row in rows %}
+          <tbody class="divide-y divide-ink-100">
+            {% for item in bars %}
+              {% with row=item.row %}
               <tr class="card-row">
-                <td class="card-title order-1 px-5 py-3">
-                  <a href="{{ row.student.get_absolute_url }}"
-                     class="font-medium text-brand-800 hover:underline">
-                    {{ row.student.formal_name }}
-                  </a>
-                  <span class="numeric block text-xs text-ink-500">
-                    {{ row.student.admission_number }}
+                <td class="card-lead order-1 px-5 py-3">
+                  <span class="min-w-0">
+                    <a href="{{ row.student.get_absolute_url }}" class="font-bold text-ink-900 hover:underline">
+                      {{ row.student.formal_name }}
+                    </a>
+                    <span class="sub-line">{{ row.student.school_class.display_name }}</span>
                   </span>
                 </td>
-                <td class="card-half card-bare order-2 whitespace-nowrap px-5 py-3 text-ink-700">
-                  {{ row.student.school_class.display_name }}
-                </td>
-                <td class="card-bare order-4 px-5 py-3">
-                  <span class="text-ink-700">{{ row.student.parent_name }}</span>
-                  <a href="{{ row.student.parent_phone_link }}"
-                     class="numeric block text-xs text-brand-800 hover:underline">
+                <td class="card-full card-bare card-parent order-4 px-5 py-3 text-ink-700 sm:whitespace-nowrap">
+                  {{ row.student.parent_name }}<span class="sm:hidden"> &middot; </span>
+                  <a href="{{ row.student.parent_phone_link }}" class="numeric text-xs text-brand-800 hover:underline sm:block">
                     {{ row.student.parent_phone_display }}
                   </a>
                 </td>
-                <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
-                  {{ row.position.expected|naira }}
-                </td>
-                <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
-                  {{ row.position.paid|naira }}
-                </td>
-                <td class="{% if not row.position.arrears_outstanding %}card-secondary {% endif %}order-5 numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
-                  {{ row.position.arrears_outstanding|naira }}
-                </td>
+                <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">{{ row.position.expected|naira }}</td>
+                <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">{{ row.position.paid|naira }}</td>
+                {% if shows_arrears %}
+                  <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
+                    {{ row.position.arrears_outstanding|naira }}
+                  </td>
+                {% endif %}
                 {# Red only where the balance is past the due date; an ordinary balance is ink. #}
-                <td class="card-half order-6 numeric whitespace-nowrap px-5 py-3 text-right
-                           font-semibold {% if row.position.pill_class == 'status-overdue' %}text-overdue-strong{% else %}text-ink-900{% endif %}">
+                <td class="card-half card-end card-bare order-2 numeric whitespace-nowrap px-5 py-3 text-right font-bold
+                           {% if row.position.pill_class == 'status-overdue' %}text-overdue-strong{% else %}text-ink-900{% endif %}">
                   {{ row.owed|naira }}
                 </td>
-                <td class="card-half card-end card-bare order-3 whitespace-nowrap px-5 py-3">
-                  <span class="status-pill {{ row.position.pill_class }}">
-                    {{ row.position.pill_label }}
+                <td class="card-full order-3 px-5 py-3">
+                  <span class="progress" role="img" aria-label="{{ item.percent }}% of this term's fees paid">
+                    <i style="width: {{ item.percent }}%"></i>
                   </span>
+                </td>
+                <td class="card-half card-bare order-6 whitespace-nowrap px-5 py-3">
+                  <span class="status-pill {{ row.position.pill_class }}">{{ row.position.pill_label }}</span>
                 </td>
                 {% if can_record %}
                   <td class="card-half card-end card-bare order-7 px-5 py-3 text-right">
                     <a href="{% url 'payments:record' %}?student={{ row.student.pk }}"
-                       class="btn btn-ghost whitespace-nowrap text-xs">Record payment</a>
+                       class="btn btn-line btn-sm whitespace-nowrap" aria-label="Record a payment for {{ row.student.full_name }}">Record</a>
                   </td>
                 {% endif %}
               </tr>
+              {% endwith %}
             {% endfor %}
           </tbody>
         </table>
       </div>
-      <p class="border-t border-ink-200 px-5 py-3 text-xs text-ink-500">
-        Expected is the class's fee structure for the term, with any adjustments for
-        that child; paid is confirmed payments only. Arrears are what is still owed
-        from earlier terms, and payments settle those first. A class with no fee
-        structure this term is listed only for its arrears.
-      </p>
     </div>
 
     {% if page_obj.paginator.num_pages > 1 %}

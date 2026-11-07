@@ -104,6 +104,17 @@ class StudentListView(ReadStudentsMixin, ListView):
             queryset = queryset.filter(school_class=filters["school_class"])
         if filters.get("status"):
             queryset = queryset.filter(status=filters["status"])
+        if filters.get("balance"):
+            # A balance is derived, not stored, so this chip has to work each child out.
+            students = list(queryset)
+            schedule = fees.load(students)
+            owes = filters["balance"] == "owes"
+            return [
+                student
+                for student in students
+                if (position := schedule.position_for(student)).is_priced
+                and (position.total_owed > fees.ZERO) == owes
+            ]
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -126,7 +137,8 @@ class StudentListView(ReadStudentsMixin, ListView):
 
         context["filter_form"] = self.get_filter_form()
         context["is_filtered"] = any(
-            self.request.GET.get(name) for name in ("q", "school_class", "status")
+            self.request.GET.get(name)
+            for name in ("q", "school_class", "status", "balance")
         )
         # Only asked when the filters found nothing, to tell the user whether the
         # roster is empty or their search was too narrow.

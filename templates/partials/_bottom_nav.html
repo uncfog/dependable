@@ -29,7 +29,7 @@ the sidebar's breakpoint up.
           <path stroke-linecap="round" stroke-linejoin="round" d="{{ d }}" />
         {% endfor %}
       </svg>
-      <span class="truncate">{{ item.label }}</span>
+      <span class="truncate">{% if forloop.first %}Home{% else %}{{ item.label }}{% endif %}</span>
     </a>
   {% endfor %}
   <button type="button" id="mobile-nav-open" class="bottom-nav-link"

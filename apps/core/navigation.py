@@ -457,21 +457,19 @@ def nav_for(
 #: What goes in the bar at the bottom of a phone screen, per role, in order. The
 #: screens that role opens every day; everything else is under More.
 #:
-#: Owners and principals get Record a payment as a lime "+" in the middle of the bar,
-#: which takes the place of Reports; Reports stays under More and in the sidebar.
+#: Whoever records payments gets Record a payment as a lime "+" in the middle of the
+#: bar. Reports and Outstanding stay under More and in the sidebar.
 BOTTOM_NAV: dict[str, tuple[str, ...]] = {
     Role.PLATFORM_OWNER: (
         HOME, "core:platform_schools", "staff:list", "students:student_list",
     ),
     Role.SCHOOL_OWNER: (HOME, "students:student_list", "payments:index"),
     Role.PRINCIPAL: (HOME, "students:student_list", "payments:index"),
-    Role.BURSAR: (HOME, "payments:index", "payments:outstanding", "students:student_list"),
+    Role.BURSAR: (HOME, "students:student_list", "payments:index"),
 }
 
-#: Roles whose bar carries the "+" for Record a payment. The bursar's bar already
-#: has four links, so a "+" there would make six; the bursar records from the
-#: dashboard instead.
-BOTTOM_RECORD_ROLES = (Role.SCHOOL_OWNER, Role.PRINCIPAL)
+#: Roles whose bar carries the "+" for Record a payment.
+BOTTOM_RECORD_ROLES = (Role.SCHOOL_OWNER, Role.PRINCIPAL, Role.BURSAR)
 
 
 def bottom_nav_for(role: str | None, sections: list[ResolvedSection]) -> list[ResolvedItem]:

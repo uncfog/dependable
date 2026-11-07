@@ -819,6 +819,55 @@ def waiting_receipts(request) -> list:
     )
 
 
+#: The phone overview's quick-access tiles. Each colour marks the section it opens.
+QUICK_ACCESS = (
+    ("Record payment", "payments:record", "blue", "plus"),
+    ("Outstanding", "payments:outstanding", "red", "alert"),
+    ("Students", "students:student_list", "purple", "person"),
+    ("Payments", "payments:index", "green", "lines"),
+    ("Fee structures", "fees:structure_list", "amber", "naira"),
+    ("Reports", "reports:index", "blue", "bars"),
+)
+
+
+def quick_access(request) -> list[dict]:
+    """The tiles this account may open: the sidebar already decided, so ask it."""
+    from .context_processors import tenancy
+
+    allowed = {
+        item.href
+        for section in tenancy(request)["nav_sections"]
+        for item in section.items
+        if item.available
+    }
+    tiles = []
+    for label, url_name, tint, icon in QUICK_ACCESS:
+        href = reverse(url_name)
+        if url_name == "payments:record":
+            permitted = has_capability(request.user, Capability.RECORD_PAYMENTS)
+        else:
+            permitted = href in allowed
+        if permitted:
+            tiles.append({"label": label, "href": href, "tint": tint, "icon": icon})
+    return tiles
+
+
+def overview_figures(request, terms, expected_total) -> dict:
+    """The band, the tiles and the lists every role's overview shares."""
+    summary = with_outstanding(collection_summary(terms), expected_total)
+    collected = summary["collected_total"]
+    return {
+        **summary,
+        "has_current_term": bool(terms),
+        "expected_total": expected_total,
+        "collected_percent": (
+            min(int(collected * 100 / expected_total), 100) if expected_total else 0
+        ),
+        "waiting_receipts": waiting_receipts(request),
+        "quick_access": quick_access(request),
+    }
+
+
 def expected_fees(terms) -> Decimal:
     """What the given terms ask for in total: each class's line items times its active roll.
 
@@ -901,17 +950,8 @@ class SchoolDashboardView(RoleDashboardMixin, TemplateView):
         # The money behind the header band: what the current terms ask for, what
         # has come in, what is waiting for a check and what is still owed.
         terms = list(current_terms.values())
-        expected_total = expected_fees(terms)
-        summary = with_outstanding(collection_summary(terms), expected_total)
-        context.update(summary)
-        context["has_current_term"] = bool(terms)
-        context["expected_total"] = expected_total
-        collected = summary["collected_total"]
-        context["collected_percent"] = (
-            min(int(collected * 100 / expected_total), 100) if expected_total else 0
-        )
-        context["waiting_receipts"] = waiting_receipts(self.request)
-        context["page_title"] = "School overview"
+        context.update(overview_figures(self.request, terms, expected_fees(terms)))
+        context["page_title"] = "Overview"
         return context
 
 
@@ -966,7 +1006,9 @@ class BranchDashboardView(RoleDashboardMixin, TemplateView):
         context["setup"] = setup_progress(self.request)
         context["receipts_waiting"] = receipts_waiting(self.request)
         context["recent_payments"] = recent_payments(self.request)
-        context["page_title"] = "Branch dashboard"
+        terms = [term] if term is not None else []
+        context.update(overview_figures(self.request, terms, expected_fees(terms)))
+        context["page_title"] = "Overview"
         return context
 
 
@@ -1038,7 +1080,10 @@ class BursarDashboardView(RoleDashboardMixin, TemplateView):
         )
         context["receipts_waiting"] = receipts_waiting(self.request)
         context["recent_payments"] = recent_payments(self.request)
-        context["page_title"] = "Finance dashboard"
+        context["status"] = status_breakdown(term)
+        terms = [term] if term is not None else []
+        context.update(overview_figures(self.request, terms, expected_total))
+        context["page_title"] = "Overview"
         return context
 
 

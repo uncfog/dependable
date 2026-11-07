@@ -270,8 +270,9 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
                 format="%d/%m/%Y",
             ),
             "reference": forms.TextInput(
-                attrs={"placeholder": "Teller / transfer ref", "autocomplete": "off"}
+                attrs={"placeholder": "Teller or transfer ref", "autocomplete": "off"}
             ),
+            "method": forms.RadioSelect,
             "note": forms.TextInput(
                 attrs={"placeholder": "Anything the receipt does not say"}
             ),
@@ -311,8 +312,21 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
         # is not refused.
         self.fields["date_paid"].input_formats = ["%d/%m/%Y", "%Y-%m-%d"]
         self.fields["amount"].label = "Amount (₦)"
-        self.fields["reference"].label = "Reference"
-        self.fields["note"].label = "Note"
+        self.fields["amount"].help_text = "Amount on the receipt"
+        self.fields["date_paid"].help_text = "Day / month / year"
+        self.fields["label"].label = "What it is for"
+        self.fields["label"].help_text = ""
+        self.fields["reference"].help_text = ""
+        self.fields["method"].label = "How was it paid"
+        # A radio per method, so a blank "-------" row is not one of the choices.
+        self.fields["method"].choices = PaymentMethod.choices
+        self.fields["reference"].label = "Reference (optional)"
+        self.fields["note"].label = "Note (optional)"
+        self.fields["note"].widget.attrs.setdefault(
+            "placeholder", "Anything the receipt does not say"
+        )
+        self.fields["student"].widget.attrs["placeholder"] = "Type an admission number or a name"
+        self.fields["student"].help_text = "Pick the student to show their balance."
 
         if "receipt" in self.fields:
             self.fields["receipt"].widget.gated_url = self.instance.receipt_file_url
@@ -490,7 +504,7 @@ class PaymentFilterForm(forms.Form):
         label="Search",
         widget=forms.TextInput(
             attrs={
-                "placeholder": "Student, admission no. or reference",
+                "placeholder": "Name, admission number or reference",
                 "type": "search",
                 "autocomplete": "off",
             }

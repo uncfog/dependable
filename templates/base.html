@@ -150,7 +150,7 @@
   </div>
 
   {# ===== Content column =================================================== #}
-  <div class="app-content flex min-w-0 flex-1 flex-col">
+  <div class="app-content flex min-w-0 flex-1 flex-col {% block shell_class %}band-overlap{% endblock %}">
 
     {% comment %}
     The page header is the one frosted surface in the app shell: it sits over
@@ -166,7 +166,7 @@
     <header class="app-header z-30 flex min-h-touch flex-wrap items-center gap-x-3 gap-y-2
                    px-4 py-2.5 sm:px-6 lg:sticky lg:top-0">
       <div class="min-w-40 flex-1 basis-0">
-        <h1 class="truncate text-base font-semibold text-ink-900 sm:text-lg">
+        <h1 class="app-title truncate {% block title_class %}{% endblock %}">
           {% block page_title %}{{ page_title|default:"Dashboard" }}{% endblock %}
         </h1>
         {% block page_subtitle %}{% endblock %}
@@ -179,6 +179,8 @@
       <div class="page-actions flex w-full flex-wrap items-center gap-2 sm:w-auto">
         {% block page_actions %}{% endblock %}
       </div>
+
+      {% block band %}{% endblock %}
     </header>
 
     {% comment %}

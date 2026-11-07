@@ -1,0 +1,648 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>SCHOOLCORD redesign</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+*{box-sizing:border-box}
+:root{
+  --bg:#f4f6fb; --surface:#ffffff; --ink:#1b2140; --muted:#5f6788; --line:#e4e8f3;
+  --blue:#4a5fc0; --blue-deep:#3b4da6; --lime:#d2f04e;
+  --paid:#0d6b48; --paid-bg:#dff5ec; --part:#8a5a00; --part-bg:#fdf1d6;
+  --over:#c93a31; --over-bg:#fde4e1; --unpaid:#3b4da6; --unpaid-bg:#eceff8;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121735; --surface:#1c2347; --ink:#eef1fb; --muted:#aeb6d8; --line:#2c3566;
+    --blue:#8ea3f0; --blue-deep:#aab8f2; --lime:#d2f04e;
+    --paid:#7fe0b4; --paid-bg:#17382c; --part:#f0c674; --part-bg:#3a2e15;
+    --over:#ff8a80; --over-bg:#3d1d22; --unpaid:#aab8f2; --unpaid-bg:#222b57;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121735; --surface:#1c2347; --ink:#eef1fb; --muted:#aeb6d8; --line:#2c3566;
+  --blue:#8ea3f0; --blue-deep:#aab8f2; --lime:#d2f04e;
+  --paid:#7fe0b4; --paid-bg:#17382c; --part:#f0c674; --part-bg:#3a2e15;
+  --over:#ff8a80; --over-bg:#3d1d22; --unpaid:#aab8f2; --unpaid-bg:#222b57;
+  color-scheme:dark;
+}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font:400 16px/1.55 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  padding-block:28px 56px;
+  padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));
+}
+.wrap{max-width:1240px;margin:0 auto}
+h1{font-size:34px;line-height:1.15;letter-spacing:-.015em;margin:0 0 10px;font-weight:800;text-wrap:balance}
+h2{font-size:22px;letter-spacing:-.01em;margin:48px 0 4px;font-weight:800}
+.lede{font-size:17px;color:var(--muted);max-width:70ch;margin:0}
+.note{font-size:14px;color:var(--muted);margin:6px 0 0;max-width:72ch}
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-top:16px}
+.sw{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px}
+.sw i{display:block;height:56px;border-radius:12px;margin-bottom:10px}
+.sw b{display:block;font-size:14px}
+.sw span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.frame{overflow-x:auto;margin-top:16px;border-radius:18px;border:1px solid var(--line);background:var(--surface)}
+.parts{padding:20px;background:#f4f6fb;display:flex;flex-wrap:wrap;gap:12px;align-items:center;border-radius:18px}
+.phones{display:flex;flex-wrap:wrap;gap:28px 24px;margin-top:18px;align-items:flex-start}
+.cap{font-size:14px;color:var(--muted);margin-top:12px;max-width:340px}
+.changes{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 18px;margin-top:12px}
+.changes h4{margin:0;font-size:14px}
+.changes ul{margin:6px 0 0;padding-left:18px;font-size:14px}
+.changes li{margin:4px 0}
+.dec{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:4px 18px;margin-top:14px}
+.dec div{padding:12px 0;border-top:1px solid var(--line);font-size:15px}
+.dec div:first-child{border-top:0}
+.dec b{display:inline-block;min-width:150px;font-weight:700}
+@media (max-width:640px){.dec b{display:block;min-width:0;margin-bottom:2px}}
+
+/* ---- Mockups: fixed colours, so they read the same in both page themes ---- */
+.desk{width:1200px;display:grid;grid-template-columns:232px minmax(0,1fr);background:#f4f6fb;color:#1b2140;font:400 14px/1.45 "Public Sans",system-ui,sans-serif;border-radius:18px;overflow:hidden}
+.side{background:#4a5fc0;color:#fff;padding:20px 14px;display:flex;flex-direction:column;gap:2px}
+.side .brand{font-weight:800;font-size:17px;letter-spacing:.02em;padding:4px 10px 16px}
+.side .grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#dfe5fb;padding:14px 10px 6px}
+.side .it{padding:9px 12px;border-radius:12px;font-weight:500}
+.side .on{background:#d2f04e;color:#1b2140;font-weight:700}
+.dmain{min-width:0;padding-bottom:26px}
+.band{background:#4a5fc0;color:#fff;padding:22px 28px 70px}
+.band h2{margin:0;font-size:26px;font-weight:800;color:#fff}
+.band p{margin:4px 0 0;color:#eef1fc;font-size:14px}
+.row{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap}
+.acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hero{margin-top:20px}
+.hero .lbl{font-size:13px;color:#eef1fc}
+.hero .big{font-size:42px;font-weight:800;font-variant-numeric:tabular-nums;letter-spacing:-.01em;margin-top:2px}
+.hero .sub{font-size:14px;color:#eef1fc}
+.bar{height:10px;border-radius:99px;background:#e6eaf7;overflow:hidden}
+.bar i{display:block;height:100%;background:#d2f04e}
+.band .bar{background:rgba(255,255,255,.28);margin-top:14px;max-width:560px}
+.wrap2{padding:0 28px;margin-top:-46px;display:flex;flex-direction:column;gap:16px}
+.card{background:#fff;border-radius:20px;padding:20px 22px;box-shadow:0 10px 26px rgba(27,33,64,.08)}
+.card h4{margin:0 0 12px;font-size:16px;font-weight:800}
+.grid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:16px}
+.tile{border-radius:18px;padding:16px 18px;display:flex;flex-direction:column;gap:8px}
+.tile b{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+.tile span{font-size:13px;font-weight:600}
+.t-blue{background:#e8ebfa}.t-green{background:#dff5ec}.t-amber{background:#fdf1d6}.t-grey{background:#eceff8}.t-purple{background:#efe9fd}.t-red{background:#fde4e1}
+.ic{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none}
+.ic svg{width:18px;height:18px}
+.ic-blue{background:#4a5fc0}.ic-green{background:#2fb383}.ic-amber{background:#e6932a}.ic-red{background:#e35d5d}.ic-purple{background:#7b5cf0}
+.btn{height:38px;padding:0 16px;border-radius:12px;font:700 14px/1 "Public Sans",system-ui,sans-serif;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;border:1px solid transparent}
+.btn-lime{background:#d2f04e;color:#1b2140}
+.btn-blue{background:#4a5fc0;color:#fff}
+.btn-ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.75)}
+.btn-line{background:#fff;color:#3b4da6;border-color:#d5dbec}
+.btn-sm{height:30px;padding:0 12px;font-size:13px;border-radius:10px}
+.btn-full{width:100%;height:46px;font-size:15px}
+.pill{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap}
+.p-paid{background:#dff5ec;color:#0d6b48}
+.p-part{background:#fdf1d6;color:#8a5a00}
+.p-over{background:#c93a31;color:#fff}
+.p-unpaid{background:#eceff8;color:#3b4da6}
+.p-pend{background:#4a5fc0;color:#fff}
+.p-void{background:#eef0f5;color:#5f6788}
+.seg{display:flex;gap:6px;background:#eef1f9;border-radius:14px;padding:4px}
+.seg span{flex:1;text-align:center;padding:9px 4px;border-radius:10px;font-weight:600;font-size:13px;white-space:nowrap}
+.seg .on{background:#d2f04e;color:#1b2140;font-weight:800}
+.field{margin-top:14px}
+.field>label{display:block;font-size:13px;font-weight:700;margin-bottom:6px}
+.inp{height:44px;border:1px solid #d5dbec;border-radius:12px;padding:0 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;color:#1b2140;font-size:14px}
+.inp.ph{color:#6b7394}
+.inp.big{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums;height:54px}
+.help{font-size:12px;color:#5f6788;margin-top:5px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.drop{border:2px dashed #b9c2e4;border-radius:16px;padding:18px;color:#5f6788;text-align:center;background:#f8f9fe;font-size:14px}
+.kv{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eef1f8;font-variant-numeric:tabular-nums}
+.kv.t{border:0;font-weight:800;font-size:17px}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:14px;margin-top:16px}
+.chk i{width:18px;height:18px;border:2px solid #8f99bf;border-radius:5px;flex:none;margin-top:1px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{font-size:12px;color:#5f6788;font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid #e4e8f3;white-space:nowrap}
+.tbl td{padding:13px 12px;border-bottom:1px solid #eef1f8;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:0}
+.r{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.s{display:block;font-size:12px;color:#5f6788}
+.search{height:40px;border-radius:12px;border:1px solid #d5dbec;background:#fff;padding:0 14px;display:flex;align-items:center;color:#6b7394;font-size:14px;flex:1;min-width:200px}
+.chip{display:inline-block;padding:7px 14px;border-radius:999px;border:1px solid #d5dbec;background:#fff;font-weight:600;font-size:13px;white-space:nowrap}
+.chip.on{background:#4a5fc0;color:#fff;border-color:#4a5fc0}
+.chip.lime{background:#d2f04e;color:#1b2140;border-color:#d2f04e;font-weight:800}
+.frow{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.foot{display:flex;justify-content:space-between;align-items:center;color:#5f6788;font-size:13px;margin-top:12px;flex-wrap:wrap;gap:8px}
+.banner{background:#f3fbd0;border:1px solid #dbef8c;border-radius:18px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+.fine{font-size:12px;color:#5f6788}
+
+/* Phone */
+.phone{width:340px;height:700px;border-radius:44px;background:#1b2140;padding:10px;flex:none}
+.scr{width:100%;height:100%;border-radius:35px;background:#f4f6fb;overflow:hidden;display:flex;flex-direction:column;color:#1b2140;font:400 13px/1.45 "Public Sans",system-ui,sans-serif}
+.stat{height:34px;padding:10px 22px 0;display:flex;justify-content:space-between;font-size:12px;font-weight:700;background:#4a5fc0;color:#fff;flex:none}
+.phd{background:#4a5fc0;color:#fff;padding:6px 20px 46px;flex:none}
+.phd h3{margin:0;font-size:22px;font-weight:800}
+.phd .sm{font-size:12px;color:#eef1fc}
+.phd .big{font-size:30px;font-weight:800;font-variant-numeric:tabular-nums;margin-top:6px}
+.phd .bar{margin-top:10px;background:rgba(255,255,255,.28)}
+.pb{flex:1;overflow:hidden;margin-top:-30px;padding:0 14px 12px;display:flex;flex-direction:column;gap:12px;min-height:0}
+.pc{background:#fff;border-radius:18px;padding:14px;box-shadow:0 8px 20px rgba(27,33,64,.08);flex:none}
+.pc h4{margin:0 0 10px;font-size:14px;font-weight:800}
+.qgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qt{border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:6px}
+.qt span.l{font-size:12px;font-weight:700;line-height:1.2}
+.ic.sm{width:30px;height:30px}
+.ic.sm svg{width:15px;height:15px}
+.prow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #eef1f8}
+.prow:last-child{border-bottom:0}
+.prow b{font-weight:700;font-size:13px;display:block}
+.prow .r{font-size:13px;font-weight:700}
+.pnav{height:66px;background:#fff;display:flex;justify-content:space-around;align-items:center;border-top:1px solid #e4e8f3;flex:none;font-size:11px;font-weight:600;color:#5f6788}
+.pnav .on{color:#3b4da6;font-weight:800}
+.plus{width:50px;height:50px;border-radius:50%;background:#d2f04e;color:#1b2140;display:grid;place-items:center;font-size:26px;font-weight:700;margin-top:-26px;box-shadow:0 6px 16px rgba(27,33,64,.2)}
+.cta{padding:12px 14px 18px;background:#fff;border-top:1px solid #e4e8f3;flex:none}
+.ico{width:18px;height:18px;flex:none}
+</style>
+
+<main class="wrap">
+<header>
+  <h1>SCHOOLCORD redesign</h1>
+  <p class="lede">The five most-used screens, on desktop and phone, in the style of the two references you sent: a blue header band and sidebar, lime for the one primary action and the active item, white rounded cards, coloured pill tags, and coloured tiles for quick access. The audit page still stands; this page replaces its corrected-screens section.</p>
+</header>
+
+<section>
+  <h2>Style</h2>
+  <p class="note">Colour carries meaning. Blue is structure, lime is the single action, and red appears only on overdue balances.</p>
+  <div class="swatches">
+    <div class="sw"><i style="background:#4a5fc0"></i><b>Blue</b><span>#4a5fc0 · header band, sidebar, primary</span></div>
+    <div class="sw"><i style="background:#d2f04e"></i><b>Lime</b><span>#d2f04e · the one action, active item</span></div>
+    <div class="sw"><i style="background:#1b2140"></i><b>Ink</b><span>#1b2140 · text and figures</span></div>
+    <div class="sw"><i style="background:#eef1fc"></i><b>Surface</b><span>#f4f6fb · page ground, white cards</span></div>
+    <div class="sw"><i style="background:#dff5ec"></i><b>Paid</b><span>#0d6b48 on #dff5ec</span></div>
+    <div class="sw"><i style="background:#fdf1d6"></i><b>Part paid</b><span>#8a5a00 on #fdf1d6</span></div>
+    <div class="sw"><i style="background:#c93a31"></i><b>Overdue</b><span>#c93a31 · only past a due date</span></div>
+    <div class="sw"><i style="background:#eceff8"></i><b>Unpaid</b><span>#3b4da6 on #eceff8</span></div>
+  </div>
+  <div class="frame"><div class="parts">
+    <span class="btn btn-blue">Save for checking</span>
+    <span class="btn btn-lime">Record a payment</span>
+    <span class="btn btn-line">Record</span>
+    <span class="btn btn-ghost" style="color:#1b2140;border-color:#1b2140">Outstanding</span>
+    <span class="pill p-paid">Paid in full</span>
+    <span class="pill p-part">Part paid</span>
+    <span class="pill p-unpaid">Unpaid</span>
+    <span class="pill p-pend">Pending check</span>
+    <span class="pill p-over">Overdue</span>
+    <span class="pill p-void">Voided</span>
+    <span class="chip lime">All 58</span>
+    <span class="chip">Owes</span>
+  </div></div>
+</section>
+
+<section>
+  <h2>Desktop</h2>
+  <p class="note">Shown at 1200px wide. Scroll sideways inside each frame on a narrow window.</p>
+
+  <!-- 1. Overview -->
+  <div class="frame"><div class="desk">
+    <aside class="side">
+      <div class="brand">SCHOOLCORD</div>
+      <div class="it on">Dashboard</div>
+      <div class="it">Reports</div>
+      <div class="grp">School</div>
+      <div class="it">Branches</div>
+      <div class="it">Staff</div>
+      <div class="it">Students</div>
+      <div class="grp">Academics</div>
+      <div class="it">Classes</div>
+      <div class="it">Subjects</div>
+      <div class="grp">Finance</div>
+      <div class="it">Fee structures</div>
+      <div class="it">Terms</div>
+      <div class="it">Payments</div>
+      <div class="it">Outstanding</div>
+    </aside>
+    <div class="dmain">
+      <div class="band">
+        <div class="row">
+          <div><h2>Overview</h2><p>Demo School · First Term 2026/2027</p></div>
+          <div class="acts"><span class="btn btn-ghost">Check 2 receipts</span><span class="btn btn-lime">Record a payment</span></div>
+        </div>
+        <div class="hero">
+          <div class="lbl">Collected this term</div>
+          <div class="big">₦2,770,500</div>
+          <div class="sub">of ₦5,202,000 expected · 53%</div>
+          <div class="bar"><i style="width:53%"></i></div>
+        </div>
+      </div>
+      <div class="wrap2">
+        <div class="grid4">
+          <div class="tile t-blue"><span>Students enrolled</span><b>58</b></div>
+          <div class="tile t-green"><span>Paid in full</span><b>21</b></div>
+          <div class="tile t-amber"><span>Part paid</span><b>21</b></div>
+          <div class="tile t-grey"><span>Unpaid</span><b>16</b></div>
+        </div>
+        <div class="grid2">
+          <div class="card">
+            <h4>Recent payments</h4>
+            <table class="tbl">
+              <tr><td><b>Khadija Usman</b><span class="s">6 Nov 2026 · School fees</span></td><td class="r">₦58,500</td><td class="r"><span class="pill p-pend">Pending check</span></td></tr>
+              <tr><td><b>Folasade Odunsi</b><span class="s">5 Nov 2026 · Uniform</span></td><td class="r">₦56,000</td><td class="r"><span class="pill p-pend">Pending check</span></td></tr>
+              <tr><td><b>Chinaza Okonkwo</b><span class="s">31 Oct 2026 · School fees</span></td><td class="r">₦31,000</td><td class="r"><span class="pill p-paid">Confirmed</span></td></tr>
+              <tr><td><b>Uchechukwu Madu</b><span class="s">20 Oct 2026 · School fees</span></td><td class="r">₦43,000</td><td class="r"><span class="pill p-paid">Confirmed</span></td></tr>
+              <tr><td><b>Zainab Bello</b><span class="s">17 Oct 2026 · School fees</span></td><td class="r">₦61,000</td><td class="r"><span class="pill p-paid">Confirmed</span></td></tr>
+            </table>
+          </div>
+          <div class="card">
+            <h4>Waiting for you</h4>
+            <div class="prow"><div><b>Khadija Usman</b><span class="s">₦58,500 · paid 6 Nov 2026</span></div><span class="btn btn-lime btn-sm">Check</span></div>
+            <div class="prow"><div><b>Folasade Odunsi</b><span class="s">₦56,000 · paid 5 Nov 2026</span></div><span class="btn btn-lime btn-sm">Check</span></div>
+            <p class="fine" style="margin-top:12px">Receipts count toward balances only after someone checks them.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="changes"><h4>What changed on the overview</h4><ul>
+    <li>The blue header leads with collected against expected. Setup prompts are gone from the first screen.</li>
+    <li>Four tiles in the quick-access style, each tinted by what it counts. Unpaid is grey, so red is kept for overdue.</li>
+    <li>One primary action (lime) in the header. The duplicate record card is removed.</li>
+    <li>Receipts waiting for a check are a list, each with a Check button.</li>
+  </ul></div>
+
+  <!-- 2. Record a payment -->
+  <div class="frame" style="margin-top:28px"><div class="desk">
+    <aside class="side">
+      <div class="brand">SCHOOLCORD</div>
+      <div class="it">Dashboard</div>
+      <div class="it">Reports</div>
+      <div class="grp">School</div>
+      <div class="it">Students</div>
+      <div class="grp">Finance</div>
+      <div class="it">Fee structures</div>
+      <div class="it">Terms</div>
+      <div class="it on">Payments</div>
+      <div class="it">Outstanding</div>
+    </aside>
+    <div class="dmain">
+      <div class="band">
+        <div class="row">
+          <div><h2>Record a payment</h2><p>First Term 2026/2027 · Main Campus</p></div>
+          <div class="acts"><span class="btn btn-ghost">Cancel</span></div>
+        </div>
+      </div>
+      <div class="wrap2">
+        <div class="grid2" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">
+          <div class="card">
+            <h4>Payment details</h4>
+            <div class="field"><label>Student</label><div class="inp ph">Type an admission number or a name</div><div class="help">Pick the student to show their balance on the right.</div></div>
+            <div class="two">
+              <div class="field"><label>Amount (₦)</label><div class="inp big">₦ 50,000</div><div class="help">Amount on the receipt</div></div>
+              <div class="field"><label>Date paid</label><div class="inp"><span>07/11/2026</span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#5f6788" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></div><div class="help">Day / month / year</div></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>What it is for</label><div class="inp"><span>School fees</span></div></div>
+              <div class="field"><label>How was it paid</label><div class="seg"><span>Cash</span><span class="on">Bank transfer</span><span>POS</span><span>Other</span></div></div>
+            </div>
+            <div class="two">
+              <div class="field"><label>Reference (optional)</label><div class="inp ph">Teller or transfer ref</div></div>
+              <div class="field"><label>Note (optional)</label><div class="inp ph">Anything the receipt does not say</div></div>
+            </div>
+            <div class="field"><label>Receipt</label><div class="drop">Drop the bank slip or POS receipt here, or choose a file. Image or PDF.</div></div>
+          </div>
+          <div class="card">
+            <h4>After this payment</h4>
+            <div class="prow" style="padding-top:0"><div><b>Ogunbiyi, Kanyinsola Temiloluwa</b><span class="s">SSS 1 Science · FA/2021/005</span></div><span class="pill p-part">Part paid</span></div>
+            <div class="kv" style="margin-top:8px"><span>Owes now</span><span>₦93,500</span></div>
+            <div class="kv"><span>This payment</span><span>−₦50,000</span></div>
+            <div class="kv t"><span>Owes after</span><span>₦43,500</span></div>
+            <p class="fine" style="margin-top:8px">Waits for a check before it counts toward the balance.</p>
+            <div class="chk"><i></i><span>Confirm now. I have checked the receipt against the student and the amount. Leave unticked to hold it for checking.</span></div>
+            <div style="margin-top:18px"><span class="btn btn-blue btn-full">Save for checking</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="changes"><h4>What changed on record a payment</h4><ul>
+    <li>Confirm now is unticked by default, and the button says what will happen: Save for checking (decision 2).</li>
+    <li>Plain field names, a ₦ prefix in the amount, and the date as text in dd/mm/yyyy with a calendar button (decision 3).</li>
+    <li>The balance appears beside the form as soon as a student is picked.</li>
+    <li>The receipt is a dashed drop zone, not a bare file control.</li>
+  </ul></div>
+
+  <!-- 3. Payments -->
+  <div class="frame" style="margin-top:28px"><div class="desk">
+    <aside class="side">
+      <div class="brand">SCHOOLCORD</div>
+      <div class="it">Dashboard</div>
+      <div class="it">Reports</div>
+      <div class="grp">School</div>
+      <div class="it">Students</div>
+      <div class="grp">Finance</div>
+      <div class="it">Fee structures</div>
+      <div class="it">Terms</div>
+      <div class="it on">Payments</div>
+      <div class="it">Outstanding</div>
+    </aside>
+    <div class="dmain">
+      <div class="band">
+        <div class="row">
+          <div><h2>Payments</h2><p>₦2,770,500 confirmed · ₦114,500 awaiting a check</p></div>
+          <div class="acts"><span class="btn btn-ghost">Outstanding</span><span class="btn btn-lime">Record a payment</span></div>
+        </div>
+      </div>
+      <div class="wrap2">
+        <div class="card">
+          <div class="frow"><span class="chip lime">All 50</span><span class="chip">Pending check 2</span><span class="chip">Voided 1</span></div>
+          <div class="frow" style="margin-top:12px"><span class="search">Name, admission number or reference</span><span class="inp" style="width:170px">All methods</span><span class="inp" style="width:220px">1 Oct to 7 Nov 2026</span></div>
+        </div>
+        <div class="card" style="padding:8px 10px">
+          <table class="tbl">
+            <tr><th>Date</th><th>Student</th><th>For</th><th>Method</th><th>Reference</th><th class="r">Amount</th><th>Status</th><th></th></tr>
+            <tr><td>6 Nov 2026</td><td><b>Khadija Usman</b><span class="s">SSS 3 Science</span></td><td>School fees</td><td>Bank transfer</td><td class="fine">FT410648498840</td><td class="r">₦58,500</td><td><span class="pill p-pend">Pending check</span></td><td><span class="btn btn-lime btn-sm">Check</span></td></tr>
+            <tr><td>5 Nov 2026</td><td><b>Folasade Odunsi</b><span class="s">SSS 2 Arts</span></td><td>Uniform</td><td>Bank transfer</td><td class="fine">FT919722870969</td><td class="r">₦56,000</td><td><span class="pill p-pend">Pending check</span></td><td><span class="btn btn-lime btn-sm">Check</span></td></tr>
+            <tr><td>31 Oct 2026</td><td><b>Chinaza Okonkwo</b><span class="s">Primary 1</span></td><td>School fees</td><td>Cash</td><td class="fine">—</td><td class="r">₦31,000</td><td><span class="pill p-paid">Confirmed</span></td><td></td></tr>
+            <tr><td>17 Oct 2026</td><td><b>Zainab Bello</b><span class="s">KG 2</span></td><td>School fees</td><td>Bank transfer</td><td class="fine">FT150420686314</td><td class="r">₦61,000</td><td><span class="pill p-paid">Confirmed</span></td><td></td></tr>
+            <tr><td>8 Oct 2026</td><td><b>Amara Nwachukwu</b><span class="s">KG 2</span></td><td>Books</td><td>Bank transfer</td><td class="fine">—</td><td class="r" style="text-decoration:line-through;color:#5f6788">₦10,000</td><td><span class="pill p-void">Voided</span></td><td></td></tr>
+          </table>
+        </div>
+        <div class="foot"><span>Showing 1 to 5 of 50</span><span>Previous · Next</span></div>
+      </div>
+    </div>
+  </div></div>
+  <div class="changes"><h4>What changed on payments</h4><ul>
+    <li>Lime marks the active tab. Pending check is blue, so the rows that need action stand out.</li>
+    <li>Each pending row has a Check button in one fixed column.</li>
+    <li>Totals sit on one line in the header instead of two coloured cards.</li>
+    <li>Filters have room for their text: the search takes the full row.</li>
+  </ul></div>
+
+  <!-- 4. Outstanding -->
+  <div class="frame" style="margin-top:28px"><div class="desk">
+    <aside class="side">
+      <div class="brand">SCHOOLCORD</div>
+      <div class="it">Dashboard</div>
+      <div class="it">Reports</div>
+      <div class="grp">School</div>
+      <div class="it">Students</div>
+      <div class="grp">Finance</div>
+      <div class="it">Fee structures</div>
+      <div class="it">Terms</div>
+      <div class="it">Payments</div>
+      <div class="it on">Outstanding</div>
+    </aside>
+    <div class="dmain">
+      <div class="band">
+        <div class="row">
+          <div><h2>Outstanding</h2><p>37 students still owe · First Term 2026/2027</p></div>
+          <div class="acts"><span class="btn btn-lime">Record a payment</span></div>
+        </div>
+      </div>
+      <div class="wrap2">
+        <div class="banner">
+          <span>No due date is set for First Term, so nothing is overdue yet.</span>
+          <span class="btn btn-blue btn-sm">Set due date</span>
+        </div>
+        <div class="grid4">
+          <div class="tile t-blue"><span>Still owed</span><b>₦2,431,500</b></div>
+          <div class="tile t-blue"><span>Students who owe</span><b>37</b></div>
+          <div class="tile t-grey"><span>Paid nothing</span><b>16</b></div>
+          <div class="tile t-amber"><span>Part paid</span><b>21</b></div>
+        </div>
+        <div class="card" style="padding:8px 10px">
+          <table class="tbl">
+            <tr><th>Student</th><th>Parent</th><th class="r">Expected</th><th class="r">Paid</th><th class="r">Owed</th><th style="width:150px">Paid so far</th><th>Status</th><th></th></tr>
+            <tr><td><b>Essien, Ememobong Nsikak</b><span class="s">SSS 1 Science</span></td><td>Mrs. Idongesit Essien</td><td class="r">₦117,000</td><td class="r">₦0</td><td class="r"><b>₦117,000</b></td><td><div class="bar"><i style="width:0%"></i></div></td><td><span class="pill p-unpaid">Unpaid</span></td><td><span class="btn btn-line btn-sm">Record</span></td></tr>
+            <tr><td><b>Ogunbiyi, Kanyinsola Temiloluwa</b><span class="s">SSS 1 Science</span></td><td>Mrs. Adenike Ogunbiyi</td><td class="r">₦117,000</td><td class="r">₦23,500</td><td class="r"><b>₦93,500</b></td><td><div class="bar"><i style="width:20%"></i></div></td><td><span class="pill p-part">Part paid</span></td><td><span class="btn btn-line btn-sm">Record</span></td></tr>
+            <tr><td><b>Ezeugo, Chukwudi Ikenna</b><span class="s">SSS 3 Science</span></td><td>Mr. Obiora Ezeugo</td><td class="r">₦117,000</td><td class="r">₦23,500</td><td class="r"><b>₦93,500</b></td><td><div class="bar"><i style="width:20%"></i></div></td><td><span class="pill p-part">Part paid</span></td><td><span class="btn btn-line btn-sm">Record</span></td></tr>
+            <tr><td><b>Usman, Khadija Fatima</b><span class="s">SSS 3 Science</span></td><td>Alhaji Sani Usman</td><td class="r">₦117,000</td><td class="r">₦0</td><td class="r"><b>₦117,000</b></td><td><div class="bar"><i style="width:0%"></i></div></td><td><span class="pill p-unpaid">Unpaid</span></td><td><span class="btn btn-line btn-sm">Record</span></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div></div>
+  <div class="changes"><h4>What changed on outstanding</h4><ul>
+    <li>Owed amounts are ink. Red is reserved for balances past a due date, which need one to exist first.</li>
+    <li>The missing due date is a banner with one button, not a statistic card.</li>
+    <li>Paid-so-far bars use the reference's progress style in blue. The Arrears column is gone when it is zero.</li>
+    <li>Record is a small outline button on one line, so every row is the same height.</li>
+  </ul></div>
+
+  <!-- 5. Students -->
+  <div class="frame" style="margin-top:28px"><div class="desk">
+    <aside class="side">
+      <div class="brand">SCHOOLCORD</div>
+      <div class="it">Dashboard</div>
+      <div class="it">Reports</div>
+      <div class="grp">School</div>
+      <div class="it on">Students</div>
+      <div class="it">Staff</div>
+      <div class="grp">Finance</div>
+      <div class="it">Fee structures</div>
+      <div class="it">Payments</div>
+      <div class="it">Outstanding</div>
+    </aside>
+    <div class="dmain">
+      <div class="band">
+        <div class="row">
+          <div><h2>Students</h2><p>58 on the roll · ₦1,831,000 expected on this page</p></div>
+          <div class="acts"><span class="btn btn-ghost">Import from Excel</span><span class="btn btn-lime">Add student</span></div>
+        </div>
+      </div>
+      <div class="wrap2">
+        <div class="card">
+          <div class="frow">
+            <span class="search">Name or admission number</span>
+            <span class="inp" style="width:170px">All classes</span>
+            <span class="chip on">All</span><span class="chip">Owes</span><span class="chip">Paid in full</span>
+          </div>
+        </div>
+        <div class="card" style="padding:8px 10px">
+          <table class="tbl">
+            <tr><th>Student</th><th>Class</th><th>Parent phone</th><th class="r">Balance</th><th></th></tr>
+            <tr><td><b>Adeyemi, Tobiloba Ayomikun</b><span class="s">FA/2024/007</span></td><td>KG 2</td><td class="fine">0800 000 0003</td><td class="r"><b>Owes ₦27,500</b></td><td><span class="btn btn-line btn-sm">More</span></td></tr>
+            <tr><td><b>Balogun, Ifeoluwa Oluwadamilola</b><span class="s">FA/2024/009</span></td><td>KG 2</td><td class="fine">0800 000 0005</td><td class="r"><span class="pill p-paid">Paid in full</span></td><td><span class="btn btn-line btn-sm">More</span></td></tr>
+            <tr><td><b>Obi, Emeka</b><span class="s">FA/2025/012</span></td><td>KG 2</td><td class="fine">0800 000 0006</td><td class="r"><b>Owes ₦61,000</b></td><td><span class="btn btn-line btn-sm">More</span></td></tr>
+            <tr><td><b>Abdullahi, Fatima</b><span class="s">FA/2022/003</span></td><td>Primary 1</td><td class="fine">0800 000 0009</td><td class="r"><b>Owes ₦35,000</b></td><td><span class="btn btn-line btn-sm">More</span></td></tr>
+            <tr><td><b>Anyanwu, Nneka Chidera</b><span class="s">FA/2023/007</span></td><td>Primary 3</td><td class="fine">0800 000 0019</td><td class="r"><b>Owes ₦78,000</b></td><td><span class="btn btn-line btn-sm">More</span></td></tr>
+          </table>
+        </div>
+        <div class="foot"><span>Showing 5 of 58 students</span><span>Previous · Next</span></div>
+      </div>
+    </div>
+  </div></div>
+  <div class="changes"><h4>What changed on students</h4><ul>
+    <li>Filter chips take the reference's pill style, with blue for the active one.</li>
+    <li>Balances show the amount owed or a Paid in full pill. "Paid ₦0" is gone, and so is the build note.</li>
+    <li>Remove moves into More, so no destructive action sits in the reading line.</li>
+    <li>The count shows in the footer and beside the filters.</li>
+  </ul></div>
+</section>
+
+<section>
+  <h2>Phone</h2>
+  <p class="note">Shown at 340px wide, the phone size of the references. Same five screens, same tokens. The bottom bar has Home, Students, the lime add button, Payments and More.</p>
+  <div class="phones">
+
+    <!-- P1 Overview -->
+    <div>
+      <div class="phone"><div class="scr">
+        <div class="stat"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="phd">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span class="sm">Demo School · Term 1</span><span class="ic sm" style="background:rgba(255,255,255,.2)"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg></span></div>
+          <div class="sm" style="margin-top:8px">Collected this term</div>
+          <div class="big">₦2,770,500</div>
+          <div class="sm">of ₦5,202,000 · 53%</div>
+          <div class="bar"><i style="width:53%"></i></div>
+        </div>
+        <div class="pb">
+          <div class="pc"><h4>Quick access</h4>
+            <div class="qgrid">
+              <div class="qt" style="background:#e8ebfa"><span class="ic sm ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><span class="l">Record payment</span></div>
+              <div class="qt" style="background:#fde4e1"><span class="ic sm ic-red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 3 20h18L12 4z"/><path d="M12 10v4M12 17h.01"/></svg></span><span class="l">Outstanding</span></div>
+              <div class="qt" style="background:#efe9fd"><span class="ic sm ic-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg></span><span class="l">Students</span></div>
+              <div class="qt" style="background:#dff5ec"><span class="ic sm ic-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 6h14M5 12h14M5 18h9"/></svg></span><span class="l">Payments</span></div>
+              <div class="qt" style="background:#fdf1d6"><span class="ic sm ic-amber"><span style="font-weight:800;font-size:15px">₦</span></span><span class="l">Fee structures</span></div>
+              <div class="qt" style="background:#e8ebfa"><span class="ic sm ic-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg></span><span class="l">Reports</span></div>
+            </div>
+          </div>
+          <div class="pc"><h4>Waiting for you</h4>
+            <div class="prow"><div><b>Khadija Usman</b><span class="s">₦58,500</span></div><span class="btn btn-lime btn-sm">Check</span></div>
+            <div class="prow"><div><b>Folasade Odunsi</b><span class="s">₦56,000</span></div><span class="btn btn-lime btn-sm">Check</span></div>
+          </div>
+          <div class="pc"><h4>Recent payments</h4>
+            <div class="prow"><div><b>Chinaza Okonkwo</b><span class="pill p-paid">Confirmed</span></div><span class="r">₦31,000</span></div>
+            <div class="prow"><div><b>Uchechukwu Madu</b><span class="pill p-paid">Confirmed</span></div><span class="r">₦43,000</span></div>
+          </div>
+        </div>
+        <div class="pnav">
+          <span class="on">Home</span><span>Students</span><span class="plus">+</span><span>Payments</span><span>More</span>
+        </div>
+      </div></div>
+      <p class="cap">Overview. Quick-access tiles from the student-portal reference, each tinted by the section it opens. The collected figure leads the blue header.</p>
+    </div>
+
+    <!-- P2 Record a payment -->
+    <div>
+      <div class="phone"><div class="scr">
+        <div class="stat"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="phd" style="padding-bottom:34px">
+          <div style="display:flex;justify-content:space-between;align-items:center"><h3>Record a payment</h3><span style="font-size:20px;font-weight:700">×</span></div>
+          <div class="sm" style="margin-top:4px">First Term 2026/2027</div>
+        </div>
+        <div class="pb">
+          <div class="pc"><div style="font-size:12px;color:#5f6788;font-weight:700;margin-bottom:6px">Student</div>
+            <b style="font-size:14px">Ogunbiyi, Kanyinsola Temiloluwa</b>
+            <span class="s" style="font-size:12px;color:#5f6788;display:block">SSS 1 Science · FA/2021/005</span>
+            <span class="pill p-part" style="margin-top:8px">Owes ₦93,500</span>
+          </div>
+          <div class="pc">
+            <div style="font-size:12px;color:#5f6788;font-weight:700;margin-bottom:6px">Amount (₦)</div>
+            <div class="inp big">₦ 50,000</div>
+            <div class="help">Amount on the receipt</div>
+            <div style="font-size:12px;color:#5f6788;font-weight:700;margin:12px 0 6px">Date paid</div>
+            <div class="inp"><span>07/11/2026</span><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="#5f6788" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></div>
+            <div class="help">Day / month / year</div>
+          </div>
+          <div class="pc">
+            <div style="font-size:12px;color:#5f6788;font-weight:700;margin-bottom:8px">How was it paid</div>
+            <div class="seg"><span>Cash</span><span class="on">Bank transfer</span><span>POS</span><span>Other</span></div>
+          </div>
+          <div class="pc"><div class="drop" style="padding:12px;font-size:13px">Add the bank slip or POS receipt. Image or PDF.</div></div>
+          <div class="chk" style="margin-top:0;padding:0 2px"><i></i><span style="font-size:13px">Confirm now. Leave unticked to hold it for checking.</span></div>
+        </div>
+        <div class="cta"><span class="btn btn-blue btn-full">Save for checking</span></div>
+      </div></div>
+      <p class="cap">Record a payment. One column. The balance is shown first, and the save button stays at the foot of the screen.</p>
+    </div>
+
+    <!-- P3 Payments -->
+    <div>
+      <div class="phone"><div class="scr">
+        <div class="stat"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="phd">
+          <h3>Payments</h3>
+          <div class="sm" style="margin-top:4px">₦2,770,500 confirmed · ₦114,500 awaiting a check</div>
+        </div>
+        <div class="pb">
+          <div class="frow" style="gap:8px;flex-wrap:nowrap"><span class="chip lime" style="font-size:12px;padding:6px 11px">All 50</span><span class="chip" style="font-size:12px;padding:6px 11px">Pending check 2</span><span class="chip" style="font-size:12px;padding:6px 11px">Voided 1</span></div>
+          <div class="pc">
+            <div class="prow"><div><b>Khadija Usman</b><span class="s">SSS 3 Science · 6 Nov</span><span class="pill p-pend" style="margin-top:4px">Pending check</span></div><div style="text-align:right"><span class="r" style="display:block">₦58,500</span><span class="btn btn-lime btn-sm" style="margin-top:6px">Check</span></div></div>
+            <div class="prow"><div><b>Folasade Odunsi</b><span class="s">SSS 2 Arts · 5 Nov</span><span class="pill p-pend" style="margin-top:4px">Pending check</span></div><div style="text-align:right"><span class="r" style="display:block">₦56,000</span><span class="btn btn-lime btn-sm" style="margin-top:6px">Check</span></div></div>
+            <div class="prow"><div><b>Chinaza Okonkwo</b><span class="s">Primary 1 · 31 Oct</span><span class="pill p-paid" style="margin-top:4px">Confirmed</span></div><span class="r">₦31,000</span></div>
+            <div class="prow"><div><b>Zainab Bello</b><span class="s">KG 2 · 17 Oct</span><span class="pill p-paid" style="margin-top:4px">Confirmed</span></div><span class="r">₦61,000</span></div>
+          </div>
+        </div>
+        <div class="pnav"><span>Home</span><span>Students</span><span class="plus">+</span><span class="on">Payments</span><span>More</span></div>
+      </div></div>
+      <p class="cap">Payments. Each pending payment has its Check button on the right. Confirmed amounts stay in ink.</p>
+    </div>
+
+    <!-- P4 Outstanding -->
+    <div>
+      <div class="phone"><div class="scr">
+        <div class="stat"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="phd">
+          <h3>Outstanding</h3>
+          <div class="sm" style="margin-top:4px">37 students still owe</div>
+          <div class="big">₦2,431,500</div>
+        </div>
+        <div class="pb">
+          <div class="banner" style="padding:12px 14px;border-radius:16px;font-size:13px"><span>No due date is set, so nothing is overdue yet.</span><span class="btn btn-blue btn-sm">Set due date</span></div>
+          <div class="pc"><div class="prow" style="border:0;padding:0 0 8px"><div><b>Essien, Ememobong Nsikak</b><span class="s">SSS 1 Science</span></div><span class="r">₦117,000</span></div>
+            <div class="bar"><i style="width:0%"></i></div>
+            <div class="prow" style="border:0;padding:8px 0 0"><span class="pill p-unpaid">Unpaid</span><span class="btn btn-line btn-sm">Record</span></div></div>
+          <div class="pc"><div class="prow" style="border:0;padding:0 0 8px"><div><b>Ogunbiyi, Kanyinsola Temiloluwa</b><span class="s">SSS 1 Science</span></div><span class="r">₦93,500</span></div>
+            <div class="bar"><i style="width:20%"></i></div>
+            <div class="prow" style="border:0;padding:8px 0 0"><span class="pill p-part">Part paid</span><span class="btn btn-line btn-sm">Record</span></div></div>
+          <div class="pc"><div class="prow" style="border:0;padding:0 0 8px"><div><b>Ezeugo, Chukwudi Ikenna</b><span class="s">SSS 3 Science</span></div><span class="r">₦93,500</span></div>
+            <div class="bar"><i style="width:20%"></i></div>
+            <div class="prow" style="border:0;padding:8px 0 0"><span class="pill p-part">Part paid</span><span class="btn btn-line btn-sm">Record</span></div></div>
+        </div>
+        <div class="pnav"><span>Home</span><span>Students</span><span class="plus">+</span><span class="on">Payments</span><span>More</span></div>
+      </div></div>
+      <p class="cap">Outstanding. Owed amounts stay in ink. The missing due date is one banner, with one button.</p>
+    </div>
+
+    <!-- P5 Students -->
+    <div>
+      <div class="phone"><div class="scr">
+        <div class="stat"><span>9:41</span><span>●●● ▮</span></div>
+        <div class="phd">
+          <h3>Students</h3>
+          <div class="sm" style="margin-top:4px">58 on the roll</div>
+        </div>
+        <div class="pb">
+          <div class="pc" style="padding:10px"><span class="search" style="min-width:0;height:40px">Name or admission number</span></div>
+          <div class="frow" style="gap:8px;flex-wrap:nowrap"><span class="chip on" style="font-size:12px;padding:6px 11px">All</span><span class="chip" style="font-size:12px;padding:6px 11px">Owes</span><span class="chip" style="font-size:12px;padding:6px 11px">Paid in full</span></div>
+          <div class="pc">
+            <div class="prow"><div><b>Adeyemi, Tobiloba Ayomikun</b><span class="s">KG 2 · FA/2024/007</span></div><span class="r">Owes ₦27,500</span></div>
+            <div class="prow"><div><b>Balogun, Ifeoluwa Oluwadamilola</b><span class="s">KG 2 · FA/2024/009</span></div><span class="pill p-paid">Paid in full</span></div>
+            <div class="prow"><div><b>Obi, Emeka</b><span class="s">KG 2 · FA/2025/012</span></div><span class="r">Owes ₦61,000</span></div>
+          </div>
+          <div class="foot" style="margin-top:0;justify-content:center"><span>Showing 3 of 58</span></div>
+        </div>
+        <div class="pnav"><span>Home</span><span class="on">Students</span><span class="plus">+</span><span>Payments</span><span>More</span></div>
+      </div></div>
+      <p class="cap">Students. One row per student, balance on the right. Paid students show a Paid in full pill, not a zero.</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <h2>Decisions</h2>
+  <div class="dec">
+    <div><b>Style</b>The two references: blue header band and sidebar, lime for the one action and the active item, white rounded cards, coloured pill tags, coloured quick-access tiles. This replaces the restrained direction in the earlier review.</div>
+    <div><b>Confirm now</b>Unticked by default. The button reads Save for checking.</div>
+    <div><b>Date paid</b>A text field that takes dd/mm/yyyy, with a calendar button beside it.</div>
+  </div>
+  <h2>Still open</h2>
+  <div class="dec">
+    <div><b>Brand colour</b>The reference blue replaces the navy in the app. The wordmark stays. Confirm this is what you want.</div>
+    <div><b>Red</b>Used only for overdue balances. The reference's red "High" tag is not copied, because red would then mean priority rather than money.</div>
+    <div><b>Coloured tiles</b>Each tile's colour marks the section it opens, not a status.</div>
+    <div><b>Not yet drawn</b>Classes, subjects, branches, account settings, add student, payment detail, family payments, platform schools, sign-in and the locked pages. These follow once the direction is approved.</div>
+  </div>
+</section>
+</main>
+
+</body></html>

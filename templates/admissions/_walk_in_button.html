@@ -9,7 +9,7 @@ may admit (or the bursar has been allowed to). One string, so every placement
 agrees with the screen it opens.
 {% endcomment %}
 {% if "enrol_walk_ins" in capabilities %}
-  <a href="{% url 'admissions:walk_in' %}" class="btn btn-primary text-sm">
+  <a href="{% url 'admissions:walk_in' %}" class="btn {{ walk_in_class|default:'btn-primary' }} text-sm">
     <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
          stroke="currentColor" aria-hidden="true">
       <path stroke-linecap="round" stroke-linejoin="round"

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% load money %}
 
+{% block shell_class %}band-overlap no-bottom-nav{% endblock %}
+
 {% block page_subtitle %}
   <p class="truncate text-sm text-ink-600">
     {% if term %}{{ term.name }}{% else %}No current term{% endif %}
@@ -10,180 +12,155 @@
 
 {% block page_actions %}
   <a href="{% if reviewing %}{% url 'payments:pending' %}{% else %}{% url 'payments:index' %}{% endif %}"
-     class="btn btn-ghost text-sm">
-    <span class="hidden sm:inline">Cancel</span>
-    <span class="sm:hidden">Back</span>
+     class="btn btn-ghost icon-only-phone text-sm">
+    <span class="max-sm:sr-only">Cancel</span>
+    <svg class="size-5 sm:hidden" fill="none" viewBox="0 0 24 24" stroke-width="2.2"
+         stroke="currentColor" stroke-linecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
   </a>
 {% endblock %}
 
 {% block content %}
-{% if "view_families" in capabilities and not form.instance.pk %}
-  <p class="mb-4 text-sm text-ink-600">
-    Paying for several children at once?
-    <a href="{% url 'payments:shared_record' %}" class="font-medium text-brand-800 hover:underline">Record a family payment</a>.
-  </p>
-{% endif %}
-<form method="post" enctype="multipart/form-data" class="grid gap-5 lg:grid-cols-3">
+<form method="post" enctype="multipart/form-data"
+      class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
   {% csrf_token %}
 
   {% if form.non_field_errors %}
-    <div class="card border-overdue/30 bg-overdue-soft px-4 py-3 text-sm
-                text-overdue-strong lg:col-span-3">
+    <div class="card border-overdue/30 bg-overdue-soft px-4 py-3 text-sm text-overdue-strong lg:col-span-2">
       {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
     </div>
   {% endif %}
 
-  {# ===== Left: the payment ============================================== #}
-  <div class="space-y-5 lg:col-span-2">
+  <section class="card card-pad space-y-3.5">
+    <h2 class="card-heading">Payment details</h2>
 
-    <section class="card overflow-hidden">
-      <div class="border-b border-ink-200 px-5 py-3">
-        <h2 class="text-sm font-semibold text-ink-900">Payment details</h2>
+    <div>
+      {% include "partials/_field.html" with field=form.student %}
+      {% comment %} Filled from a search as they type, by the script below. An
+         admission number or a surname both find the child. {% endcomment %}
+      <datalist id="student-options" data-search-url="{% url 'payments:student_search' %}"></datalist>
+      <span class="status-pill mt-2 lg:hidden" data-owes-pill hidden></span>
+    </div>
+
+    <div class="grid gap-3.5 sm:grid-cols-2">
+      <div>
+        <label for="{{ form.amount.id_for_label }}" class="field-label">
+          {{ form.amount.label }} <span class="text-overdue" aria-hidden="true">*</span>
+        </label>
+        <div class="money-field">{{ form.amount }}</div>
+        <p class="field-hint">{{ form.amount.help_text }}</p>
+        {% for error in form.amount.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
-      <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
-        <div class="sm:col-span-2">
-          {% include "partials/_field.html" with field=form.student %}
-          {% comment %} Filled from a search as they type, by the script below. An
-             admission number or a surname both find the child. {% endcomment %}
-          <datalist id="student-options"
-                    data-search-url="{% url 'payments:student_search' %}"></datalist>
-        </div>
-        {% include "partials/_field.html" with field=form.amount %}
+      <div>
         {% include "partials/_field.html" with field=form.date_paid %}
         {# The calendar's picker: hidden, and driven only by the calendar button the script below adds beside the typed date. #}
         <input type="date" class="date-native" data-date-native data-no-datepicker tabindex="-1" aria-hidden="true">
-
-        {% include "partials/_field.html" with field=form.label %}
-        {% include "partials/_field.html" with field=form.method %}
-        {% include "partials/_field.html" with field=form.reference %}
-        {% include "partials/_field.html" with field=form.note %}
       </div>
-      <p class="border-t border-ink-200 bg-ink-50 px-5 py-3 text-xs text-ink-500">
-        The label says what the money was for. It does not split the balance —
-        a student's balance is one combined figure.
-      </p>
-    </section>
+    </div>
 
-    <section class="card overflow-hidden">
-      <div class="border-b border-ink-200 px-5 py-3">
-        <h2 class="text-sm font-semibold text-ink-900">Receipt attachment</h2>
-        <p class="mt-0.5 text-xs text-ink-500">
-          Optional. The parent's bank slip or POS stub, as an image or a PDF.
-        </p>
-      </div>
-      <div class="px-5 py-5">
-        {# Only a saved slip: an upload on a form that bounced was never stored. #}
-        {% if form.instance.receipt_file_url %}
-          <div class="mb-4 rounded-md border border-ink-200 bg-ink-50 p-3">
-            <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">
-              Attached
-            </p>
-            {% if form.instance.attachment_is_pdf %}
-              <a href="{{ form.instance.receipt_file_url }}" target="_blank" rel="noopener"
-                 class="mt-1 inline-block text-sm text-brand-800 hover:underline">
-                Open the PDF
-              </a>
-            {% else %}
-              <a href="{{ form.instance.receipt_file_url }}" target="_blank" rel="noopener">
-                <img src="{{ form.instance.receipt_file_url }}" alt="Uploaded receipt" loading="lazy" decoding="async"
-                     class="mt-2 max-h-96 max-w-full rounded-md border border-ink-200">
-              </a>
-            {% endif %}
-          </div>
-        {% endif %}
-        {{ form.receipt }}
-        {% if form.receipt.help_text %}
-          <p class="field-hint">{{ form.receipt.help_text }}</p>
-        {% endif %}
-        {% for error in form.receipt.errors %}
-          <p class="field-error">{{ error }}</p>
-        {% endfor %}
-      </div>
-    </section>
-  </div>
-
-  {# ===== Right: balance and the decision ================================ #}
-  <div class="space-y-5">
-    <section class="card overflow-hidden">
-      <div class="border-b border-ink-200 px-5 py-3">
-        <h2 class="text-sm font-semibold text-ink-900">Where they stand</h2>
-      </div>
-      <div id="position-panel" aria-live="polite"
-           data-position-url="{% url 'payments:student_position' %}">
-        {% include "payments/_position_panel.html" %}
-      </div>
-    </section>
-
-    <section class="card overflow-hidden">
-      <div class="border-b border-ink-200 px-5 py-3">
-        <h2 class="text-sm font-semibold text-ink-900">Confirm</h2>
-      </div>
-      <div class="px-5 py-4">
-        <label class="check-row px-0">
-          {{ form.confirm_now }}
-          <span class="text-sm font-medium text-ink-900">
-            {{ form.confirm_now.label }}
-          </span>
-        </label>
-        <p class="field-hint">{{ form.confirm_now.help_text }}</p>
-        {% for error in form.confirm_now.errors %}
-          <p class="field-error">{{ error }}</p>
-        {% endfor %}
-
-        {% comment %}
-        The human check on an attached slip. Nothing reads the picture for us,
-        so confirming a payment that has one asks the person confirming to say
-        they did. The form refuses to confirm without the tick (see
-        PaymentForm.receipt_checked); this is where it is asked, beside the
-        button, rather than discovered as an error.
-
-        On the review screen it names the student and amount on the record, so
-        the comparison is spelled out. On a fresh payment there may be no slip at
-        all, so it is phrased as conditional and only enforced when one is
-        attached.
-        {% endcomment %}
-        {% if reviewing and form.instance.has_attachment %}
-          <div class="mt-4 rounded-md border border-partial/30 bg-partial-soft p-3
-                      text-sm text-partial-strong">
-            <p class="font-semibold">Before you confirm, check the receipt</p>
-            <p class="mt-1">
-              Open the attached slip. Make sure it is for
-              <strong>{{ form.instance.student.full_name }}</strong>
-              ({{ form.instance.student.admission_number }}) and shows
-              <strong class="numeric">{{ form.instance.amount|naira }}</strong>.
-              If you have changed either one above, check the slip against
-              your change instead.
-            </p>
-          </div>
-        {% elif not reviewing %}
-          <p class="mt-4 text-xs font-semibold uppercase tracking-wide text-ink-500">
-            Attaching a receipt?
-          </p>
-        {% endif %}
-        {% if not reviewing or form.instance.has_attachment %}
-          <label class="check-row mt-2 px-0">
-            {{ form.receipt_checked }}
-            <span class="text-sm font-medium text-ink-900">
-              {{ form.receipt_checked.label }}
-            </span>
-          </label>
-          <p class="field-hint">{{ form.receipt_checked.help_text }}</p>
-          {% for error in form.receipt_checked.errors %}
-            <p class="field-error">{{ error }}</p>
+    <div class="grid gap-3.5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.label %}
+      <fieldset class="seg-field">
+        <legend class="field-label">{{ form.method.label }}</legend>
+        <div class="seg">
+          {% for radio in form.method %}
+            <label class="seg-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
           {% endfor %}
-        {% endif %}
-        <p class="mt-3 text-xs text-ink-500">
-          Only confirmed payments count toward a balance. A pending one waits in
-          the receipt queue until a person checks the slip and confirms it.
+        </div>
+        {% for error in form.method.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </fieldset>
+    </div>
+
+    <div class="grid gap-3.5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.reference %}
+      {% include "partials/_field.html" with field=form.note %}
+    </div>
+
+    <div>
+      <p class="field-label" id="receipt-label">Receipt</p>
+      {# Only a saved slip: an upload on a form that bounced was never stored. #}
+      {% if form.instance.receipt_file_url %}
+        <div class="mb-3 rounded-md bg-ink-50 p-3">
+          {% if form.instance.attachment_is_pdf %}
+            <a href="{{ form.instance.receipt_file_url }}" target="_blank" rel="noopener"
+               class="text-sm text-brand-800 hover:underline">Open the PDF</a>
+          {% else %}
+            <a href="{{ form.instance.receipt_file_url }}" target="_blank" rel="noopener">
+              <img src="{{ form.instance.receipt_file_url }}" alt="Uploaded receipt" loading="lazy" decoding="async"
+                   class="max-h-96 max-w-full rounded-md">
+            </a>
+          {% endif %}
+        </div>
+        {{ form.receipt }}
+      {% else %}
+        <div class="drop-zone">
+          <span data-drop-text>Drop the bank slip or POS receipt here, or choose a file. Image or PDF.</span>
+          {{ form.receipt }}
+        </div>
+      {% endif %}
+      {% for error in form.receipt.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </div>
+
+    {% if "view_families" in capabilities and not form.instance.pk %}
+      <p class="text-sm text-ink-600">
+        Paying for several children at once?
+        <a href="{% url 'payments:shared_record' %}" class="font-medium text-brand-800 hover:underline">Record a family payment</a>.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="card card-pad lg:sticky lg:top-4">
+    <h2 class="card-heading">After this payment</h2>
+    <div id="position-panel" aria-live="polite" data-position-url="{% url 'payments:student_position' %}">
+      {% include "payments/_position_panel.html" %}
+    </div>
+    <p class="mt-2 text-xs text-ink-500" data-confirm-note>
+      {% if form.confirm_now.value %}Counts toward the balance as soon as you save.{% else %}Waits for a check before it counts toward the balance.{% endif %}
+    </p>
+
+    {% if reviewing and form.instance.has_attachment %}
+      <div class="mt-4 rounded-md bg-partial-soft p-3 text-sm text-partial-strong">
+        <p class="font-semibold">Before you confirm, check the receipt</p>
+        <p class="mt-1">
+          Open the attached slip. Make sure it is for
+          <strong>{{ form.instance.student.full_name }}</strong>
+          ({{ form.instance.student.admission_number }}) and shows
+          <strong class="numeric">{{ form.instance.amount|naira }}</strong>.
+          If you have changed either one above, check the slip against your change instead.
         </p>
       </div>
-      <div class="border-t border-ink-200 px-5 py-4">
-        <button type="submit" class="btn btn-primary w-full text-sm">
-          {{ verb }}
-        </button>
+    {% endif %}
+
+    <label class="mt-4 flex items-start gap-2.5 text-sm text-ink-900">
+      {{ form.confirm_now }}
+      <span>
+        {% if form.instance.pk %}{{ form.confirm_now.label }}{% else %}Confirm now. I have checked the receipt against the student and the amount. Leave unticked to hold it for checking.{% endif %}
+      </span>
+    </label>
+    {% for error in form.confirm_now.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+
+    {% comment %}
+    The human check on an attached slip. Nothing reads the picture for us, so confirming a
+    payment that has one asks the person confirming to say they did, and the form refuses
+    to confirm without it (PaymentForm.receipt_checked). The script shows this only once a
+    slip and a confirmation are both in play; without script it simply stays visible.
+    {% endcomment %}
+    {% if not reviewing or form.instance.has_attachment %}
+      <div class="mt-3" data-receipt-check>
+        <label class="flex items-start gap-2.5 text-sm font-medium text-ink-900">
+          {{ form.receipt_checked }}
+          <span>{{ form.receipt_checked.label }}</span>
+        </label>
+        {% for error in form.receipt_checked.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
       </div>
-    </section>
-  </div>
+    {% endif %}
+
+    <div class="form-cta mt-4">
+      <button type="submit" class="btn btn-primary btn-full"
+              data-verb="{{ verb }}" data-verb-confirming="{{ verb_confirming|default:verb }}">{% if form.confirm_now.value and verb_confirming %}{{ verb_confirming }}{% else %}{{ verb }}{% endif %}</button>
+    </div>
+  </section>
 </form>
 {% endblock %}
 
@@ -324,6 +301,71 @@
       typed.value = toTyped(native.value);
       typed.dispatchEvent(new Event('change', { bubbles: true }));
     });
+  })();
+  // "After this payment": this payment and what is left, as the amount is typed. What
+  // the button says, and what the note promises, follow the confirm box.
+  (function () {
+    var panel = document.getElementById('position-panel');
+    var amount = document.querySelector('input[name="amount"]');
+    var confirm = document.querySelector('input[name="confirm_now"]');
+    var checkRow = document.querySelector('[data-receipt-check]');
+    var file = document.querySelector('input[name="receipt"]');
+    var note = document.querySelector('[data-confirm-note]');
+    var button = document.querySelector('button[data-verb]');
+    var pill = document.querySelector('[data-owes-pill]');
+    var dropText = document.querySelector('[data-drop-text]');
+    var hadSlip = !!document.querySelector('[data-receipt-check]') && !file;
+
+    function naira(value) {
+      return '\u20A6' + value.toLocaleString('en-NG', { maximumFractionDigits: 2 });
+    }
+
+    function refreshFigures() {
+      var position = panel && panel.querySelector('[data-position]');
+      if (pill) {
+        pill.hidden = !position;
+        if (position) {
+          pill.textContent = position.getAttribute('data-owes-label');
+          pill.className = 'status-pill mt-2 lg:hidden ' + position.getAttribute('data-pill');
+        }
+      }
+      if (!position || !amount) return;
+      var owes = parseFloat(position.getAttribute('data-owes')) || 0;
+      var paying = parseFloat(amount.value) || 0;
+      position.querySelector('[data-this-payment]').textContent = paying ? '\u2212' + naira(paying) : '\u2014';
+      position.querySelector('[data-owes-after]').textContent = paying ? naira(Math.max(owes - paying, 0)) : '\u2014';
+    }
+
+    function refreshConfirm() {
+      var confirming = !!(confirm && confirm.checked);
+      if (button) {
+        button.textContent = button.getAttribute(confirming ? 'data-verb-confirming' : 'data-verb');
+      }
+      if (note) {
+        note.textContent = confirming
+          ? 'Counts toward the balance as soon as you save.'
+          : 'Waits for a check before it counts toward the balance.';
+      }
+      if (checkRow) {
+        var hasSlip = hadSlip || !!(file && file.files && file.files.length);
+        var errored = !!checkRow.querySelector('.field-error');
+        checkRow.hidden = !(errored || (confirming && hasSlip));
+      }
+    }
+
+    if (amount) amount.addEventListener('input', refreshFigures);
+    if (confirm) confirm.addEventListener('change', refreshConfirm);
+    if (file) {
+      file.addEventListener('change', function () {
+        if (dropText && file.files && file.files.length) dropText.textContent = file.files[0].name;
+        refreshConfirm();
+      });
+    }
+    if (panel && window.MutationObserver) {
+      new MutationObserver(refreshFigures).observe(panel, { childList: true });
+    }
+    refreshFigures();
+    refreshConfirm();
   })();
 </script>
 {% endblock %}

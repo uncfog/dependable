@@ -99,11 +99,16 @@ class PaymentListView(ViewPaymentsMixin, TermMixin, ListView):
         return self._filter_form
 
     def get_queryset(self):
+        return self._filtered()
+
+    def _filtered(self, *, ignoring_status=False):
         queryset = super().get_queryset().select_related(
             "student", "student__school_class", "term", "recorded_by"
         )
         form = self.get_filter_form()
         filters = form.cleaned_data if form.is_bound and form.is_valid() else {}
+        if ignoring_status:
+            filters = {name: value for name, value in filters.items() if name != "status"}
 
         term = filters.get("q")
         if term:
@@ -140,6 +145,15 @@ class PaymentListView(ViewPaymentsMixin, TermMixin, ListView):
         context["pending_total"] = totals["pending"] or ZERO
         context["pending_count"] = totals["pending_count"] or 0
         context["term"] = self.current_term()
+        # The chips. Counted without the status filter, so each one still says how
+        # many it would show while another is selected.
+        chips = self._filtered(ignoring_status=True).aggregate(
+            every=Count("id"),
+            pending=Count("id", filter=Q(status=PaymentStatus.PENDING)),
+            void=Count("id", filter=Q(status=PaymentStatus.VOID)),
+        )
+        context["chip_counts"] = chips
+        context["status_selected"] = self.request.GET.get("status", "")
         if "view_families" in _capabilities(self.request):
             context["unallocated_total"] = shared.unallocated_total()
         context["page_title"] = "Payments"
@@ -208,9 +222,11 @@ class PaymentCreateView(RecordPaymentsMixin, TermMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["page_title"] = "Record a payment"
-        context["verb"] = "Record payment"
+        context["verb"] = "Save for checking"
+        context["verb_confirming"] = "Record and confirm"
         context["term"] = self.current_term()
         context["position"] = _position_for_form(context["form"])
+        context["position_student"] = _student_for_form(context["form"])
         return context
 
     def form_valid(self, form):
@@ -266,6 +282,7 @@ class StudentPositionView(RecordPaymentsMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         student = student_from_picker(self.request.GET.get("student"))
         context["position"] = fees.position_for(student) if student else None
+        context["position_student"] = student
         return context
 
 
@@ -348,6 +365,7 @@ class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):
         context["reviewing"] = pending
         context["term"] = self.object.term
         context["position"] = _position_for_form(context["form"])
+        context["position_student"] = _student_for_form(context["form"])
         return context
 
     def form_valid(self, form):
@@ -491,14 +509,35 @@ class OutstandingView(ViewPaymentsMixin, TermMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         rows = context["rows"]
-        context["owed_total"] = sum((row.owed for row in rows), ZERO)
+        # Everyone who owes, not just this page: the tiles answer "how much is still
+        # out there?", and pagination must not change the answer.
+        everyone = context["paginator"].object_list if context["paginator"] else rows
+        context["owed_total"] = sum((row.owed for row in everyone), ZERO)
+        context["owing_count"] = len(everyone)
+        context["paid_nothing_count"] = sum(1 for row in everyone if not row.position.paid)
+        context["part_paid_count"] = context["owing_count"] - context["paid_nothing_count"]
         context["expected_total"] = sum(
             (row.position.expected for row in rows), ZERO
         )
+        context["any_overdue"] = any(row.position.is_overdue for row in everyone)
+        context["shows_arrears"] = any(row.position.arrears_outstanding for row in rows)
+        # One bar per row, so the width is worked out here rather than in a template.
+        context["bars"] = [
+            {
+                "row": row,
+                "percent": (
+                    min(int(row.position.paid * 100 / row.position.expected), 100)
+                    if row.position.expected
+                    else 0
+                ),
+            }
+            for row in rows
+        ]
         context["term"] = self.current_term()
+        context["can_set_due_date"] = "manage_fees" in _capabilities(self.request)
         context["can_send"] = "send_messages" in _capabilities(self.request)
         context["can_record"] = "record_payments" in _capabilities(self.request)
-        context["page_title"] = "Outstanding balances"
+        context["page_title"] = "Outstanding"
         return context
 
 
@@ -599,6 +638,13 @@ def _naira(amount: Decimal) -> str:
     from apps.core.templatetags.money import naira
 
     return naira(amount)
+
+
+def _student_for_form(form):
+    """Who the form is pointed at, for naming them beside their balance."""
+    if "student" in form.fields:
+        return student_from_picker(form["student"].value())
+    return form.instance.student if form.instance.pk else None
 
 
 def _position_for_form(form):

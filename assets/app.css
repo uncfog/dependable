@@ -91,36 +91,36 @@
   --color-lattice-pill: #E2E2DC;
 
   /* --- Neutrals: cooled toward the brand hue --------------------------- */
-  --color-ink-50: #f6f8fb;
-  --color-ink-100: #eef1f6;
-  --color-ink-200: #dfe4ed;
-  --color-ink-300: #c3cbd9;
-  --color-ink-400: #8290a8;
-  --color-ink-500: #626e88;
-  --color-ink-600: #5a6b85;
-  --color-ink-700: #435065;
-  --color-ink-800: #2e3849;
-  --color-ink-900: #1c2432;
+  --color-ink-50: #f4f6fb;
+  --color-ink-100: #eef1f9;
+  --color-ink-200: #e4e8f3;
+  --color-ink-300: #d5dbec;
+  --color-ink-400: #6b7394;
+  --color-ink-500: #5f6788;
+  --color-ink-600: #5f6788;
+  --color-ink-700: #444c6e;
+  --color-ink-800: #2c3356;
+  --color-ink-900: #1b2140;
 
   /* --- Payment status --------------------------------------------------
      Four states, each with a solid tone for text/icons and a soft tone for
      pill backgrounds. Never signal these by colour alone -- pair with the
      label, as the .status-pill component below does. */
   --color-paid: #0f7a52;
-  --color-paid-soft: #e4f4ec;
-  --color-paid-strong: #0a5c3e;
+  --color-paid-soft: #dff5ec;
+  --color-paid-strong: #0d6b48;
 
   --color-partial: #a86a09;
-  --color-partial-soft: #fdf1dd;
-  --color-partial-strong: #7d4e04;
+  --color-partial-soft: #fdf1d6;
+  --color-partial-strong: #8a5a00;
 
-  --color-unpaid: #5a6b85;
-  --color-unpaid-soft: #eef1f6;
-  --color-unpaid-strong: #435065;
+  --color-unpaid: #3b4da6;
+  --color-unpaid-soft: #eceff8;
+  --color-unpaid-strong: #3b4da6;
 
-  --color-overdue: #b32424;
-  --color-overdue-soft: #fbe9e9;
-  --color-overdue-strong: #8a1a1a;
+  --color-overdue: #c93a31;
+  --color-overdue-soft: #fde4e1;
+  --color-overdue-strong: #a92c24;
 
   /* --- Icon accents -----------------------------------------------------
      A short, deliberate ramp for colourful icon tiles. Not a second palette:
@@ -178,7 +178,7 @@
      Four steps: `card` for a resting surface, `panel` for something lifted
      over the page, `float` for the hero's product cards, and `glow` for the
      brand-tinted spread under a primary action. */
-  --shadow-card: 0 1px 2px 0 rgb(9 23 50 / 0.06), 0 1px 3px 0 rgb(9 23 50 / 0.08);
+  --shadow-card: 0 10px 26px rgb(27 33 64 / 0.08);
   --shadow-panel: 0 10px 30px -12px rgb(9 23 50 / 0.28);
   --shadow-float: 0 24px 60px -24px rgb(9 23 50 / 0.45),
                   0 2px 8px -2px rgb(9 23 50 / 0.18);
@@ -245,7 +245,7 @@
   /* Lime: the single highlight on a screen. The active sidebar item, and the
      one action in a header band. Dark ink on it only, never lime text on white. */
   --color-lime: #d2f04e;
-  --color-on-lime: #1c2432;
+  --color-on-lime: #1b2140;
 
   /* --- Glass -----------------------------------------------------------
      A frosted surface is three values, not one: what tints the pane, what
@@ -315,34 +315,34 @@
   --color-brand-950: #eef5fe;
 
   /* Neutrals: ink-50 is the page ground, ink-900 the primary text. */
-  --color-ink-50: #0e131b;
-  --color-ink-100: #1a222e;
-  --color-ink-200: #26313f;
-  --color-ink-300: #384555;
-  --color-ink-400: #7b899d;
-  --color-ink-500: #a3b0c3;
-  --color-ink-600: #bcc8d8;
-  --color-ink-700: #d2dce8;
-  --color-ink-800: #e4ebf4;
-  --color-ink-900: #f4f8fc;
+  --color-ink-50: #121735;
+  --color-ink-100: #222b57;
+  --color-ink-200: #2c3566;
+  --color-ink-300: #3a4478;
+  --color-ink-400: #8a93b8;
+  --color-ink-500: #aeb6d8;
+  --color-ink-600: #bcc3e0;
+  --color-ink-700: #d3d8ec;
+  --color-ink-800: #e4e7f5;
+  --color-ink-900: #eef1fb;
 
   /* Payment status: the soft/strong relationship holds, both ends move. A
      status pill is a light label on a deep tint instead of the reverse. */
   --color-paid: #34b27c;
-  --color-paid-soft: #0f2a20;
-  --color-paid-strong: #63d6a3;
+  --color-paid-soft: #17382c;
+  --color-paid-strong: #7fe0b4;
 
   --color-partial: #d99a2b;
-  --color-partial-soft: #2c2211;
-  --color-partial-strong: #f2bc60;
+  --color-partial-soft: #3a2e15;
+  --color-partial-strong: #f0c674;
 
   --color-unpaid: #8b9ab0;
-  --color-unpaid-soft: #1b222d;
-  --color-unpaid-strong: #bcc8d8;
+  --color-unpaid-soft: #222b57;
+  --color-unpaid-strong: #aab8f2;
 
-  --color-overdue: #c93f3f;
-  --color-overdue-soft: #2d1719;
-  --color-overdue-strong: #f39191;
+  --color-overdue: #cc4840;
+  --color-overdue-soft: #3d1d22;
+  --color-overdue-strong: #ff8a80;
 
   /* Icon accents: the tile darkens and the glyph brightens, so a tile keeps
      the same contrast direction in both themes. */
@@ -361,8 +361,8 @@
   --color-acc-rose: #ef86a6;
   --color-acc-rose-soft: #2e161f;
 
-  --color-surface: #171f2b;
-  --color-surface-raised: #1e2836;
+  --color-surface: #1c2347;
+  --color-surface-raised: #222b57;
 
   /* The panel stays dark, but lifts away from the darker page ground so the
      sidebar still reads as a separate plane rather than merging with it. */
@@ -388,7 +388,7 @@
   --color-on-accent: #ffffff;
 
   --color-lime: #d2f04e;
-  --color-on-lime: #1c2432;
+  --color-on-lime: #1b2140;
 
   /* Glass on a dark ground is a lightening pane, not a whitening one: a
      66%-white fill that reads as frost over a pale page reads as fog over a
@@ -920,7 +920,8 @@
   }
 
   .card {
-    @apply bg-surface rounded-lg border border-ink-200 shadow-card;
+    @apply bg-surface border border-transparent shadow-card;
+    border-radius: 20px;
   }
 
   /* A card that goes somewhere or opens something. The lift is 2px and the
@@ -1080,7 +1081,11 @@
   }
 
   .table-head {
-    @apply bg-ink-50 text-left text-xs uppercase tracking-wide text-ink-600;
+    @apply text-left text-xs text-ink-600;
+  }
+
+  .table-head th {
+    font-weight: 700;
   }
 
   .empty-state {
@@ -1307,6 +1312,44 @@
 
     #main .btn {
       min-height: var(--spacing-touch);
+    }
+
+    /* Two lines on a phone: who and how much, then the status and what to do. */
+    .table-cards tr.card-row > td.card-lead {
+      grid-column: 1;
+      justify-content: flex-start;
+      text-align: left;
+    }
+
+    .table-cards tr.card-row > td.card-lead::before,
+    .table-cards tr.card-row > td.card-full::before {
+      content: none;
+    }
+
+    .table-cards tr.card-row > td.card-full {
+      display: block;
+      text-align: left;
+    }
+
+    /* Each row its own white card, on the page ground. */
+    .card.card-apart {
+      background: transparent;
+      border-width: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .card-apart .overflow-x-auto {
+      overflow: visible;
+    }
+
+    .card-apart .table-cards tr {
+      margin-bottom: 0.75rem;
+      padding: 0.625rem 0;
+      border-top: 0;
+      border-radius: 18px;
+      background: var(--color-surface);
+      box-shadow: var(--shadow-card);
     }
 
     /* A cell with no heading to show, such as a row of buttons or a group title. */
@@ -2006,7 +2049,11 @@
   .status-paid    { @apply bg-paid-soft text-paid-strong; }
   .status-partial { @apply bg-partial-soft text-partial-strong; }
   .status-unpaid  { @apply bg-unpaid-soft text-unpaid-strong; }
-  .status-overdue { @apply bg-overdue-soft text-overdue-strong; }
+  /* Solid: red only ever means a balance past its due date, and it should read as that. */
+  .status-overdue { background-color: #c93a31; color: #ffffff; }
+  /* Blue: the rows that are waiting for someone to act. */
+  .status-pending { background-color: #4a5fc0; color: #ffffff; }
+  .status-void    { @apply bg-ink-100 text-ink-600; }
 
   /* A dot in the matching colour, for legends and table keys where the word
      is already next to it.
@@ -2056,7 +2103,7 @@
 
   /* Figures read as money/IDs -- tabular mono keeps columns aligned. */
   .numeric {
-    @apply font-mono tabular-nums;
+    @apply font-sans tabular-nums;
   }
 
   /* --- Disclosure: a card that opens ------------------------------------
@@ -3401,3 +3448,396 @@
 .app-header p a.text-brand-800 {
   color: var(--color-panel-fg);
 }
+
+/* =========================================================================
+   The redesign as drawn (docs/design-references/schoolcord-redesign.html).
+   Outside the layers, because these have to beat the utilities on the shell:
+   blue is structure, lime is the one action, red is only an overdue balance.
+   ========================================================================= */
+.app-title {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--color-panel-fg);
+}
+
+@media (min-width: 640px) {
+  .app-title { font-size: 1.625rem; }
+}
+
+.btn {
+  border-radius: 12px;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .btn { min-height: 38px; }
+  .btn-sm { min-height: 30px; padding-inline: 0.75rem; border-radius: 10px; font-size: 0.8125rem; }
+}
+
+.btn-lime { background-color: var(--color-lime); color: var(--color-on-lime); }
+.btn-lime:hover:not(:disabled) { background-color: #c4e23f; }
+.btn-line {
+  background-color: var(--color-surface);
+  color: var(--color-unpaid-strong);
+  border: 1px solid var(--color-ink-300);
+}
+.btn-line:hover:not(:disabled) { background-color: var(--color-ink-100); }
+.btn-full { width: 100%; min-height: 46px; font-size: 0.9375rem; }
+
+.field-input { border-radius: 12px; border-color: var(--color-ink-300); }
+.card-heading { margin-bottom: 0.75rem; font-size: 1rem; font-weight: 800; color: var(--color-ink-900); }
+.card-pad { padding: 1.25rem 1.375rem; }
+.sub-line { display: block; font-size: 0.75rem; font-weight: 400; color: var(--color-ink-500); }
+
+/* --- The band: the header runs on behind the first cards ------------------ */
+.band-overlap .app-header {
+  position: static;
+  z-index: auto;
+  padding-top: 1rem;
+  padding-bottom: 2.875rem;
+}
+
+.band-overlap #main {
+  position: relative;
+  margin-top: -1.875rem;
+  padding-top: 0;
+}
+
+@media (min-width: 640px) {
+  .band-overlap .app-header {
+    padding: 1.375rem 1.75rem 4.375rem;
+  }
+
+  .band-overlap #main {
+    margin-top: -2.875rem;
+    padding-inline: 1.75rem;
+  }
+}
+
+.band-hero { width: 100%; margin-top: 0.5rem; }
+.band-hero-label, .band-hero-sub { font-size: 0.8125rem; color: var(--color-panel-copy); }
+.band-hero-figure {
+  margin-top: 0.125rem;
+  font-size: 1.875rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-panel-fg);
+}
+
+@media (min-width: 640px) {
+  .band-hero { margin-top: 1.25rem; }
+  .band-hero-figure { font-size: 2.625rem; }
+}
+
+/* --- Bars: the true ratio, and a zero has no stub ------------------------- */
+.progress {
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 99px;
+  background-color: var(--color-ink-200);
+}
+
+.progress > i { display: block; height: 100%; background-color: #4a5fc0; }
+.band-hero .progress { max-width: 35rem; margin-top: 0.75rem; background-color: rgb(255 255 255 / 0.28); }
+.band-hero .progress > i { background-color: var(--color-lime); }
+
+/* --- Tiles --------------------------------------------------------------- */
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+  border-radius: 18px;
+  color: var(--color-ink-900);
+  box-shadow: var(--shadow-card);
+  transition: transform var(--duration-quick) var(--ease-out);
+}
+
+a.tile:hover { transform: translateY(-2px); }
+.tile > span { font-size: 0.8125rem; font-weight: 600; }
+.tile > b { font-size: 1.625rem; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+
+.tint-blue   { background-color: #e8ebfa; }
+.tint-green  { background-color: var(--color-paid-soft); }
+.tint-amber  { background-color: var(--color-partial-soft); }
+.tint-grey   { background-color: var(--color-unpaid-soft); }
+.tint-purple { background-color: #efe9fd; }
+.tint-red    { background-color: var(--color-overdue-soft); }
+
+.quick-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-height: 5rem;
+  padding: 0.625rem;
+  border-radius: 14px;
+  color: var(--color-ink-900);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.quick-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 1.875rem;
+  height: 1.875rem;
+  border-radius: 50%;
+  color: #ffffff;
+  font-size: 0.9375rem;
+  font-weight: 800;
+}
+
+.quick-icon svg { width: 0.9375rem; height: 0.9375rem; }
+.icon-blue   { background-color: #4a5fc0; }
+.icon-red    { background-color: #e35d5d; }
+.icon-purple { background-color: #7b5cf0; }
+.icon-green  { background-color: #2fb383; }
+.icon-amber  { background-color: #c47a1c; }
+
+:root[data-theme="dark"] .tint-blue,
+:root[data-theme="dark"] .tint-purple { background-color: #222b57; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tint-blue,
+  :root:not([data-theme="light"]) .tint-purple { background-color: #222b57; }
+}
+
+/* --- Chips ---------------------------------------------------------------- */
+.chip-row { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0.375rem 0.875rem;
+  border: 1px solid var(--color-ink-300);
+  border-radius: 999px;
+  background-color: var(--color-surface);
+  color: var(--color-ink-900);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.filter-chip:hover { background-color: var(--color-ink-100); }
+.filter-chip-lime, .filter-chip-lime:hover {
+  border-color: var(--color-lime);
+  background-color: var(--color-lime);
+  color: var(--color-on-lime);
+  font-weight: 800;
+}
+.filter-chip-blue, .filter-chip-blue:hover {
+  border-color: #4a5fc0;
+  background-color: #4a5fc0;
+  color: #ffffff;
+}
+
+@media (max-width: 639.98px) {
+  .filter-chip { min-height: var(--spacing-touch); }
+  .filter-panel {
+    padding: 0;
+    border-width: 0;
+    background: transparent;
+    box-shadow: none;
+    overflow: visible;
+  }
+}
+
+/* --- The one-button banner ------------------------------------------------- */
+.note-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #dbef8c;
+  border-radius: 18px;
+  background-color: #f3fbd0;
+  color: #1b2140;
+  font-size: 0.875rem;
+}
+
+/* --- Record a payment ------------------------------------------------------ */
+.money-field { position: relative; }
+.money-field::before {
+  content: "\20A6";
+  position: absolute;
+  top: 50%;
+  left: 0.875rem;
+  transform: translateY(-50%);
+  font-size: 1.375rem;
+  font-weight: 800;
+  color: var(--color-ink-900);
+  pointer-events: none;
+}
+.money-field .field-input {
+  min-height: 3.375rem;
+  padding-left: 2.25rem;
+  font-size: 1.375rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.seg-field { min-width: 0; border: 0; padding: 0; margin: 0; }
+.seg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0.25rem;
+  border-radius: 14px;
+  background-color: var(--color-ink-100);
+}
+.seg-option { flex: 1 1 auto; cursor: pointer; }
+.seg-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--color-ink-900);
+}
+.seg-option input:checked + span { background-color: var(--color-lime); color: var(--color-on-lime); font-weight: 800; }
+.seg-option input:focus-visible + span { outline: 2px solid #4a5fc0; outline-offset: 2px; }
+
+.drop-zone {
+  position: relative;
+  padding: 1.125rem;
+  border: 2px dashed var(--color-ink-300);
+  border-radius: 16px;
+  background-color: var(--color-ink-50);
+  color: var(--color-ink-500);
+  font-size: 0.875rem;
+  text-align: center;
+}
+.drop-zone:hover, .drop-zone:focus-within { border-color: #4a5fc0; }
+/* The real input, over the whole zone: the browser's own click and drop both work. */
+.drop-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.kv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+  border-bottom: 1px solid var(--color-ink-100);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-ink-900);
+}
+.kv-row-total { border-bottom: 0; font-size: 1.0625rem; font-weight: 800; }
+
+@media (max-width: 1023.98px) {
+  .no-bottom-nav #main { padding-bottom: 6.5rem; }
+  .form-cta {
+    position: fixed;
+    z-index: 30;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    padding: 0.75rem 0.875rem calc(1.125rem + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--color-ink-200);
+    background-color: var(--color-surface);
+  }
+}
+
+body:has(.no-bottom-nav) .bottom-nav { display: none; }
+
+/* --- A row's quieter actions, opened in place so the table's frame can't clip them --- */
+.row-menu { position: relative; display: inline-block; }
+.row-menu > summary { list-style: none; cursor: pointer; }
+.row-menu > summary::-webkit-details-marker { display: none; }
+.row-menu-tray {
+  position: absolute;
+  top: 50%;
+  right: calc(100% + 0.375rem);
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  transform: translateY(-50%);
+  border-radius: 12px;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-panel);
+}
+
+/* --- Second look against the drawing -------------------------------------- */
+/* The figures close the band: after the title, its actions and the theme switch. */
+.band-hero { order: 10000; }
+
+.tile-row { display: none; }
+
+@media (min-width: 640px) {
+  .tile-row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    gap: 0.875rem;
+  }
+}
+
+.tile > b { white-space: nowrap; overflow-wrap: normal; }
+
+@media (max-width: 639.98px) {
+  .tile > b { font-size: 1.1875rem; }
+
+  /* Compact rows that are still easy to press: the tap area is 44px, and the negative
+     margin stops that from adding to the height of the row. */
+  .table-cards tr.card-row > td.card-lead a:not(.btn),
+  .table-cards tr.card-row > td.card-full a:not(.btn),
+  .table-cards tr.card-row > td a.receipt-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--spacing-touch);
+    margin-block: -0.75rem;
+  }
+
+  .card-apart .table-cards td.card-parent { color: var(--color-ink-500); font-size: 0.8125rem; }
+
+  .icon-only-phone { width: 2.75rem; padding-inline: 0; }
+
+  .no-bottom-nav .page-actions { width: auto; order: 10000; }
+  .no-bottom-nav .app-header { flex-wrap: nowrap; }
+}
+
+/* A column of names reads on one line; the table scrolls inside its own frame if it must. */
+@media (min-width: 640px) {
+  .table-tight td, .table-tight th { padding-inline: 0.5rem; }
+  .table-tight td:first-child, .table-tight th:first-child { padding-left: 1.25rem; }
+  .table-tight td:last-child, .table-tight th:last-child { padding-right: 1.25rem; }
+}
+
+.filter-panel .btn { min-height: 44px; }
+
+.money-field input::-webkit-outer-spin-button,
+.money-field input::-webkit-inner-spin-button { appearance: none; margin: 0; }
+.money-field input { appearance: textfield; }
+
+/* --- Sign-in: the same blue, flat, and lime for the one action -------------- */
+.auth-visual { background: #4a5fc0 !important; }
+.auth-form-side .btn-primary { background-color: var(--color-lime); color: var(--color-on-lime); }
+.auth-form-side .btn-primary:hover:not(:disabled) { background-color: #c4e23f; }
+
+/* An invisible label inside a scrolling table must not widen the whole page. */
+.overflow-x-auto { position: relative; }
+
+.auth-orb { display: none; }
+
+.receipt-link { display: block; margin-top: 0.25rem; white-space: nowrap; }

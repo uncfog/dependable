@@ -55,7 +55,7 @@ class BalanceLookupTests(PaymentsTestCase):
         # Pending money does not count until someone confirms it.
         self.assertEqual(position.outstanding, Decimal("30000"))
         self.assertContains(response, "₦30,000")
-        self.assertContains(response, "Outstanding")
+        self.assertContains(response, "Owes now")
         self.assertNotContains(response, "Pick a student")
 
     def test_a_bare_admission_number_finds_the_student_too(self):
