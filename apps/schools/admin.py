@@ -2,12 +2,13 @@ from collections import Counter
 
 from django.contrib import admin
 from django.db import transaction
+from django.utils import timezone
 from django.utils.html import format_html
 
 from apps.core.admin import TenantScopedAdminMixin
 
 from . import teardown
-from .models import Branch, School, SchoolModule, SchoolStatus
+from .models import Branch, PlanOrder, School, SchoolModule, SchoolStatus
 
 _STATUS_COLOURS = {
     SchoolStatus.ACTIVE: "#0f7a52",
@@ -170,3 +171,62 @@ class SchoolModuleAdmin(TenantScopedAdminMixin):
     search_fields = ("school__name", "key")
     autocomplete_fields = ("school", "changed_by")
     readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(PlanOrder)
+class PlanOrderAdmin(admin.ModelAdmin):
+    """Where the platform owner confirms a bank transfer and switches the plan.
+
+    A school cannot move itself onto a paid plan. Its order waits here until the
+    money has arrived, and the only way to change the plan is the action below.
+    Status and the plan itself are read-only, so the action is the only path.
+    """
+
+    list_display = (
+        "reference",
+        "school",
+        "plan",
+        "amount_naira",
+        "status",
+        "transfer_reported_at",
+        "paid_at",
+    )
+    list_filter = ("status", "plan")
+    search_fields = ("reference", "school__name")
+    readonly_fields = (
+        "reference",
+        "school",
+        "plan",
+        "amount_naira",
+        "status",
+        "transfer_reported_at",
+        "paid_at",
+        "created_at",
+        "updated_at",
+    )
+    actions = ("mark_paid_and_activate",)
+
+    def get_queryset(self, request):
+        return PlanOrder.all_objects.select_related("school")
+
+    def has_add_permission(self, request):
+        return False
+
+    @admin.action(description="Confirm payment and switch the school to this plan")
+    def mark_paid_and_activate(self, request, queryset):
+        now = timezone.now()
+        switched = 0
+        with transaction.atomic():
+            open_orders = queryset.exclude(
+                status__in=(PlanOrder.Status.PAID, PlanOrder.Status.CANCELLED)
+            ).select_related("school")
+            for order in open_orders:
+                school = order.school
+                school.plan = order.plan
+                school.status = SchoolStatus.ACTIVE
+                school.save(update_fields=["plan", "status", "updated_at"])
+                order.status = PlanOrder.Status.PAID
+                order.paid_at = now
+                order.save(update_fields=["status", "paid_at", "updated_at"])
+                switched += 1
+        self.message_user(request, f"{switched} school(s) switched to the plan they paid for.")

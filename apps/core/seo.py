@@ -123,6 +123,8 @@ PRIVATE_PATHS: tuple[str, ...] = (
     "/onboarding/",
     "/messaging/",
     "/payments/",
+    # A school's plan and its bank-transfer orders. Signed-in owners only.
+    "/plan/",
     "/admissions/",
     "/reports/",
     "/media/",
