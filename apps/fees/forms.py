@@ -10,7 +10,37 @@ from django.forms import BaseInlineFormSet, inlineformset_factory
 from apps.academics.models import Class
 from apps.core.forms import BranchScopedForm, StyledFormMixin
 
-from .models import FeeComponent, FeeStructure, Term
+from .models import FeeComponent, FeeStructure, StudentFeeAdjustment, Term, not_past
+
+
+class StudentFeeAdjustmentForm(StyledFormMixin, forms.ModelForm):
+    """A change to one child's bill. Its student comes from the URL, never the form."""
+
+    class Meta:
+        model = StudentFeeAdjustment
+        fields = ["term", "kind", "amount", "description"]
+        widgets = {
+            "amount": forms.NumberInput(attrs={"step": "0.01", "inputmode": "decimal"}),
+        }
+
+    def __init__(self, *args, student, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance.student = student
+        self.fields["amount"].label = "Amount (₦)"
+        # Their own campus's terms. Earlier ones too, which is how a balance from
+        # before the school joined gets recorded.
+        self.fields["term"].queryset = Term.objects.filter(branch_id=student.branch_id)
+        current = self.fields["term"].queryset.filter(is_current=True).first()
+        if current is not None:
+            self.fields["term"].initial = current
+
+
+class VoidAdjustmentForm(StyledFormMixin, forms.Form):
+    reason = forms.CharField(
+        label="Why is this being voided?",
+        max_length=250,
+        widget=forms.TextInput(attrs={"placeholder": "Entered against the wrong child"}),
+    )
 
 
 class FeeStructureForm(BranchScopedForm):
@@ -27,7 +57,8 @@ class FeeStructureForm(BranchScopedForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         classes = Class.objects.filter(is_active=True).select_related("branch")
-        terms = Term.objects.select_related("branch")
+        # Not a term a campus has moved on from: see Term.is_past.
+        terms = not_past(Term.objects.select_related("branch"))
         self.fields["school_class"].queryset = classes
         self.fields["term"].queryset = terms
         self.fields["school_class"].label = "Class"
@@ -81,6 +112,13 @@ class TermForm(BranchScopedForm):
         fields = ["branch", "name", "academic_year", "sequence", "is_current", "due_date"]
         widgets = {"due_date": forms.DateInput(attrs={"type": "date"})}
         labels = {"is_current": "This is the term the school is in now"}
+        help_texts = {
+            "is_current": (
+                "Starting a new term ends the last one: its fees are locked, and "
+                "anything unpaid carries over as arrears. Move students to their new "
+                "classes after this, not before."
+            ),
+        }
 
 
 class FeeComponentForm(StyledFormMixin, forms.ModelForm):

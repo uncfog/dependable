@@ -299,7 +299,8 @@ def build(scope: ReportScope, *, prepared_for: str = "") -> Report:
         period_label=_period_label(scope, terms),
         generated_at=timezone.localtime(),
         prepared_for=prepared_for,
-        stats=_stats(summary, expected_total, students, states),
+        stats=_stats(summary, expected_total, students, states)
+        + _arrears_stat(positions),
         charts=(_collection_chart(summary, expected_total), _states_chart(states)),
         tables=_tables(scope, by_school, by_branch, by_class, terms, ledger, students),
         notes=_notes(scope, terms, students, positions, summary, expected_total),
@@ -416,6 +417,27 @@ def _ledger(branch_ids, terms) -> dict:
 
 def _plural(count: int, word: str, suffix: str = "s") -> str:
     return f"{count:,} {word}{'' if count == 1 else suffix}"
+
+
+def _arrears_stat(positions) -> tuple[Stat, ...]:
+    """What is owed from earlier terms, beside this term's figures and not inside them.
+
+    Expected, collected and outstanding answer for the current term. Mixing older debt
+    into them would change what the collection rate means from one term to the next.
+    Absent until a school has any, so nothing appears for a school with none.
+    """
+    total = sum((p.arrears_outstanding for p in positions.values()), ZERO)
+    if not total:
+        return ()
+    owing = sum(1 for p in positions.values() if p.arrears_outstanding)
+    return (
+        Stat(
+            label="From earlier terms",
+            value=Cell.money(total),
+            note=f"Still owed by {_plural(owing, 'student')}",
+            tone="overdue",
+        ),
+    )
 
 
 def _stats(summary, expected_total, students, states) -> tuple[Stat, ...]:

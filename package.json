@@ -9,8 +9,8 @@
     "check:contrast": "node scripts/check-contrast.mjs"
   },
   "devDependencies": {
-    "@tailwindcss/cli": "^4.1.0",
-    "driver.js": "^1.8.0",
+    "@tailwindcss/cli": "^4.3.4",
+    "driver.js": "^1.10.2",
     "tailwindcss": "^4.1.0"
   }
 }

@@ -236,8 +236,10 @@ class SummariseTests(SchoolTeardownTestCase):
                 parent_name="A Parent", parent_phone="08034129878",
             )
         rows = teardown.summarise(self.alpha)
-        self.assertEqual(rows[0][0], "Students")
+        counts = [count for _, count in rows]
+        self.assertEqual(counts, sorted(counts, reverse=True))
         self.assertEqual(rows[0][1], 5)
+        self.assertIn(("Students", 5), rows)
 
 
 class AdminDeleteScreenTests(SchoolTeardownTestCase):

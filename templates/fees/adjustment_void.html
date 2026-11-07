@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">{{ adjustment.student.full_name }}</p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{{ adjustment.student.get_absolute_url }}" class="btn btn-ghost text-sm">Cancel</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" class="mx-auto max-w-xl">
+  {% csrf_token %}
+  <section class="card overflow-hidden">
+    <div class="border-b border-ink-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-ink-900">
+        {{ adjustment.get_kind_display }} of <span class="numeric">{{ adjustment.amount|naira }}</span>
+      </h2>
+      <p class="mt-0.5 text-xs text-ink-500">
+        {{ adjustment.term.name }} &middot; {{ adjustment.description }}
+      </p>
+    </div>
+    <div class="px-5 py-5">
+      {% include "partials/_field.html" with field=form.reason %}
+      <p class="field-hint">
+        It stays on the child's record, marked as voided, and stops counting toward their balance.
+      </p>
+    </div>
+    <div class="border-t border-ink-200 px-5 py-4">
+      <button type="submit" class="btn btn-primary text-sm">Void adjustment</button>
+    </div>
+  </section>
+</form>
+{% endblock %}

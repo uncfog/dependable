@@ -1,4 +1,4 @@
-Django==5.2.17
+Django==5.2.18
 # Resend's API, as a Django email backend. The [resend] extra adds the
 # signature verification Anymail uses for Resend's status webhooks.
 django-anymail[resend]==15.2
@@ -9,9 +9,9 @@ openpyxl==3.1.5
 # is both unserved and ephemeral. The [s3] extra brings boto3. See
 # config/settings/base.py.
 django-storages[s3]==1.14.6
-psycopg[binary]==3.3.4
+psycopg[binary]==3.3.7
 pwned-passwords-django==5.2.0
-python-dotenv==1.2.2
+python-dotenv==1.2.4
 # Error reporting, off unless SENTRY_DSN is set. See config/settings/monitoring.py.
 sentry-sdk[django]==2.74.0
 # Authenticator-app sign-in for platform accounts, with recovery codes. segno draws
@@ -21,5 +21,5 @@ segno==1.6.6
 # The Reports PDF export, and nothing else -- see apps/reports/pdf.py for
 # why this one is worth a dependency where the payment receipt was not.
 # Pillow arrives with it and is not otherwise used.
-reportlab==5.0.1
+reportlab==5.1.0
 whitenoise==6.12.0

@@ -3,7 +3,40 @@ from django.db.models import Sum
 
 from apps.core.admin import TenantScopedAdminMixin
 
-from .models import FeeComponent, FeeStructure, Term
+from .models import (
+    FeeComponent,
+    FeeStructure,
+    StudentFeeAdjustment,
+    StudentTermEnrolment,
+    Term,
+)
+
+
+class ReadOnlyAdmin(TenantScopedAdminMixin):
+    """A record to read. These change through the app's own rules, or not at all."""
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(StudentFeeAdjustment)
+class StudentFeeAdjustmentAdmin(ReadOnlyAdmin):
+    list_display = ("student", "term", "kind", "amount", "description", "voided_at")
+    list_filter = ("kind", "term", "branch")
+    search_fields = ("student__admission_number", "student__last_name", "description")
+
+
+@admin.register(StudentTermEnrolment)
+class StudentTermEnrolmentAdmin(ReadOnlyAdmin):
+    list_display = ("student", "term", "school_class", "branch")
+    list_filter = ("term", "branch")
+    search_fields = ("student__admission_number", "student__last_name")
 
 
 @admin.register(Term)

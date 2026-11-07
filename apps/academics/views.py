@@ -13,7 +13,7 @@ from collections import OrderedDict
 
 from django.contrib import messages
 from django.db import transaction
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, ProtectedError
 from django.http import HttpResponseRedirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
@@ -297,8 +297,19 @@ class ClassDeleteView(ManageAcademicsMixin, DeleteView):
     extra_context = {"page_title": "Delete class"}
 
     def form_valid(self, form):
-        messages.success(self.request, f"Class {self.object} deleted.")
-        return super().form_valid(form)
+        name = str(self.object)
+        try:
+            response = super().form_valid(form)
+        except ProtectedError:
+            # Students are on it, or were billed through it. Both are history.
+            messages.error(
+                self.request,
+                f"{name} has students or fee history, so it can't be deleted. "
+                f"You can deactivate it instead, which keeps the history.",
+            )
+            return HttpResponseRedirect(self.success_url)
+        messages.success(self.request, f"Class {name} deleted.")
+        return response
 
 
 # ---------------------------------------------------------------------------

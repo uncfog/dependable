@@ -408,6 +408,39 @@ from. Add a model with one entry in `TRACKED` in `apps/audit/recording.py`.
   so someone with direct database access is not stopped, and closing a school
   removes its events.
 
+### Each child's ledger (`apps/students/fees.py`)
+
+A child's balance is calculated on request from these, and stored nowhere:
+
+| Source | What it gives |
+| --- | --- |
+| `StudentTermEnrolment` | Which class the child was in for a term, and that the term counts for them |
+| `FeeStructure` for that class and term | The fees |
+| `StudentFeeAdjustment` | Opening balances, charges, discounts, scholarships and waivers for one child |
+| Confirmed `Payment` rows | The money |
+
+`FeePosition` gives `expected` and `outstanding` for this term, `arrears` (from earlier
+terms; negative is credit), `arrears_outstanding`, `credit` and `total_owed`. The rules:
+
+- **Money settles the oldest debt first.** A payment is always credited to the current
+  term, then the position works out what it covers.
+- **Arrears start from the first term change after this ships.** An earlier term only
+  counts with an enrolment or adjustment on record, and the migration creates enrolments
+  for the current term alone. So no figure moves on deploy, and history nobody can vouch
+  for is neither a debt nor a credit. A balance from before that goes in as an opening
+  balance.
+- **Enrolments maintain themselves** (`apps/fees/enrolment.py`): starting a term records
+  every active child there, and a change of class updates the current term only.
+  **Promote after starting the new term.** Moving a child before that changes the class
+  recorded for the term that is ending, and so its fees.
+- **Earlier terms' fees are locked**, on the screens and the import, once the campus has
+  moved on (`Term.is_past`). Correct one child with an adjustment.
+- **Adjustments are never edited.** The owner adds or voids them from the child's page,
+  and every change is in the audit log.
+- **Reports keep their meaning.** Expected, collected, outstanding and collection rate
+  are still this term's, with arrears as their own figure. The Outstanding screen and
+  fee reminders use `total_owed`, so a child whose only debt is from last term is chased.
+
 ### Error reporting (`config/settings/monitoring.py`)
 
 Off until `SENTRY_DSN` is set. Reports exclude user details, cookies, stack-frame

@@ -93,7 +93,8 @@ class OutstandingRow:
 
     @property
     def owed(self) -> Decimal:
-        return self.position.outstanding
+        """Everything this child owes, earlier terms included."""
+        return self.position.total_owed
 
 
 def outstanding(students=None) -> list[OutstandingRow]:
@@ -117,7 +118,7 @@ def outstanding(students=None) -> list[OutstandingRow]:
         OutstandingRow(student=student, position=schedule.position_for(student))
         for student in students
     ]
-    rows = [row for row in rows if row.position.is_priced and row.owed > ZERO]
+    rows = [row for row in rows if row.owed > ZERO]
     rows.sort(key=lambda row: row.owed, reverse=True)
     return rows
 
@@ -133,7 +134,7 @@ def running_balance(payment: Payment) -> Decimal:
     from apps.students import fees
 
     position = fees.position_for(payment.student)
-    if not position.is_priced or position.term is None:
+    if position.term is None or not (position.is_priced or position.arrears):
         return ZERO
 
     taken = (
@@ -143,7 +144,7 @@ def running_balance(payment: Payment) -> Decimal:
         .aggregate(amount=Sum("amount"))["amount"]
         or ZERO
     )
-    return max(position.expected - taken, ZERO)
+    return max(position.arrears + position.expected - taken, ZERO)
 
 
 def _up_to(payment: Payment) -> Q:

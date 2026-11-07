@@ -1,5 +1,5 @@
 # Tools for working on the project and for CI. Never installed in production.
 coverage==7.17.2
-pip-audit==2.10.0
+pip-audit==2.10.1
 # The browser smoke tests in e2e/. After installing: playwright install chromium
 playwright==1.64.1
