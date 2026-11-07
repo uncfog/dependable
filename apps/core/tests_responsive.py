@@ -76,7 +76,7 @@ class BottomNavTests(ResponsiveTestCase):
 
     def test_each_role_gets_the_screens_it_lives_on(self):
         self.assertEqual(
-            self.labels(Role.BURSAR), ["Dashboard", "Payments", "Outstanding", "Students"]
+            self.labels(Role.BURSAR), ["Dashboard", "Students", "Payments"]
         )
         self.assertEqual(
             self.labels(Role.SCHOOL_OWNER), ["Dashboard", "Students", "Payments"]
@@ -108,10 +108,10 @@ class BottomNavTests(ResponsiveTestCase):
 
     def test_the_current_screen_is_marked(self):
         self.client.force_login(self.bursar)
-        response = self.client.get(reverse("payments:outstanding"))
+        response = self.client.get(reverse("payments:index"))
 
         active = [i.label for i in response.context["bottom_nav"] if i.active]
-        self.assertEqual(active, ["Outstanding"])
+        self.assertEqual(active, ["Payments"])
 
     def test_signed_out_pages_do_not_have_it(self):
         self.assertNotContains(self.client.get(reverse("login")), 'class="bottom-nav')

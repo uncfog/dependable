@@ -100,9 +100,9 @@ class PaymentStatus(models.TextChoices):
 
 #: Design-system pill class per status, reusing the four payment-status colours.
 STATUS_PILLS = {
-    PaymentStatus.PENDING: "status-partial",
+    PaymentStatus.PENDING: "status-pending",
     PaymentStatus.CONFIRMED: "status-paid",
-    PaymentStatus.VOID: "status-unpaid",
+    PaymentStatus.VOID: "status-void",
 }
 
 
@@ -401,6 +401,13 @@ class Payment(BranchScopedModel):
     @property
     def pill_class(self) -> str:
         return STATUS_PILLS.get(self.status, "status-unpaid")
+
+    @property
+    def status_label(self) -> str:
+        """The pill's words. "Pending check" says what the row is waiting for."""
+        if self.status == PaymentStatus.PENDING:
+            return "Pending check"
+        return self.get_status_display()
 
     @property
     def receipt_number(self) -> str:

@@ -1,0 +1,21 @@
+{% comment %}
+Four tiles, each tinted by what it counts. Takes `student_count` and `status`. Overdue
+gets a tile only when somebody is overdue: red is kept for that fact alone.
+{% endcomment %}
+<div class="tile-row" role="group" aria-labelledby="fees-heading">
+  <h2 id="fees-heading" class="sr-only">{% if current_branch %}Fees this term{% else %}Fees across every campus{% endif %}</h2>
+  <a href="{% url 'students:student_list' %}" class="tile tint-blue">
+    <span>Students enrolled</span><b>{{ student_count }}</b>
+  </a>
+  {% for bucket in status.buckets %}
+    {% if bucket.key == "paid" %}
+      <a href="{% url 'payments:outstanding' %}" class="tile tint-green"><span>Paid in full</span><b>{{ bucket.count }}</b></a>
+    {% elif bucket.key == "partial" %}
+      <a href="{% url 'payments:outstanding' %}" class="tile tint-amber"><span>Part paid</span><b>{{ bucket.count }}</b></a>
+    {% elif bucket.key == "unpaid" %}
+      <a href="{% url 'payments:outstanding' %}" class="tile tint-grey"><span>Unpaid</span><b>{{ bucket.count }}</b></a>
+    {% elif bucket.key == "overdue" and bucket.count %}
+      <a href="{% url 'payments:outstanding' %}" class="tile tint-red"><span>Overdue</span><b>{{ bucket.count }}</b></a>
+    {% endif %}
+  {% endfor %}
+</div>

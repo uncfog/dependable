@@ -1,0 +1,13 @@
+{% load money %}
+{% comment %}
+The band's lead: collected against what the term asks for. Takes collected_total,
+expected_total and collected_percent. A bar's width is the true ratio.
+{% endcomment %}
+<div class="band-hero" role="group" aria-label="Collected this term">
+  <a href="{% url 'payments:index' %}?status=confirmed" class="band-hero-label hover:underline">Collected this term</a>
+  <p class="band-hero-figure">{{ collected_total|naira }}</p>
+  <p class="band-hero-sub numeric">of {{ expected_total|naira }} expected &middot; {{ collected_percent }}%</p>
+  <span class="progress" role="img" aria-label="{{ collected_percent }}% of expected fees collected">
+    <i style="width: {{ collected_percent }}%"></i>
+  </span>
+</div>

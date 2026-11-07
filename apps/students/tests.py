@@ -311,7 +311,7 @@ class ViewPermissionTests(StudentTestCase):
     def test_principal_sees_edit_controls(self):
         self.client.force_login(self.north_principal)
         body = self.client.get(reverse("students:student_list")).content.decode()
-        self.assertIn("New student", body)
+        self.assertIn("Add student", body)
 
     def test_anonymous_is_redirected_to_login(self):
         response = self.client.get(reverse("students:student_list"))

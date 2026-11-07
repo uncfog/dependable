@@ -593,8 +593,8 @@ class MovedOffTheDashboardsTests(ReportsData):
     def test_the_bursar_dashboard_keeps_its_figures_and_its_one_chart(self):
         self.client.force_login(self.bursar)
         response = self.client.get(reverse("core:bursar_dashboard"))
-        self.assertContains(response, "Expected this term")
-        self.assertContains(response, "Collected against the term")
+        self.assertContains(response, "Collected this term")
+        self.assertContains(response, "Waiting for you")
         # Gone: the per-class table, and the second chart beside the meter.
         self.assertNotContains(response, "What each class is worth")
         self.assertNotContains(response, "Where the roster stands")
@@ -610,7 +610,7 @@ class MovedOffTheDashboardsTests(ReportsData):
     def test_the_branch_dashboard_keeps_its_figures_and_its_one_chart(self):
         self.client.force_login(self.principal)
         response = self.client.get(reverse("core:branch_dashboard"))
-        self.assertContains(response, "Where this campus stands")
+        self.assertContains(response, "Collected this term")
         self.assertNotContains(response, "Classes on this campus")
         self.assertContains(response, reverse("reports:index"))
 

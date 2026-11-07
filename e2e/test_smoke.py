@@ -305,7 +305,7 @@ class TakingAPaymentTests(BrowserTestCase):
         # Confirm now: the box is unticked by default, so a payment is held pending
         # unless the person taking it says it is checked.
         page.check('input[name="confirm_now"]')
-        page.click('button[type="submit"]:has-text("Record payment")')
+        page.click('button[type="submit"]:has-text("Record and confirm")')
         page.wait_for_url("**/receipt/")
 
         payment = Payment.all_objects.get(student=self.students[1])
@@ -344,10 +344,11 @@ class PhoneLayoutTests(BrowserTestCase):
             with self.subTest(role=role, path=path):
                 self.assertLess(self.go(self.page, path).status, 400)
                 self.assertLessEqual(self.overflow(), 0)
-                # The title used to be squeezed away to nothing by the buttons.
-                self.assertGreater(
-                    self.page.locator("header h1").bounding_box()["width"], 100
-                )
+                # The title used to be squeezed away to nothing by the buttons. The
+                # overviews hide theirs on a phone on purpose: the figures lead there.
+                title = self.page.locator("header h1")
+                if "max-sm:sr-only" not in (title.get_attribute("class") or ""):
+                    self.assertGreater(title.bounding_box()["width"], 100)
 
     def test_nothing_overflows_for_the_platform(self):
         self.check_every_screen("platform")
@@ -362,11 +363,11 @@ class PhoneLayoutTests(BrowserTestCase):
         self.check_every_screen("bursar")
 
     def test_a_table_becomes_labelled_cards(self):
-        page = self.open("bursar", "/students/")
+        page = self.open("bursar", "/payments/")
 
         # Kept for screen readers, in a one-pixel box, rather than removed.
         self.assertLessEqual(page.locator("#main thead").bounding_box()["height"], 1)
-        cell = page.locator('#main td[data-label="Class"]').first
+        cell = page.locator('#main td[data-label="Status"]').first
         self.assertTrue(cell.is_visible())
         self.assertEqual(
             page.evaluate(
@@ -414,7 +415,7 @@ class PhoneLayoutTests(BrowserTestCase):
                 self.assertGreaterEqual(smallest, 44)
 
     def test_filters_start_closed_and_open_on_a_press(self):
-        page = self.open("bursar", "/students/")
+        page = self.open("bursar", "/payments/")
         search = page.locator('input[name="q"]')
 
         self.assertFalse(search.is_visible())
@@ -436,9 +437,9 @@ class PhoneLayoutTests(BrowserTestCase):
         self.assertTrue(link.is_visible())
 
     def test_the_bottom_bar_does_not_hide_the_end_of_a_page(self):
-        page = self.open("bursar", "/payments/record/")
+        page = self.open("owner", "/students/new/")
         page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
-        button = page.locator('button[type="submit"]:has-text("Record payment")')
+        button = page.locator('main button[type="submit"]').last
 
         self.assertLessEqual(
             button.bounding_box()["y"] + button.bounding_box()["height"],

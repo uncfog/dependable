@@ -1,54 +1,38 @@
 {% load money %}
 {% comment %}
-"Where they stand", for the record/edit payment form. Rendered inline on load
-and fetched again from payments:student_position each time the student picker
-changes, so the panel the bursar sees is always this one template.
+"After this payment", for the record/edit payment form. Rendered inline on load and
+fetched again from payments:student_position each time the student picker changes, so
+the panel is always this one template. The form's script fills in "This payment" and
+"Owes after" from the amount as it is typed; without script those two rows stay blank.
 {% endcomment %}
 {% if position and position.is_priced or position.arrears %}
-  <dl class="divide-y divide-ink-200">
+  <div data-position data-owes="{{ position.total_owed|stringformat:'f' }}"
+       data-owes-label="Owes {{ position.total_owed|naira }}" data-pill="{{ position.pill_class }}">
+    {% if position_student %}
+      <div class="flex items-center justify-between gap-3 pb-2">
+        <span class="min-w-0">
+          <span class="block text-sm font-bold text-ink-900">{{ position_student.formal_name }}</span>
+          <span class="sub-line numeric">{{ position_student.school_class.display_name }} &middot; {{ position_student.admission_number }}</span>
+        </span>
+        <span class="status-pill {{ position.pill_class }} shrink-0">{{ position.pill_label }}</span>
+      </div>
+    {% endif %}
     {% if position.arrears_outstanding %}
-      <div class="flex items-baseline justify-between gap-3 px-5 py-3">
-        <dt class="text-sm text-ink-600">From earlier terms</dt>
-        <dd class="numeric text-sm text-overdue-strong">{{ position.arrears_outstanding|naira }}</dd>
-      </div>
+      <div class="kv-row"><span>From earlier terms</span><span>{{ position.arrears_outstanding|naira }}</span></div>
     {% endif %}
-    <div class="flex items-baseline justify-between gap-3 px-5 py-3">
-      <dt class="text-sm text-ink-600">Expected this term</dt>
-      <dd class="numeric text-sm text-ink-900">{{ position.expected|naira }}</dd>
-    </div>
-    <div class="flex items-baseline justify-between gap-3 px-5 py-3">
-      <dt class="text-sm text-ink-600">Confirmed so far</dt>
-      <dd class="numeric text-sm text-ink-900">{{ position.paid|naira }}</dd>
-    </div>
-    <div class="flex items-baseline justify-between gap-3 bg-ink-50 px-5 py-3">
-      <dt class="text-sm font-semibold text-ink-900">Outstanding</dt>
-      <dd class="numeric text-lg font-semibold
-                 {% if position.total_owed %}text-overdue-strong
-                 {% else %}text-paid-strong{% endif %}">
-        {{ position.total_owed|naira }}
-      </dd>
-    </div>
+    <div class="kv-row"><span>Owes now</span><span>{{ position.total_owed|naira }}</span></div>
+    <div class="kv-row"><span>This payment</span><span data-this-payment>&mdash;</span></div>
+    <div class="kv-row kv-row-total"><span>Owes after</span><span data-owes-after>&mdash;</span></div>
     {% if position.credit %}
-      <div class="flex items-baseline justify-between gap-3 px-5 py-3">
-        <dt class="text-sm text-ink-600">Credit</dt>
-        <dd class="numeric text-sm text-paid-strong">{{ position.credit|naira }}</dd>
-      </div>
+      <div class="kv-row"><span>Credit</span><span>{{ position.credit|naira }}</span></div>
     {% endif %}
-  </dl>
-  <div class="border-t border-ink-200 px-5 py-3">
-    <span class="status-pill {{ position.pill_class }}">
-      {{ position.pill_label }}
-    </span>
   </div>
 {% else %}
-  <div class="empty-state py-8">
-    <p class="text-sm text-ink-600">
-      {% if position %}
-        That student's class has no fees set for this term, so there is no
-        balance to move.
-      {% else %}
-        Pick a student and their balance appears here.
-      {% endif %}
-    </p>
-  </div>
+  <p class="py-4 text-sm text-ink-600">
+    {% if position %}
+      That student's class has no fees set for this term, so there is no balance to move.
+    {% else %}
+      Pick a student and their balance appears here.
+    {% endif %}
+  </p>
 {% endif %}

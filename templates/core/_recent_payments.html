@@ -15,8 +15,8 @@ variants -- see the note at the top of assets/app.css.
 {% endcomment %}
 {% if "view_payments" in capabilities %}
   <section class="card overflow-hidden" aria-labelledby="recent-payments-heading">
-    <div class="flex items-center justify-between gap-3 border-b border-ink-200 px-5 py-3">
-      <h2 id="recent-payments-heading" class="text-sm font-semibold text-ink-900">
+    <div class="flex items-center justify-between gap-3 px-5 pt-5 pb-1">
+      <h2 id="recent-payments-heading" class="text-base font-extrabold text-ink-900">
         Recent payments
       </h2>
       <a href="{% url 'payments:index' %}"
@@ -26,13 +26,13 @@ variants -- see the note at the top of assets/app.css.
     </div>
 
     {% if recent_payments %}
-      <ul class="divide-y divide-ink-200">
+      <ul class="divide-y divide-ink-100">
         {% for payment in recent_payments %}
           <li>
             <a href="{{ payment.get_absolute_url }}"
                class="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-ink-50">
               <span class="min-w-0 flex-1">
-                <span class="block truncate text-sm font-medium text-ink-900">
+                <span class="block truncate text-sm font-bold text-ink-900">
                   {{ payment.student.full_name }}
                 </span>
                 <span class="block text-xs text-ink-500">
@@ -40,12 +40,12 @@ variants -- see the note at the top of assets/app.css.
                   &middot; {{ payment.get_label_display }}
                 </span>
               </span>
-              <span class="flex shrink-0 flex-col items-end gap-1">
-                <span class="numeric text-sm font-semibold text-ink-900">
+              <span class="flex shrink-0 flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+                <span class="numeric text-sm font-bold text-ink-900">
                   {{ payment.amount|naira }}
                 </span>
                 <span class="status-pill {{ payment.pill_class }}">
-                  {{ payment.get_status_display }}
+                  {{ payment.status_label }}
                 </span>
               </span>
             </a>
