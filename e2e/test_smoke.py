@@ -245,6 +245,18 @@ class InstalledAppTests(BrowserTestCase):
         self.assertFalse(page.locator("[data-install-prompt]").is_visible())
 
 
+class BlueHeaderTests(BrowserTestCase):
+    def test_the_page_title_is_white_on_the_blue_band_in_both_themes(self):
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+        for theme in ("light", "dark"):
+            page.evaluate("t => document.documentElement.setAttribute('data-theme', t)", theme)
+            colour = page.evaluate(
+                "getComputedStyle(document.querySelector('.app-header h1')).color"
+            )
+            self.assertEqual(colour, "rgb(255, 255, 255)", theme)
+
+
 class EveryRoleTests(BrowserTestCase):
     def check_role(self, role, viewport):
         page = self.page_for(viewport)

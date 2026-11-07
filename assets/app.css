@@ -3393,3 +3393,11 @@
 .app-header .text-ink-700 {
   color: var(--color-panel-copy);
 }
+
+/* Same reason: the page title carries text-ink-900, and a link in a subtitle
+   text-brand-800. Both are dark in light mode and unreadable on the blue. Named
+   narrowly, so a light surface opened from the header keeps its dark text. */
+.app-header h1.text-ink-900,
+.app-header p a.text-brand-800 {
+  color: var(--color-panel-fg);
+}
