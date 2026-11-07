@@ -254,6 +254,18 @@ marked up to read as compact rows, on the table's own cells, with no effect at a
 rearrange. The browser tests set a limit on row height for Outstanding, Payments and
 Students, and require 44px links in those lists.
 
+### Installing to a phone (`apps/core/pwa.py`)
+
+`/manifest.webmanifest` and `/sw.js` let a phone add the app to its home screen. The service
+worker stores static files and `static/offline.html`, and nothing else. Pages always come
+from the network, and without one the offline page appears, so no record or payment is kept
+on a device and signing out has nothing to clear. Signed-in responses also carry
+`Cache-Control: private, no-store`. There is no offline mode for records or money.
+
+`PWA_ENABLED=false` is the off switch: `/sw.js` then removes itself and its caches from
+every device on its next check. It is off by default in `dev.py`. A release changes the
+cache name, because the name comes from the versioned static file names.
+
 ## 5. Database and multi-tenancy
 
 ### Engine selection

@@ -24,7 +24,7 @@ ORIGIN = "https://www.schoolcord.test"
 PUBLIC_PATHS = [reverse(page.url_name) for page in PUBLIC_PAGES]
 
 #: Crawler-facing files, which are public by definition.
-MACHINE_PATHS = ["/robots.txt", "/sitemap.xml", "/llms.txt"]
+MACHINE_PATHS = ["/robots.txt", "/sitemap.xml", "/llms.txt", "/sw.js", "/manifest.webmanifest"]
 
 
 class _HeadParser(HTMLParser):

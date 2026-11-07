@@ -5,7 +5,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import include, path
 from django.views.generic import RedirectView
 
-from apps.core import seo
+from apps.core import pwa, seo
 from apps.core.branding import PRODUCT_NAME
 from apps.core.views import (
     BrandedLogoutView,
@@ -20,6 +20,8 @@ admin.site.index_title = "School management platform"
 
 urlpatterns = [
     # For crawlers and AI assistants. What each says is in apps/core/seo.py.
+    path("sw.js", pwa.ServiceWorkerView.as_view(), name="service_worker"),
+    path("manifest.webmanifest", pwa.ManifestView.as_view(), name="web_manifest"),
     path("robots.txt", seo.RobotsTxtView.as_view(), name="robots_txt"),
     path("sitemap.xml", sitemap, {"sitemaps": seo.SITEMAPS}, name="sitemap"),
     path("llms.txt", seo.LlmsTxtView.as_view(), name="llms_txt"),
