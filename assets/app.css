@@ -1176,8 +1176,57 @@
     }
 
     .table-cards td a:not(.btn) {
-      display: inline-block;
-      padding-block: 0.375rem;
+      display: inline-flex;
+      align-items: center;
+      min-height: var(--spacing-touch);
+    }
+
+    /* A long list reads as compact rows. A row marked `card-row` is a two-column grid:
+       `card-title` leads it, `card-half` shares a line, and `card-secondary` waits on
+       the record's own page. Without grid support it falls back to the plain stack. */
+    .table-cards tr.card-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .table-cards tr.card-row > td {
+      grid-column: 1 / -1;
+    }
+
+    .table-cards tr.card-row > td.card-half {
+      grid-column: auto;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      text-align: left;
+    }
+
+    .table-cards tr.card-row > td.card-end {
+      align-items: flex-end;
+      text-align: right;
+    }
+
+    .table-cards tr.card-row > td.card-title {
+      justify-content: flex-start;
+      column-gap: 0.5rem;
+      text-align: left;
+    }
+
+    .table-cards tr.card-row > td.card-title::before {
+      content: none;
+    }
+
+    /* The value says what it is, so the label only adds a line. */
+    .table-cards tr.card-row > td.card-bare::before {
+      content: none;
+    }
+
+    .table-cards tr.card-row > td.card-secondary {
+      display: none;
+    }
+
+    #main .btn {
+      min-height: var(--spacing-touch);
     }
 
     /* A cell with no heading to show, such as a row of buttons or a group title. */

@@ -244,6 +244,16 @@ students 2, messaging 5, payments 1, admissions 3.
   the landing page (`templates/core/landing.html`) was rebuilt from. It is not
   served.
 
+### Long lists on a phone
+
+Tables become cards through `ui.js` and the `table-cards` styles. A long list can be
+marked up to read as compact rows, on the table's own cells, with no effect at a desk:
+`card-row` on the row, `card-title` for what leads it, `card-half` to share a line,
+`card-end` to align right, `card-bare` to drop a label the value makes obvious, and
+`card-secondary` for what waits on the record's own page. Use Tailwind's `order-*` to
+rearrange. The browser tests set a limit on row height for Outstanding, Payments and
+Students, and require 44px links in those lists.
+
 ## 5. Database and multi-tenancy
 
 ### Engine selection
