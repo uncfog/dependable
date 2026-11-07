@@ -1,6 +1,6 @@
 from django.urls import path
 
-from . import views
+from . import shared_views, views
 
 app_name = "payments"
 
@@ -17,6 +17,26 @@ urlpatterns = [
         views.StudentPaymentHistoryView.as_view(),
         name="student_history",
     ),
+    path("family/", shared_views.SharedListView.as_view(), name="shared_list"),
+    path("family/record/", shared_views.SharedRecordView.as_view(), name="shared_record"),
+    path("family/<int:pk>/", shared_views.SharedDetailView.as_view(), name="shared_detail"),
+    path(
+        "family/<int:pk>/confirm/",
+        shared_views.SharedConfirmView.as_view(),
+        name="shared_confirm",
+    ),
+    path("family/<int:pk>/void/", shared_views.SharedVoidView.as_view(), name="shared_void"),
+    path(
+        "family/<int:pk>/receipt/",
+        shared_views.SharedReceiptView.as_view(),
+        name="shared_receipt",
+    ),
+    path(
+        "family/<int:pk>/receipt/file/",
+        shared_views.SharedReceiptFileView.as_view(),
+        name="shared_receipt_file",
+    ),
+    path("<int:pk>/move/", shared_views.AllocationMoveView.as_view(), name="allocation_move"),
     path("<int:pk>/", views.PaymentDetailView.as_view(), name="payment_detail"),
     path("<int:pk>/edit/", views.PaymentUpdateView.as_view(), name="payment_update"),
     path("<int:pk>/void/", views.PaymentVoidView.as_view(), name="payment_void"),

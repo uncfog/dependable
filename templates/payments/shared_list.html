@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    <span class="numeric">{{ unallocated_total|naira }}</span> not yet allocated
+  </p>
+{% endblock %}
+
+{% block page_actions %}
+  {% if showing_all %}
+    <a href="{% url 'payments:shared_list' %}" class="btn btn-ghost text-sm">Waiting only</a>
+  {% else %}
+    <a href="{% url 'payments:shared_list' %}?show=all" class="btn btn-ghost text-sm">Show all</a>
+  {% endif %}
+  {% if "record_payments" in capabilities %}
+    <a href="{% url 'payments:shared_record' %}" class="btn btn-primary text-sm">Record family payment</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  {% if transactions %}
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="table-head">
+            <tr>
+              <th scope="col" class="px-5 py-3 font-semibold">Family</th>
+              <th scope="col" class="px-5 py-3 font-semibold">Date</th>
+              <th scope="col" class="px-5 py-3 text-right font-semibold">Received</th>
+              <th scope="col" class="px-5 py-3 text-right font-semibold">Not yet allocated</th>
+              <th scope="col" class="px-5 py-3 font-semibold">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-200">
+            {% for txn in transactions %}
+              <tr>
+                <td class="px-5 py-3">
+                  <a href="{{ txn.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">{{ txn.family.name }}</a>
+                  <span class="numeric block text-xs text-ink-500">{{ txn.number }}</span>
+                </td>
+                <td class="px-5 py-3 text-ink-700">{{ txn.date_paid|date:"j M Y" }}</td>
+                <td class="numeric px-5 py-3 text-right text-ink-900">{{ txn.amount|naira }}</td>
+                <td class="numeric px-5 py-3 text-right font-semibold text-ink-900">
+                  {% if txn.status == 'void' %}—{% else %}{{ txn.left|naira }}{% endif %}
+                </td>
+                <td class="px-5 py-3">
+                  <span class="status-pill {{ txn.pill_class }}">{{ txn.get_status_display }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% if page_obj.paginator.num_pages > 1 %}
+      <nav class="mt-5 flex items-center justify-between gap-3" aria-label="Pagination">
+        {% if page_obj.has_previous %}
+          <a href="{% querystring page=page_obj.previous_page_number %}" class="btn btn-secondary text-sm">Previous</a>
+        {% else %}<span></span>{% endif %}
+        <span class="text-sm text-ink-600">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="{% querystring page=page_obj.next_page_number %}" class="btn btn-secondary text-sm">Next</a>
+        {% else %}<span></span>{% endif %}
+      </nav>
+    {% endif %}
+  {% else %}
+    <div class="card empty-state">
+      <p class="text-base font-medium text-ink-700">
+        {% if showing_all %}No family payments yet{% else %}Nothing is waiting{% endif %}
+      </p>
+      <p class="mx-auto mt-1 max-w-md text-sm">
+        Every family payment here has been checked and shared between the children.
+      </p>
+    </div>
+  {% endif %}
+{% endblock %}

@@ -87,6 +87,8 @@ INSTALLED_APPS = [
     "apps.fees",
     # Onboarding step 4: the student roster.
     "apps.students",
+    # Children grouped into households, so one payment can cover several of them.
+    "apps.families",
     # Outbound parent messaging (SMS/WhatsApp). Staff-side only.
     "apps.messaging",
     # Money received, recorded against a student. Balances derive from here.

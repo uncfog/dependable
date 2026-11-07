@@ -296,6 +296,8 @@ NAVIGATION: tuple[NavSection, ...] = (
             # so every role gets the link.
             NavItem("Students", "students:student_list", "students", ALL_ROLES,
                     tour="nav-students"),
+            NavItem("Families", "families:list", "users", _SCHOOL_SIDE,
+                    capability="view_families", module="families"),
         ),
     ),
     NavSection(
@@ -320,6 +322,8 @@ NAVIGATION: tuple[NavSection, ...] = (
             # the link.
             NavItem("Payments", "payments:index", "money", ALL_ROLES,
                     tour="nav-payments"),
+            NavItem("Family payments", "payments:shared_list", "money", ALL_ROLES,
+                    capability="view_payments", module="families"),
             NavItem("Outstanding", "payments:outstanding", "chart", ALL_ROLES),
         ),
     ),

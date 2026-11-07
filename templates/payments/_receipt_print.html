@@ -1,0 +1,25 @@
+<style>
+  @media print {
+    /* Everything but the sheet goes: no sidebar, no header, no buttons. */
+    body * { visibility: hidden; }
+    .receipt-sheet, .receipt-sheet * { visibility: visible; }
+    .receipt-sheet {
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      max-width: none;
+    }
+    .receipt-sheet .card {
+      border: 1px solid #999;
+      box-shadow: none;
+    }
+    /* Printers drop background colours by default, which would blank the
+       initial-square fallback. Force it, and the logo image with it. */
+    .receipt-sheet img,
+    .receipt-sheet [aria-hidden="true"] {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+    @page { margin: 14mm; }
+  }
+</style>

@@ -19,7 +19,7 @@
       Receipt
     </a>
   {% endif %}
-  {% if can_record and payment.status != 'void' %}
+  {% if can_record and payment.status != 'void' and not shared_txn %}
     <a href="{% url 'payments:payment_update' payment.pk %}" class="btn btn-primary text-sm">
       {% if payment.status == 'pending' %}Check and confirm{% else %}Edit{% endif %}
     </a>
@@ -72,6 +72,15 @@
           <span class="numeric font-semibold text-ink-900">{{ intake_portion|naira }}</span>
           paid the admission fee and intake items and is kept with the admission
           record, under the same receipt number.
+        </p>
+      {% endif %}
+
+      {% if shared_txn %}
+        <p class="border-b border-ink-200 bg-ink-50 px-5 py-3 text-sm text-ink-700">
+          This child's share of a family payment of
+          <span class="numeric font-semibold text-ink-900">{{ shared_txn.amount|naira }}</span>,
+          {% if shared_txn_opens %}<a href="{{ shared_txn.get_absolute_url }}" class="numeric font-medium text-brand-800 hover:underline">{{ shared_txn.number }}</a>{% else %}<span class="numeric">{{ shared_txn.number }}</span>{% endif %}.
+          Corrected by voiding or moving it, not by editing.
         </p>
       {% endif %}
 
@@ -288,6 +297,11 @@
            class="btn btn-secondary text-sm">
           {{ payment.student.first_name }}'s payment history
         </a>
+        {% if can_void and shared_txn %}
+          <a href="{% url 'payments:allocation_move' payment.pk %}" class="btn btn-secondary text-sm">
+            Move to another child
+          </a>
+        {% endif %}
         {% if can_void %}
           <a href="{% url 'payments:payment_void' payment.pk %}"
              class="btn btn-ghost text-sm text-overdue-strong hover:bg-overdue-soft">

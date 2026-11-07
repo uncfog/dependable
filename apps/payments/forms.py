@@ -161,6 +161,22 @@ class StudentPickerField(forms.CharField):
         return value
 
 
+def validate_receipt_upload(upload):
+    # An unchanged existing file comes back as the FieldFile, which has nothing
+    # to re-validate.
+    if not upload or not hasattr(upload, "content_type"):
+        return upload
+    name = (upload.name or "").lower()
+    if not any(name.endswith(ext) for ext in RECEIPT_TYPES):
+        raise ValidationError("Upload the receipt as an image or a PDF.")
+    if upload.size > RECEIPT_MAX_BYTES:
+        raise ValidationError(
+            f"That file is {upload.size // 1024 // 1024} MB. Keep receipts "
+            f"under {RECEIPT_MAX_BYTES // 1024 // 1024} MB."
+        )
+    return upload
+
+
 @dataclass(frozen=True)
 class _GatedFile:
     """What the "Currently:" line links to: the name, but the gated URL."""
@@ -304,22 +320,7 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
         return amount
 
     def clean_receipt(self):
-        upload = self.cleaned_data.get("receipt")
-        # An unchanged existing file comes back as the FieldFile, which has
-        # nothing to re-validate.
-        if not upload or not hasattr(upload, "content_type"):
-            return upload
-        name = (upload.name or "").lower()
-        if not any(name.endswith(ext) for ext in RECEIPT_TYPES):
-            raise ValidationError(
-                "Upload the receipt as an image or a PDF."
-            )
-        if upload.size > RECEIPT_MAX_BYTES:
-            raise ValidationError(
-                f"That file is {upload.size // 1024 // 1024} MB. Keep receipts "
-                f"under {RECEIPT_MAX_BYTES // 1024 // 1024} MB."
-            )
-        return upload
+        return validate_receipt_upload(self.cleaned_data.get("receipt"))
 
     def has_receipt(self) -> bool:
         """Whether the payment will have a slip attached once this form saves.

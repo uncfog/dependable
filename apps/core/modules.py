@@ -137,6 +137,19 @@ MODULES: tuple[Module, ...] = (
     ),
 )
 
+MODULES += (
+    Module(
+        key="families",
+        label="Families",
+        description="Group children into households, so one payment can be shared "
+                    "between siblings. Each child keeps their own record and balance. "
+                    "Off until a school is ready to use it.",
+        paths=("/families/", "/payments/family/"),
+        capabilities=("view_families", "manage_families"),
+        default_on=False,
+    ),
+)
+
 BY_KEY: dict[str, Module] = {module.key: module for module in MODULES}
 ALL_KEYS: frozenset[str] = frozenset(BY_KEY)
 #: The ones the platform owner is offered a switch for.

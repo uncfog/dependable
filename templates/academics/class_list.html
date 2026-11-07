@@ -16,21 +16,21 @@
     {% endcomment %}
     {% if classes %}
       <a href="{% url 'academics:class_edit_all' %}" class="btn btn-secondary text-sm">
-        <span class="hidden sm:inline">Edit</span> all
+        Edit all
       </a>
     {% endif %}
     <a href="{% url 'academics:class_create' %}" class="btn btn-secondary text-sm">
-      <span class="hidden sm:inline">One</span> class
+      One class
     </a>
     <a href="{% url 'academics:class_import' %}" class="btn btn-secondary text-sm">
-      <span class="hidden sm:inline">Import from</span> Excel
+      Import from Excel
     </a>
     <a href="{% url 'academics:class_bulk_create' %}" class="btn btn-primary text-sm">
       <svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
            stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
       </svg>
-      <span class="hidden sm:inline">Add classes</span>
+      <span>Add classes</span>
     </a>
   {% endif %}
 {% endblock %}

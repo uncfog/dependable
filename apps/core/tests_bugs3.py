@@ -351,7 +351,7 @@ class PlatformDashboardTests(BatchTestCase):
         by_name = {c["school"].name: c for c in response.context["cards"]}
         self.assertEqual(set(by_name), {"Fulfilled Academy", "Rival College"})
         keys = {m["key"] for m in by_name["Fulfilled Academy"]["modules"]}
-        self.assertEqual(keys, {"messaging", "admissions"})
+        self.assertEqual(keys, {"messaging", "admissions", "families"})
 
     def test_no_school_role_can_reach_either(self):
         for who in (self.owner, self.principal, self.bursar):

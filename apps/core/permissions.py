@@ -66,6 +66,10 @@ class Capability(str, Enum):
     DECIDE_ADMISSIONS = "decide_admissions"
     VIEW_ADMISSION_PAYMENTS = "view_admission_payments"
     RECORD_ADMISSION_PAYMENTS = "record_admission_payments"
+    # Families. Grouping children decides whose balances appear together, so it
+    # belongs with the roster: a bursar reads families and does not change them.
+    VIEW_FAMILIES = "view_families"
+    MANAGE_FAMILIES = "manage_families"
     # Which features a school has. The platform's decision and nobody else's:
     # a proprietor who could switch on their own paid add-ons would be writing
     # their own invoice. Granted only in _PLATFORM below, and it is the one
@@ -110,6 +114,8 @@ _LEADERSHIP = frozenset(
         Capability.DECIDE_ADMISSIONS,
         Capability.VIEW_ADMISSION_PAYMENTS,
         Capability.RECORD_ADMISSION_PAYMENTS,
+        Capability.VIEW_FAMILIES,
+        Capability.MANAGE_FAMILIES,
     }
 )
 
@@ -192,6 +198,7 @@ _BURSAR = frozenset(
         # to hold regardless of how the rest is configured.
         Capability.VIEW_ADMISSION_PAYMENTS,
         Capability.RECORD_ADMISSION_PAYMENTS,
+        Capability.VIEW_FAMILIES,
     }
 )
 

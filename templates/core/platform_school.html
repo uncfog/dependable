@@ -21,11 +21,11 @@ flipping one: how many campuses, who can sign in, whether the terms are set.
 
 {% block page_actions %}
   <a href="{% url 'core:platform_overview' %}" class="btn btn-ghost text-sm">
-    <span class="hidden sm:inline">All</span> schools
+    All schools
   </a>
   <a href="{% url 'admin:schools_school_change' school.pk %}"
      class="btn btn-secondary text-sm">
-    <span class="hidden sm:inline">Edit in</span> admin
+    Edit in admin
   </a>
 {% endblock %}
 

@@ -38,7 +38,7 @@ from apps.fees.models import Term
 from apps.students import fees
 from apps.students.models import Student
 
-from . import balances, duplicates
+from . import allocation, balances, duplicates, shared
 from .forms import (
     SEARCH_MIN_LENGTH,
     ConfirmedPaymentNotesForm,
@@ -49,7 +49,7 @@ from .forms import (
     picker_options,
     student_from_picker,
 )
-from .models import Payment, PaymentStatus
+from .models import Payment, PaymentStatus, PaymentTransaction
 
 ZERO = Decimal("0")
 
@@ -140,6 +140,8 @@ class PaymentListView(ViewPaymentsMixin, TermMixin, ListView):
         context["pending_total"] = totals["pending"] or ZERO
         context["pending_count"] = totals["pending_count"] or 0
         context["term"] = self.current_term()
+        if "view_families" in _capabilities(self.request):
+            context["unallocated_total"] = shared.unallocated_total()
         context["page_title"] = "Payments"
         return context
 
@@ -171,6 +173,10 @@ class PendingQueueView(ViewPaymentsMixin, ListView):
         rows = list(context["payments"])
         context["pending_total"] = sum((p.amount for p in rows), ZERO)
         context["can_record"] = "record_payments" in _capabilities(self.request)
+        if "view_families" in _capabilities(self.request):
+            context["shared_pending"] = (
+                shared.transactions().filter(status=PaymentStatus.PENDING).count()
+            )
         context["page_title"] = "Pending receipts"
         return context
 
@@ -298,6 +304,23 @@ class PaymentUpdateView(RecordPaymentsMixin, TermMixin, UpdateView):
             .select_related("student", "term")
         )
 
+    def dispatch(self, request, *args, **kwargs):
+        # One child's share of a larger sum. Correcting it alone could hand out more
+        # than came in, so it is voided and allocated again instead.
+        if request.user.is_authenticated and has_capability(
+            request.user, self.capability
+        ):
+            payment = self.get_object()
+            if payment.transaction and payment.transaction.is_shared:
+                flash.error(
+                    request,
+                    "This is a share of a larger payment, so it can't be edited on its "
+                    "own. Void it to return the money to the payment, then allocate it "
+                    "again.",
+                )
+                return HttpResponseRedirect(payment.get_absolute_url())
+        return super().dispatch(request, *args, **kwargs)
+
     def _money_is_locked(self) -> bool:
         return self.object.status == PaymentStatus.CONFIRMED and not has_capability(
             self.request.user, Capability.VOID_PAYMENTS
@@ -379,6 +402,11 @@ class PaymentDetailView(ViewPaymentsMixin, DetailView):
         context["intake_portion"] = intake_portion(payment)
         context["received_total"] = payment.amount + context["intake_portion"]
         context["history"] = history_for("payments.Payment", payment.pk)
+        txn = payment.transaction
+        if txn is not None and txn.is_shared:
+            context["shared_txn"] = txn
+            # The money can be at a campus this account can't open.
+            context["shared_txn_opens"] = PaymentTransaction.objects.filter(pk=txn.pk).exists()
         context["page_title"] = f"Payment {payment.receipt_number}"
         return context
 
@@ -424,7 +452,13 @@ class PaymentVoidView(VoidPaymentsMixin, FormView):
             flash.info(self.request, "That payment was already voided.")
             return HttpResponseRedirect(payment.get_absolute_url())
 
-        payment.void(by=self.request.user, reason=form.cleaned_data["reason"])
+        # Shares of a family payment take its lock, like every other change to it.
+        if payment.transaction and payment.transaction.is_shared:
+            payment = allocation.void_allocation(
+                payment, actor=self.request.user, reason=form.cleaned_data["reason"]
+            )
+        else:
+            payment.void(by=self.request.user, reason=form.cleaned_data["reason"])
         position = fees.position_for(payment.student)
         flash.warning(
             self.request,
@@ -498,6 +532,8 @@ class ReceiptView(ViewPaymentsMixin, DetailView):
         context["school"] = payment.student.branch.school
         context["intake_portion"] = intake_portion(payment)
         context["received_total"] = payment.amount + context["intake_portion"]
+        if payment.transaction and payment.transaction.is_shared:
+            context["shared_txn"] = payment.transaction
         context["page_title"] = f"Receipt {payment.receipt_number}"
         return context
 

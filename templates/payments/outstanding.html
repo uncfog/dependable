@@ -11,7 +11,7 @@
 
 {% block page_actions %}
   <a href="{% url 'payments:index' %}" class="btn btn-ghost text-sm">
-    <span class="hidden sm:inline">All</span> payments
+    All payments
   </a>
   {% if can_send %}
     {% comment %} The same derivation this page uses, so the reminder reaches exactly the

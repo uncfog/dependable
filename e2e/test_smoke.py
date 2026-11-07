@@ -27,6 +27,9 @@ from apps.academics.models import Class, Level
 from apps.core.roles import Role
 from apps.fees.models import FeeComponent, FeeStructure, Term, TermSequence
 from apps.payments.models import Payment
+from apps.families.models import Family
+from apps.families.services import link
+from apps.payments.models import PaymentTransaction
 from apps.schools.models import Branch, School, SchoolModule, SchoolStatus
 from apps.students.models import Sex, Student
 
@@ -48,7 +51,8 @@ ROLES = {
     "platform": ("/platform/", ["/platform/schools/", "/staff/"]),
     "owner": ("/school/", ["/students/", "/payments/", "/reports/", "/fees/"]),
     "principal": ("/branch/", ["/students/", "/payments/", "/reports/"]),
-    "bursar": ("/finance/", ["/payments/", "/payments/record/", "/payments/outstanding/"]),
+    "bursar": ("/finance/", ["/payments/", "/payments/record/", "/payments/outstanding/",
+                             "/payments/family/", "/payments/family/record/", "/families/"]),
 }
 
 
@@ -81,7 +85,7 @@ class BrowserTestCase(StaticLiveServerTestCase):
         )
         # With the paid modules on: they add buttons to the page headers, and that is
         # the layout real schools have to fit on a phone.
-        for key in ("messaging", "admissions"):
+        for key in ("messaging", "admissions", "families"):
             SchoolModule.all_objects.create(school=school, key=key, enabled=True)
         branch = Branch.all_objects.create(school=school, name="Main Campus")
         klass = Class.all_objects.create(
@@ -142,13 +146,49 @@ class BrowserTestCase(StaticLiveServerTestCase):
         user = self.users[role]
         # The tour would otherwise open over the first screen.
         page.add_init_script(
-            f"try {{ localStorage.setItem('schoolcord-tour-seen:{user.pk}', '1'); }} catch (e) {{}}"
+            f"try {{ localStorage.setItem('schoolcord-tour-seen:{user.pk}', 'yes'); }} catch (e) {{}}"
         )
         self.go(page, "/accounts/login/")
         page.fill('input[name="username"]', user.username)
         page.fill('input[name="password"]', PASSWORD)
         page.click('button[type="submit"]:has-text("Sign in")')
         page.wait_for_url(f"**{ROLES[role][0]}")
+
+
+class FamilyPaymentTests(BrowserTestCase):
+    def test_a_bursar_shares_a_payment_on_a_phone(self):
+        school = self.users["bursar"].school
+        family = Family.all_objects.create(school=school, name="The Adeyemis")
+        for student in self.students[1:3]:
+            link(family, student)
+        page = self.page_for(PHONE)
+        self.sign_in(page, "bursar")
+
+        self.go(page, f"/payments/family/record/?family={family.pk}")
+        page.fill('input[name="amount"]', "70000")
+        page.click('button:has-text("Record and share")')
+        page.wait_for_selector("[data-share-form]")
+        txn = PaymentTransaction.all_objects.get(family=family)
+
+        # The helper fills what each child owes, and never more than is left.
+        page.locator("[data-fill]").nth(0).click()
+        page.locator("[data-fill]").nth(1).click()
+        boxes = page.locator('[data-share-form] input[type="number"]')
+        self.assertEqual(boxes.nth(0).input_value(), "50000.00")
+        self.assertEqual(boxes.nth(1).input_value(), "20000.00")
+        self.assertIn("0", page.locator("[data-left-after]").inner_text())
+
+        page.click('button:has-text("Share payment")')
+        page.wait_for_selector("[data-share-form]", state="detached")
+
+        self.assertEqual(txn.unallocated, Decimal("0"))
+        self.assertEqual(
+            page.evaluate(
+                "document.documentElement.scrollWidth - document.documentElement.clientWidth"
+            ),
+            0,
+        )
+        self.assertEqual(page.script_errors, [])
 
 
 class EveryRoleTests(BrowserTestCase):

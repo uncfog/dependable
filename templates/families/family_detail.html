@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% block page_subtitle %}
+  {% if family.family_code %}
+    <p class="truncate text-sm text-ink-600">Family ID {{ family.family_code }}</p>
+  {% endif %}
+{% endblock %}
+
+{% block page_actions %}
+  {% if "record_payments" in capabilities %}
+    <a href="{% url 'payments:shared_record' %}?family={{ family.pk }}" class="btn btn-primary text-sm">Record family payment</a>
+  {% endif %}
+  {% if "manage_families" in capabilities %}
+    <a href="{% url 'families:update' family.pk %}" class="btn btn-secondary text-sm">Edit</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+  <div class="stat-row mb-5">
+    <div class="card p-5">
+      <div class="text-sm font-medium text-ink-600">Owed by these children</div>
+      <div class="numeric mt-2 text-3xl font-semibold {% if summary.total_owed %}text-overdue-strong{% else %}text-paid-strong{% endif %}">
+        {{ summary.total_owed|naira }}
+      </div>
+    </div>
+    <div class="card p-5">
+      <div class="text-sm font-medium text-ink-600">Their credit</div>
+      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ summary.total_credit|naira }}</div>
+      <div class="mt-1 text-xs text-ink-500">Stays with each child</div>
+    </div>
+    <div class="card p-5">
+      <div class="text-sm font-medium text-ink-600">Not yet allocated</div>
+      <div class="numeric mt-2 text-3xl font-semibold text-brand-900">{{ summary.unallocated|naira }}</div>
+      <div class="mt-1 text-xs text-ink-500">Received, not yet shared between children</div>
+    </div>
+  </div>
+
+  {% if summary.has_children_elsewhere %}
+    <p class="card mb-5 px-5 py-3 text-sm text-ink-700">
+      This family also has children at another campus. They aren't shown here or
+      included in these figures.
+    </p>
+  {% endif %}
+
+  <section class="card mb-5 overflow-hidden">
+    <div class="border-b border-ink-200 px-5 py-3">
+      <h2 class="text-sm font-semibold text-ink-900">Children</h2>
+    </div>
+    {% if summary.children %}
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="table-head">
+            <tr>
+              <th scope="col" class="px-5 py-3 font-semibold">Child</th>
+              <th scope="col" class="px-5 py-3 font-semibold">Class</th>
+              <th scope="col" class="px-5 py-3 text-right font-semibold">Owed</th>
+              <th scope="col" class="px-5 py-3 font-semibold">Status</th>
+              {% if "manage_families" in capabilities %}
+                <th scope="col" class="px-5 py-3 text-right font-semibold">Actions</th>
+              {% endif %}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-200">
+            {% for row in summary.children %}
+              <tr>
+                <td class="px-5 py-3">
+                  <a href="{{ row.student.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">
+                    {{ row.student.formal_name }}
+                  </a>
+                  <span class="numeric block text-xs text-ink-500">{{ row.student.admission_number }}</span>
+                </td>
+                <td class="px-5 py-3 text-ink-700">{{ row.student.school_class.display_name }}</td>
+                <td class="numeric px-5 py-3 text-right font-semibold text-ink-900">{{ row.position.total_owed|naira }}</td>
+                <td class="px-5 py-3">
+                  <span class="status-pill {{ row.position.pill_class }}">{{ row.position.pill_label }}</span>
+                </td>
+                {% if "manage_families" in capabilities %}
+                  <td class="px-5 py-3 text-right">
+                    <form method="post" action="{% url 'families:remove_child' row.membership.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn-ghost text-xs text-overdue-strong">Remove</button>
+                    </form>
+                  </td>
+                {% endif %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="empty-state text-sm">No children to show here yet.</p>
+    {% endif %}
+  </section>
+
+  {% if payments %}
+    <section class="card mb-5 overflow-hidden">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 class="text-sm font-semibold text-ink-900">Family payments</h2>
+      </div>
+      <ul class="divide-y divide-ink-200">
+        {% for txn in payments %}
+          <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-5 py-3 text-sm">
+            <a href="{{ txn.get_absolute_url }}" class="numeric font-medium text-brand-800 hover:underline">{{ txn.number }}</a>
+            <span class="text-ink-600">{{ txn.date_paid|date:"j M Y" }}</span>
+            <span class="numeric font-semibold text-ink-900">{{ txn.amount|naira }}</span>
+            <span class="text-xs text-ink-600">
+              {% if txn.status == 'void' %}Voided{% elif txn.left %}<span class="numeric">{{ txn.left|naira }}</span> not yet allocated{% else %}Fully shared{% endif %}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
+
+  {% if "manage_families" in capabilities %}
+    <form method="post" action="{% url 'families:add_child' family.pk %}" class="card flex flex-wrap items-end gap-3 p-4 sm:p-5">
+      {% csrf_token %}
+      <div class="min-w-48 flex-1">
+        <label for="add-child" class="field-label">Add a child</label>
+        <input id="add-child" type="text" name="student" class="field-input" required
+               autocomplete="off" placeholder="Admission number">
+        <p class="field-hint">Their record and payments stay exactly as they are.</p>
+      </div>
+      <button type="submit" class="btn btn-secondary text-sm">Add</button>
+    </form>
+  {% endif %}
+{% endblock %}

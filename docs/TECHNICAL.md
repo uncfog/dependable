@@ -441,6 +441,39 @@ terms; negative is credit), `arrears_outstanding`, `credit` and `total_owed`. Th
   are still this term's, with arrears as their own figure. The Outstanding screen and
   fee reminders use `total_owed`, so a child whose only debt is from last term is chased.
 
+### Shared payments and families (`apps/payments/allocation.py`, `apps/families/`)
+
+`PaymentTransaction` is the money received. `Payment` is still one child's row and the
+only thing balances read, so a family payment changes nothing about how a balance is
+worked out, and no figure can be counted twice.
+
+- **Individual payments work as before.** `Payment.save()` wraps a new payment in a
+  one-child transaction and keeps the two in step, so every existing writer stays correct.
+  `0003_backfill_transactions` did this for old payments and checks its own totals.
+- **Shared money changes only through `allocation.py`.** Each change locks the
+  transaction row first, so allocations can never exceed the amount received. What is
+  left is worked out each time and shown: on the family page, and as "Not yet allocated"
+  in reports. It is not part of "Collected".
+- **The rules.** Paying a child more than they owe needs `allow_credit=True`. Moving money
+  between siblings is `reallocate()`, a logged void and a new allocation in one step.
+  Campus staff allocate only to children at their campus; a school owner can reach any.
+  A share cannot be edited on its own.
+- **A family groups records and owns nothing.** A person always makes the link; nothing
+  matches on surname or guardian name. Removing a child ends the membership and moves no
+  money. Family totals add up each child's position, and one child's credit is not set
+  against a sibling's debt. Campus staff see their own campus's children and a note that
+  others exist.
+- **Off by default.** The `families` module is enabled per school, and covers
+  `/families/` and `/payments/family/`. Individual payments don't depend on it. Bursars
+  can read families; owners and principals can change them.
+- **The screens (`apps/payments/shared_views.py`).** A bursar records the money, then
+  shares it on the next page. All of a form's shares save or none do. A page opened
+  before the shares changed is refused, which also stops a second press repeating them.
+  What is left waits under Family payments, and the Payments page says when anything
+  is. Voiding or moving a share, or voiding the whole payment, needs `void_payments`.
+  One sheet covers the sum the parent handed over, and each child still has a receipt.
+- **Checking it.** `check_payment_transactions` exits 1 if anything disagrees.
+
 ### Error reporting (`config/settings/monitoring.py`)
 
 Off until `SENTRY_DSN` is set. Reports exclude user details, cookies, stack-frame
@@ -842,6 +875,7 @@ the server). `--help` on each lists its options.
 | `settle_enrolment_payment [--commit]` | admissions | yes, carefully | One-off repair: moves the term share of an old all-in admission payment onto the term ledger. **Dry run unless `--commit`.** |
 | `reset_platform_mfa --email …` | accounts | yes, carefully | Clears a platform account's authenticator when the phone and recovery codes are lost. Recorded in the audit log. |
 | `report_wrong_child_risk [--school <slug>]` | payments | yes, read-only | CSV of past payments a since-fixed picker bug may have credited to the wrong child. Says what to check, not what is wrong. Treat the output as confidential. |
+| `check_payment_transactions` | payments | yes, read-only | Checks every payment has a transaction, one-child transactions match their payment, and no shared transaction has handed out more than it received. Exits 1 and names the rows if not. |
 | `bootstrap_tenant --password …` | core | **NO** | Demo school + one user per role, including a superuser. Local only. |
 | `seed_academics`, `seed_fees`, `seed_students`, `seed_payments`, `seed_admission_fees` | various | **NO** | Demo data. Local only. |
 | `seed_messaging_identity` | messaging | only deliberately | Registers **and approves** a school's Sender ID without the UI review. |

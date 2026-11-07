@@ -36,7 +36,9 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from django.db import models
+from django.db import models, transaction as db_transaction
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 from django.urls import reverse
 from django.utils import timezone
 
@@ -106,11 +108,163 @@ def receipt_upload_to(instance: "Payment", filename: str) -> str:
     return f"receipts/{instance.school_id or 'unassigned'}/{filename}"
 
 
+class TransactionKind(models.TextChoices):
+    #: One child's payment, in step with its single ``Payment`` row.
+    INDIVIDUAL = "individual", "One child"
+    #: Money shared across children by :mod:`apps.payments.allocation`.
+    FAMILY = "family", "Shared"
+
+
+class PaymentTransaction(BranchScopedModel):
+    """Money actually received, once, however it is then shared out.
+
+    **Balances never read this.** They read ``Payment`` rows, one per child, as they
+    always have, so no figure can be counted twice and a family payment changes
+    nothing about how a balance is worked out. This records the sum handed over, and
+    what is left of it is simply what its allocations have not used.
+
+    ``branch`` is the campus that took the money. Shared money is only changed through
+    :mod:`apps.payments.allocation`, which holds the rule that allocations can never
+    exceed the amount received.
+    """
+
+    branch = models.ForeignKey(
+        "schools.Branch", on_delete=models.CASCADE, related_name="payment_transactions"
+    )
+    kind = models.CharField(
+        max_length=20, choices=TransactionKind.choices, default=TransactionKind.INDIVIDUAL
+    )
+    family = models.ForeignKey(
+        "families.Family", on_delete=models.PROTECT, null=True, blank=True,
+        related_name="transactions",
+    )
+    amount = models.DecimalField(
+        max_digits=12, decimal_places=2, validators=[MinValueValidator(Decimal("0.01"))]
+    )
+    date_paid = models.DateField(default=timezone.localdate)
+    method = models.CharField(
+        max_length=20, choices=PaymentMethod.choices, default=PaymentMethod.TRANSFER
+    )
+    reference = models.CharField(max_length=120, blank=True)
+    payer_name = models.CharField(max_length=160, blank=True)
+    source = models.CharField(
+        max_length=20, choices=PaymentSource.choices, default=PaymentSource.MANUAL
+    )
+    status = models.CharField(
+        max_length=20, choices=PaymentStatus.choices, default=PaymentStatus.CONFIRMED
+    )
+    note = models.CharField(max_length=250, blank=True)
+    receipt = models.FileField(
+        "receipt attachment", upload_to=receipt_upload_to, blank=True,
+        help_text="The parent's bank slip or POS receipt. Image or PDF.",
+    )
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="payment_transactions_recorded",
+    )
+    confirmed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="payment_transactions_confirmed",
+    )
+    confirmed_at = models.DateTimeField(null=True, blank=True)
+    voided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="payment_transactions_voided",
+    )
+    voided_at = models.DateTimeField(null=True, blank=True)
+    void_reason = models.CharField(max_length=250, blank=True)
+
+    class Meta(BranchScopedModel.Meta):
+        abstract = False
+        ordering = ["-date_paid", "-id"]
+        indexes = [
+            models.Index(fields=["school", "branch"]),
+            models.Index(fields=["family", "status"]),
+            models.Index(fields=["kind", "status"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.number} {self.amount}"
+
+    @property
+    def number(self) -> str:
+        """Not a receipt number: those stay on each child's ``Payment``."""
+        return f"TXN-{self.pk:06d}" if self.pk else "TXN-------"
+
+    @property
+    def is_shared(self) -> bool:
+        return self.kind == TransactionKind.FAMILY
+
+    def get_absolute_url(self) -> str:
+        return reverse("payments:shared_detail", args=[self.pk])
+
+    @property
+    def pill_class(self) -> str:
+        return {
+            PaymentStatus.CONFIRMED: "status-paid",
+            PaymentStatus.PENDING: "status-partial",
+        }.get(self.status, "status-unpaid")
+
+    @property
+    def has_attachment(self) -> bool:
+        return bool(self.receipt)
+
+    @property
+    def receipt_file_url(self) -> str:
+        """Behind the sign-in and tenant checks, not the storage URL."""
+        if not (self.pk and self.receipt):
+            return ""
+        return reverse("payments:shared_receipt_file", args=[self.pk])
+
+    def shares(self):
+        """Every child's row, at every campus.
+
+        Not ``self.allocations``, which only shows what the caller's campus can see.
+        One campus can take money that a school owner shares with another, and the
+        ceiling has to count all of it whoever is asking.
+        """
+        return Payment.all_objects.filter(transaction=self)
+
+    @property
+    def allocated(self) -> Decimal:
+        """What its children's rows are using. A voided share gives its money back."""
+        total = self.shares().exclude(status=PaymentStatus.VOID).aggregate(
+            total=models.Sum("amount")
+        )["total"]
+        return total or ZERO
+
+    @property
+    def unallocated(self) -> Decimal:
+        """What is left to share out. Worked out every time, stored never."""
+        if self.status == PaymentStatus.VOID:
+            return ZERO
+        return self.amount - self.allocated
+
+
+#: The fields a one-child transaction takes from its payment.
+_MIRRORED = (
+    "amount", "date_paid", "method", "reference", "source", "status", "note",
+    "recorded_by_id", "confirmed_by_id", "confirmed_at", "voided_by_id", "voided_at",
+    "void_reason",
+)
+
+
 class Payment(BranchScopedModel):
-    """One payment received from (or on behalf of) one student."""
+    """One payment received from (or on behalf of) one student.
+
+    On a shared transaction, this is one child's portion of it.
+    """
 
     branch = models.ForeignKey(
         "schools.Branch", on_delete=models.CASCADE, related_name="payments"
+    )
+    transaction = models.ForeignKey(
+        PaymentTransaction,
+        # A transaction with money shared out must not vanish from under it.
+        on_delete=models.PROTECT,
+        related_name="allocations",
+        null=True,
+        blank=True,
     )
     student = models.ForeignKey(
         "students.Student",
@@ -309,7 +463,35 @@ class Payment(BranchScopedModel):
             # Recorded straight as confirmed, which is the common case at the
             # bursary window: there is no pending step to stamp, so stamp now.
             self.confirmed_at = timezone.now()
-        super().save(*args, **kwargs)
+        # In the model rather than in each writer, so the screens, walk-in enrolment,
+        # seeds and the admin all stay correct, as will whatever writes one next. Both
+        # rows or neither.
+        with db_transaction.atomic():
+            if self._state.adding and self.transaction_id is None:
+                self.transaction = PaymentTransaction.all_objects.create(
+                    school_id=self.school_id or self.branch.school_id,
+                    branch_id=self.branch_id,
+                    **self._mirrored_values(),
+                )
+            super().save(*args, **kwargs)
+            self._keep_single_transaction_in_step()
+
+    def _mirrored_values(self) -> dict:
+        return {name: getattr(self, name) for name in _MIRRORED}
+
+    def _keep_single_transaction_in_step(self) -> None:
+        """A one-child transaction always says what its payment says."""
+        txn = self.transaction
+        if txn is None or txn.is_shared:
+            return
+        changed = [
+            name for name, value in self._mirrored_values().items()
+            if getattr(txn, name) != value
+        ]
+        if changed:
+            for name in changed:
+                setattr(txn, name, getattr(self, name))
+            txn.save()
 
     def clean(self):
         super().clean()
@@ -321,3 +503,12 @@ class Payment(BranchScopedModel):
                 )
         if self.date_paid and self.date_paid > timezone.localdate():
             raise ValidationError({"date_paid": "That date is in the future."})
+
+
+@receiver(post_delete, sender=Payment, dispatch_uid="payments_single_transaction_goes_too")
+def _delete_single_transaction(sender, instance, **kwargs):
+    """A one-child transaction means nothing without its payment."""
+    if instance.transaction_id:
+        PaymentTransaction.all_objects.filter(
+            pk=instance.transaction_id, kind=TransactionKind.INDIVIDUAL
+        ).delete()

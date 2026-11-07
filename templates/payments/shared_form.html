@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block page_actions %}
+  <a href="{% url 'payments:shared_list' %}" class="btn btn-ghost text-sm">Cancel</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="mx-auto max-w-2xl space-y-5">
+  {% csrf_token %}
+  <section class="card overflow-hidden">
+    {% if form.non_field_errors %}
+      <div class="border-b border-overdue/30 bg-overdue-soft px-5 py-3 text-sm text-overdue-strong">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+    <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
+      {% include "partials/_field.html" with field=form.family %}
+      {% if form.branch %}{% include "partials/_field.html" with field=form.branch %}{% endif %}
+      {% include "partials/_field.html" with field=form.amount %}
+      {% include "partials/_field.html" with field=form.date_paid %}
+      {% include "partials/_field.html" with field=form.method %}
+      {% include "partials/_field.html" with field=form.reference %}
+      {% include "partials/_field.html" with field=form.payer_name %}
+      {% include "partials/_field.html" with field=form.note %}
+      <div class="sm:col-span-2">
+        {% include "partials/_field.html" with field=form.receipt %}
+      </div>
+    </div>
+  </section>
+
+  <section class="card overflow-hidden">
+    <div class="px-5 py-4">
+      <label class="check-row px-0">
+        {{ form.confirm_now }}
+        <span class="text-sm font-medium text-ink-900">{{ form.confirm_now.label }}</span>
+      </label>
+      <p class="field-hint">{{ form.confirm_now.help_text }}</p>
+      <label class="check-row mt-3 px-0">
+        {{ form.receipt_checked }}
+        <span class="text-sm font-medium text-ink-900">{{ form.receipt_checked.label }}</span>
+      </label>
+      <p class="field-hint">Only needed when a slip is attached and you are confirming.</p>
+      {% for error in form.receipt_checked.errors %}
+        <p class="field-error">{{ error }}</p>
+      {% endfor %}
+    </div>
+    <div class="border-t border-ink-200 px-5 py-4">
+      <button type="submit" class="btn btn-primary w-full text-sm sm:w-auto">Record and share</button>
+      <p class="field-hint">You share it between the children on the next page. It stays visible as not allocated until you do.</p>
+    </div>
+  </section>
+</form>
+{% endblock %}
