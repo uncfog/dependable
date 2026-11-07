@@ -6,6 +6,21 @@ the sidebar's breakpoint up.
 {% endcomment %}
 <nav class="bottom-nav lg:hidden" aria-label="Quick links">
   {% for item in bottom_nav %}
+    {% if forloop.counter == 3 and bottom_record_href %}
+      {% comment %}
+      The lime "+", placed before the third link. For owners and principals that is
+      Payments, so the bar reads Home, Students, +, Payments, More.
+      {% endcomment %}
+      <a href="{{ bottom_record_href }}" class="bottom-nav-plus">
+        <span class="bottom-nav-plus-disc">
+          <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="2"
+               stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </span>
+        <span class="truncate">Record</span>
+      </a>
+    {% endif %}
     <a href="{{ item.href }}" class="bottom-nav-link{% if item.active %} bottom-nav-link-active{% endif %}"
        {% if item.active %}aria-current="page"{% endif %}>
       <svg class="size-6" fill="none" viewBox="0 0 24 24" stroke-width="1.6"

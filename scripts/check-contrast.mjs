@@ -88,6 +88,11 @@ const PAIRS = [
   ['on-accent', 'accent-hover', 4.5, '.btn-primary label, hover'],
   ['on-accent', 'accent-active', 4.5, '.btn-primary label, pressed'],
 
+  // Lime: the one highlight on a screen. Dark ink on it only. The active
+  // sidebar row and the header band's action are the two places it appears.
+  ['on-lime', 'lime', 4.5, 'lime action label and active sidebar row'],
+  ['lime', 'panel', 3.0, 'lime rail and accent on the blue band (non-text)'],
+
   // Payment status pills -- the soft/strong pair is the whole contract.
   ['paid-strong', 'paid-soft', 4.5, 'Paid pill'],
   ['partial-strong', 'partial-soft', 4.5, 'Part paid pill'],

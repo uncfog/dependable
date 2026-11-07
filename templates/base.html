@@ -163,9 +163,8 @@
     than sticking, because two rows held on screen would cost too much of it; the bar
     at the bottom is what stays in reach there.
     {% endcomment %}
-    <header class="z-30 flex min-h-touch flex-wrap items-center gap-x-3 gap-y-2 border-b
-                   border-ink-200 bg-surface/85 px-4 py-2.5 backdrop-blur-lg sm:px-6
-                   lg:sticky lg:top-0">
+    <header class="app-header z-30 flex min-h-touch flex-wrap items-center gap-x-3 gap-y-2
+                   px-4 py-2.5 sm:px-6 lg:sticky lg:top-0">
       <div class="min-w-40 flex-1 basis-0">
         <h1 class="truncate text-base font-semibold text-ink-900 sm:text-lg">
           {% block page_title %}{{ page_title|default:"Dashboard" }}{% endblock %}

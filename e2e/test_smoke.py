@@ -290,6 +290,9 @@ class TakingAPaymentTests(BrowserTestCase):
 
         page.fill('input[name="student"]', self.students[1].admission_number)
         page.fill('input[name="amount"]', "15000")
+        # Confirm now: the box is unticked by default, so a payment is held pending
+        # unless the person taking it says it is checked.
+        page.check('input[name="confirm_now"]')
         page.click('button[type="submit"]:has-text("Record payment")')
         page.wait_for_url("**/receipt/")
 

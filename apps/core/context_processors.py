@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 from django.apps import apps as django_apps
+from django.urls import reverse
 
 from .modules import enabled_for_user
-from .navigation import bottom_nav_for, nav_for
+from .navigation import BOTTOM_RECORD_ROLES, bottom_nav_for, nav_for
 from .permissions import capabilities_of
 from .roles import Role, scope_for
 
@@ -37,6 +38,7 @@ def tenancy(request):
     if user is None or not user.is_authenticated:
         return {
             "nav_sections": [],
+            "bottom_record_href": "",
             "tenant": None,
             "capabilities": frozenset(),
             "enabled_modules": frozenset(),
@@ -57,6 +59,13 @@ def tenancy(request):
     return {
         "nav_sections": sections,
         "bottom_nav": bottom_nav_for(role, sections),
+        # The lime "+" in the phone bar. Empty for every other role, so the template
+        # draws nothing for them.
+        "bottom_record_href": (
+            reverse("payments:record")
+            if role in BOTTOM_RECORD_ROLES and "record_payments" in capabilities
+            else ""
+        ),
         "tenant": context,
         "current_school": getattr(user, "school", None),
         "current_branch": getattr(user, "branch", None),

@@ -38,7 +38,7 @@
 
     <section class="card overflow-hidden">
       <div class="border-b border-ink-200 px-5 py-3">
-        <h2 class="text-sm font-semibold text-ink-900">Who and how much</h2>
+        <h2 class="text-sm font-semibold text-ink-900">Payment details</h2>
       </div>
       <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
         <div class="sm:col-span-2">
@@ -50,6 +50,9 @@
         </div>
         {% include "partials/_field.html" with field=form.amount %}
         {% include "partials/_field.html" with field=form.date_paid %}
+        {# The calendar's picker: hidden, and driven only by the calendar button the script below adds beside the typed date. #}
+        <input type="date" class="date-native" data-date-native data-no-datepicker tabindex="-1" aria-hidden="true">
+
         {% include "partials/_field.html" with field=form.label %}
         {% include "partials/_field.html" with field=form.method %}
         {% include "partials/_field.html" with field=form.reference %}
@@ -266,6 +269,60 @@
     picker.addEventListener('input', function () {
       clearTimeout(timer);
       timer = setTimeout(refresh, 300);
+    });
+  })();
+
+  // The date is typed as dd/mm/yyyy, with a calendar beside it. The calendar is a
+  // hidden native date input: the browser's own picker opens from the button and
+  // fills the typed text when a day is chosen. Without script the typed date works.
+  (function () {
+    var typed = document.querySelector('input[name="date_paid"]');
+    var native = document.querySelector('[data-date-native]');
+    if (!typed || !typed.parentNode || !native) return;
+
+    function toIso(text) {
+      var m = /^\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s*$/.exec(text || '');
+      if (!m) return '';
+      return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+    }
+
+    function toTyped(iso) {
+      var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+      return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+    }
+
+    var wrap = document.createElement('div');
+    wrap.className = 'date-field';
+    typed.parentNode.insertBefore(wrap, typed);
+    wrap.appendChild(typed);
+
+    native.value = toIso(typed.value);
+    wrap.appendChild(native);
+
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'date-field-button';
+    button.setAttribute('aria-label', 'Choose the date from a calendar');
+    button.innerHTML =
+      '<svg class="size-5" fill="none" viewBox="0 0 24 24" stroke-width="1.6" ' +
+      'stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" ' +
+      'stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3.75 9h16.5M5.25 5.25h13.5' +
+      'a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-12' +
+      'a1.5 1.5 0 0 1 1.5-1.5Z" /></svg>';
+    wrap.appendChild(button);
+
+    button.addEventListener('click', function () {
+      native.value = toIso(typed.value) || native.value;
+      if (native.showPicker) {
+        try { native.showPicker(); return; } catch (e) { /* fall through */ }
+      }
+      native.focus();
+      native.click();
+    });
+
+    native.addEventListener('change', function () {
+      typed.value = toTyped(native.value);
+      typed.dispatchEvent(new Event('change', { bubbles: true }));
     });
   })();
 </script>

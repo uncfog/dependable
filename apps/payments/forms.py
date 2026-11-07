@@ -262,7 +262,13 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
                 attrs={"step": "0.01", "min": "0.01", "inputmode": "decimal",
                        "placeholder": "50000"}
             ),
-            "date_paid": forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
+            # A typed day, dd/mm/yyyy, the way Nigerian receipts print it. The
+            # calendar button beside it (payment_form.html) fills this same text.
+            "date_paid": forms.DateInput(
+                attrs={"placeholder": "dd/mm/yyyy", "inputmode": "numeric",
+                       "autocomplete": "off"},
+                format="%d/%m/%Y",
+            ),
             "reference": forms.TextInput(
                 attrs={"placeholder": "Teller / transfer ref", "autocomplete": "off"}
             ),
@@ -279,7 +285,7 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
     #: select makes the bursar read three words to express one of them.
     confirm_now = forms.BooleanField(
         required=False,
-        initial=True,
+        initial=False,
         label="Confirm this payment now",
         help_text="Leave unticked to hold it in the pending queue for checking.",
     )
@@ -301,6 +307,9 @@ class PaymentForm(StyledFormMixin, forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["date_paid"].initial = timezone.localdate()
+        # Typed as dd/mm/yyyy; ISO is still accepted so a pasted or old-style value
+        # is not refused.
+        self.fields["date_paid"].input_formats = ["%d/%m/%Y", "%Y-%m-%d"]
         self.fields["amount"].label = "Amount (₦)"
         self.fields["reference"].label = "Reference"
         self.fields["note"].label = "Note"

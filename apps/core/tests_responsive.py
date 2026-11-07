@@ -79,10 +79,10 @@ class BottomNavTests(ResponsiveTestCase):
             self.labels(Role.BURSAR), ["Dashboard", "Payments", "Outstanding", "Students"]
         )
         self.assertEqual(
-            self.labels(Role.SCHOOL_OWNER), ["Dashboard", "Students", "Payments", "Reports"]
+            self.labels(Role.SCHOOL_OWNER), ["Dashboard", "Students", "Payments"]
         )
         self.assertEqual(
-            self.labels(Role.PRINCIPAL), ["Dashboard", "Students", "Payments", "Reports"]
+            self.labels(Role.PRINCIPAL), ["Dashboard", "Students", "Payments"]
         )
 
     def test_a_platform_account_gets_its_own_screens(self):

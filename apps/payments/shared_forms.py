@@ -64,7 +64,7 @@ class ReceiveForm(StyledFormMixin, forms.Form):
     )
     note = forms.CharField(max_length=250, required=False)
     confirm_now = forms.BooleanField(
-        required=False, initial=True, label="Confirm this payment now",
+        required=False, initial=False, label="Confirm this payment now",
         help_text="Leave unticked to hold it until someone has checked it. Nothing counts "
                   "toward a balance until then.",
     )

@@ -796,6 +796,60 @@ def recent_payments(request) -> list:
     )
 
 
+#: How many receipts the owner's "Waiting for you" list names. The full count is in
+#: the header; this is the few a reader can act on without opening the queue.
+WAITING_RECEIPTS_LIMIT = 3
+
+
+def waiting_receipts(request) -> list:
+    """The oldest pending payments in the caller's scope, for the owner's list.
+
+    Oldest first: the receipt that has waited longest is the one to check next.
+    Empty, and no query, for an account that cannot record payments, as
+    :func:`receipts_waiting`.
+    """
+    if not has_capability(request.user, Capability.RECORD_PAYMENTS):
+        return []
+    from apps.payments.models import Payment, PaymentStatus
+
+    return list(
+        Payment.objects.filter(status=PaymentStatus.PENDING)
+        .select_related("student")
+        .order_by("date_paid", "id")[:WAITING_RECEIPTS_LIMIT]
+    )
+
+
+def expected_fees(terms) -> Decimal:
+    """What the given terms ask for in total: each class's line items times its active roll.
+
+    The bursar's dashboard does this for its one term; this is the same arithmetic over
+    several, one current term per campus. A class belongs to one campus, so it has at
+    most one current term and the per-class totals cannot collide.
+    """
+    structures = list(FeeStructure.objects.filter(term__in=terms)) if terms else []
+    if not structures:
+        return ZERO
+    totals = {
+        row["fee_structure__school_class_id"]: row["amount"] or ZERO
+        for row in FeeComponent.objects.filter(fee_structure__in=structures)
+        .values("fee_structure__school_class_id")
+        .annotate(amount=Sum("amount"))
+    }
+    head_counts = {
+        row["school_class_id"]: row["n"]
+        for row in Student.objects.filter(status=StudentStatus.ACTIVE)
+        .values("school_class_id")
+        .annotate(n=Count("id"))
+    }
+    return sum(
+        (
+            totals.get(s.school_class_id, ZERO) * head_counts.get(s.school_class_id, 0)
+            for s in structures
+        ),
+        ZERO,
+    )
+
+
 class SchoolDashboardView(RoleDashboardMixin, TemplateView):
     """A school owner's view: how big the school is, and where its fees stand.
 
@@ -843,6 +897,20 @@ class SchoolDashboardView(RoleDashboardMixin, TemplateView):
         context["setup"] = setup_progress(self.request)
         context["receipts_waiting"] = receipts_waiting(self.request)
         context["recent_payments"] = recent_payments(self.request)
+
+        # The money behind the header band: what the current terms ask for, what
+        # has come in, what is waiting for a check and what is still owed.
+        terms = list(current_terms.values())
+        expected_total = expected_fees(terms)
+        summary = with_outstanding(collection_summary(terms), expected_total)
+        context.update(summary)
+        context["has_current_term"] = bool(terms)
+        context["expected_total"] = expected_total
+        collected = summary["collected_total"]
+        context["collected_percent"] = (
+            min(int(collected * 100 / expected_total), 100) if expected_total else 0
+        )
+        context["waiting_receipts"] = waiting_receipts(self.request)
         context["page_title"] = "School overview"
         return context
 
