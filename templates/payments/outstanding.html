@@ -88,8 +88,8 @@
           </thead>
           <tbody class="divide-y divide-ink-200">
             {% for row in rows %}
-              <tr>
-                <td class="px-5 py-3">
+              <tr class="card-row">
+                <td class="card-title order-1 px-5 py-3">
                   <a href="{{ row.student.get_absolute_url }}"
                      class="font-medium text-brand-800 hover:underline">
                     {{ row.student.formal_name }}
@@ -98,36 +98,36 @@
                     {{ row.student.admission_number }}
                   </span>
                 </td>
-                <td class="whitespace-nowrap px-5 py-3 text-ink-700">
+                <td class="card-half card-bare order-2 whitespace-nowrap px-5 py-3 text-ink-700">
                   {{ row.student.school_class.display_name }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3">
+                <td class="card-bare order-4 whitespace-nowrap px-5 py-3">
                   <span class="text-ink-700">{{ row.student.parent_name }}</span>
                   <a href="{{ row.student.parent_phone_link }}"
                      class="numeric block text-xs text-brand-800 hover:underline">
                     {{ row.student.parent_phone_display }}
                   </a>
                 </td>
-                <td class="numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
+                <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
                   {{ row.position.expected|naira }}
                 </td>
-                <td class="numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
+                <td class="card-secondary numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
                   {{ row.position.paid|naira }}
                 </td>
-                <td class="numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
+                <td class="{% if not row.position.arrears_outstanding %}card-secondary {% endif %}order-5 numeric whitespace-nowrap px-5 py-3 text-right text-ink-700">
                   {{ row.position.arrears_outstanding|naira }}
                 </td>
-                <td class="numeric whitespace-nowrap px-5 py-3 text-right
+                <td class="card-half order-6 numeric whitespace-nowrap px-5 py-3 text-right
                            font-semibold text-overdue-strong">
                   {{ row.owed|naira }}
                 </td>
-                <td class="whitespace-nowrap px-5 py-3">
+                <td class="card-half card-end card-bare order-3 whitespace-nowrap px-5 py-3">
                   <span class="status-pill {{ row.position.pill_class }}">
                     {{ row.position.pill_label }}
                   </span>
                 </td>
                 {% if can_record %}
-                  <td class="px-5 py-3 text-right">
+                  <td class="card-half card-end card-bare order-7 px-5 py-3 text-right">
                     <a href="{% url 'payments:record' %}?student={{ row.student.pk }}"
                        class="btn btn-ghost text-xs">Record payment</a>
                   </td>

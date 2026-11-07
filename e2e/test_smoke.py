@@ -303,8 +303,46 @@ class PhoneLayoutTests(BrowserTestCase):
             page.evaluate(
                 "getComputedStyle(document.querySelector('#main tbody tr')).display"
             ),
-            "block",
+            "grid",
         )
+
+    def row_height(self) -> float:
+        return self.page.evaluate(
+            """() => {
+                const rows = [...document.querySelectorAll('#main tbody tr')];
+                return rows.reduce((total, row) => total + row.getBoundingClientRect().height, 0)
+                    / rows.length;
+            }"""
+        )
+
+    def test_long_lists_stay_short_enough_to_work_through(self):
+        self.sign_in(self.page, "bursar")
+        for path, most in (("/payments/outstanding/", 220), ("/payments/", 160), ("/students/", 190)):
+            with self.subTest(path=path):
+                self.go(self.page, path)
+                self.assertLessEqual(self.row_height(), most)
+
+    def test_what_a_list_hides_on_a_phone_is_still_there_at_a_desk(self):
+        page = self.page_for(DESKTOP)
+        self.sign_in(page, "bursar")
+        self.go(page, "/payments/")
+        self.assertTrue(page.locator('th:has-text("Method")').is_visible())
+        self.assertEqual(
+            page.evaluate("getComputedStyle(document.querySelector('#main tbody tr')).display"),
+            "table-row",
+        )
+
+    def test_links_in_a_list_are_big_enough_to_press(self):
+        self.sign_in(self.page, "bursar")
+        for path in ("/payments/outstanding/", "/payments/", "/students/"):
+            with self.subTest(path=path):
+                self.go(self.page, path)
+                smallest = self.page.evaluate(
+                    """() => Math.min(...[...document.querySelectorAll('#main td a')]
+                        .filter(a => a.getBoundingClientRect().height > 0)
+                        .map(a => a.getBoundingClientRect().height))"""
+                )
+                self.assertGreaterEqual(smallest, 44)
 
     def test_filters_start_closed_and_open_on_a_press(self):
         page = self.open("bursar", "/students/")
