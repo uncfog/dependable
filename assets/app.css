@@ -279,10 +279,10 @@
   /* --- Motion -----------------------------------------------------------
      Three durations and two curves, so every transition in the app is one of
      a handful of recognisable movements rather than a per-component guess.
-     `--ease-spring` overshoots slightly; reserved for the auth panel swap and
-     the disclosure chevron. */
+     `--ease-spring` is a quick settle with no overshoot (a bounce read as a
+     template); reserved for the auth panel swap and the disclosure chevron. */
   --ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.42, 0.64, 1);
+  --ease-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
   --duration-quick: 160ms;
   --duration-settle: 380ms;
   --duration-slow: 620ms;
@@ -727,39 +727,6 @@
     .glass-dark {
       background-color: rgb(15 37 71 / 0.86);
     }
-  }
-
-  /* A card that is glass instead of a solid surface. Composed on top of
-     `.card` -- `class="card card-glass"` -- so everything a card already is
-     (radius, border, shadow, both themes) still holds and only the fill
-     changes.
-
-     Used where a panel sits over something worth seeing through: a section
-     with a tinted ground, a summary floating above a table. Not on a form. A
-     form is read for minutes at a time and deserves an opaque surface.
-
-     Legibility is not left to chance: the fill is `--glass-bg`, which in dark
-     mode is a lightening pane over the page rather than a whitening one, and
-     text on it keeps the same ink tokens a solid card uses. */
-  .card-glass {
-    background-color: var(--glass-bg);
-    border-color: var(--glass-border);
-    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  }
-
-  /* A tinted ground for a glass card to actually be glass against. Without
-     something behind it a frosted pane over flat white is just a white box
-     with a slower paint. */
-  .glass-ground {
-    position: relative;
-    isolation: isolate;
-    background-image:
-      radial-gradient(40rem 20rem at 12% 0%,
-                      color-mix(in srgb, var(--color-brand-500) 12%, transparent),
-                      transparent 65%),
-      radial-gradient(34rem 18rem at 88% 100%,
-                      color-mix(in srgb, var(--color-acc-violet) 10%, transparent),
-                      transparent 60%);
   }
 
   /* Composed in markup -- `class="btn btn-primary"`. Tailwind v4's @apply only
@@ -1966,8 +1933,8 @@
   }
 
   /* --- The About page ----------------------------------------------------
-     Three small pieces. Everything else on that page is `.card card-glass` on a
-     `.glass-ground` and `.reveal` for the entrance, all of which already exist.
+     Three small pieces. Everything else on that page is a solid `.card` and `.reveal` for the
+     entrance, both of which already exist.
 
      Each hover state here changes a colour as well as a position, so the
      affordance survives `prefers-reduced-motion` cutting the movement -- and none
@@ -2731,15 +2698,6 @@
     -webkit-mask-image: radial-gradient(60rem 34rem at 30% 20%, #000 10%, transparent 70%);
   }
 
-  /* The badge over the hero: glass, on the dark side of the palette. */
-  .hero-badge {
-    @apply inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-xs
-           font-semibold uppercase tracking-wider text-white;
-    background-color: var(--glass-dark-bg);
-    border: 1px solid var(--glass-dark-border);
-    backdrop-filter: blur(8px);
-  }
-
   /* --- Floating product cards -------------------------------------------
      Real UI fragments, not screenshots: a stat card, a status table and an
      SMS preview, built from the same tokens as the app itself, so what the
@@ -2759,168 +2717,6 @@
      atmosphere should stop moving the moment someone tries to read it. */
   .float-card:hover {
     animation-play-state: paused;
-  }
-
-  /* --- Problem cards -----------------------------------------------------
-     Taller than wide, glass, on the brand gradient. Each one is a sentence a
-     school administrator has actually said, so the type is large and there is
-     nothing else in the card competing with it. */
-  .problem-card {
-    @apply relative flex min-h-[19rem] flex-col justify-between overflow-hidden
-           p-6 sm:min-h-[21rem];
-    background-color: var(--glass-dark-bg);
-    border: 1px solid var(--glass-dark-border);
-    border-radius: var(--radius-2xl);
-    color: var(--color-panel-fg);
-    backdrop-filter: blur(var(--glass-blur)) saturate(130%);
-    transition: transform var(--duration-settle) var(--ease-out),
-                background-color var(--duration-settle) var(--ease-out),
-                border-color var(--duration-settle) var(--ease-out);
-  }
-
-  .problem-card:hover {
-    transform: translateY(-4px);
-    background-color: rgb(255 255 255 / 0.14);
-    border-color: rgb(255 255 255 / 0.28);
-  }
-
-  /* The oversized index in the corner. Decorative, and hidden from the
-     accessibility tree in the markup. */
-  .problem-index {
-    @apply absolute -right-2 -top-6 select-none text-[7rem] font-bold leading-none;
-    color: rgb(255 255 255 / 0.07);
-  }
-
-  /* --- Bento grid --------------------------------------------------------
-     Cards of deliberately unequal size, which is the whole point: the two
-     features that matter most are given the room, and the eye is told where
-     to start. Below `sm` it collapses to one column and every span is
-     ignored, because a bento of one-column cards is just a list. */
-  .bento {
-    @apply grid gap-4 sm:grid-cols-2 lg:grid-cols-6;
-    grid-auto-rows: minmax(11rem, auto);
-  }
-
-  .bento-item {
-    @apply relative flex flex-col overflow-hidden p-6;
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-ink-200);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-card);
-    transition: transform var(--duration-settle) var(--ease-out),
-                box-shadow var(--duration-settle) var(--ease-out),
-                border-color var(--duration-settle) var(--ease-out);
-  }
-
-  .bento-item:hover {
-    transform: translateY(-3px);
-    border-color: var(--color-ink-300);
-    box-shadow: var(--shadow-panel);
-  }
-
-  /* The glass members of the grid. Two of the nine, so the material still
-     means something when it appears. */
-  .bento-item.is-glass {
-    background-color: var(--glass-bg);
-    border-color: var(--glass-border);
-    backdrop-filter: blur(var(--glass-blur)) saturate(140%);
-  }
-
-  /* The one tile drawn on the brand gradient, as the grid's anchor. */
-  .bento-item.is-brand {
-    background: var(--gradient-brand);
-    border-color: transparent;
-    color: var(--color-panel-fg);
-  }
-
-  .bento-item.is-brand .bento-title { color: var(--color-panel-fg); }
-  .bento-item.is-brand .bento-body  { color: var(--color-panel-muted); }
-
-  .bento-title {
-    @apply text-base font-semibold text-ink-900;
-  }
-
-  .bento-body {
-    @apply mt-1.5 text-sm text-ink-600;
-  }
-
-  /* The line that ties a feature back to the problem above it. Small, set in
-     the accent colour of its own tile, and prefixed in the markup with the
-     word "Answers" so the connection is stated rather than implied. */
-  .bento-answers {
-    @apply mt-auto pt-4 text-xs font-semibold;
-    color: var(--accent-solid, var(--color-brand-700));
-  }
-
-  .bento-item.is-brand .bento-answers { color: var(--color-panel-muted); }
-
-  .bento-wide { @apply lg:col-span-4; }
-  .bento-half { @apply lg:col-span-3; }
-  .bento-third { @apply lg:col-span-2; }
-  .bento-tall { @apply lg:col-span-2 lg:row-span-2; }
-
-  /* --- Setup timeline ----------------------------------------------------
-     A numbered vertical spine. The connecting line is drawn on the list, not
-     between the items, so it cannot fall out of step with them; the last
-     step's stub is masked off by `.timeline-step:last-child::before`. */
-  .timeline {
-    @apply relative space-y-6 sm:space-y-8;
-  }
-
-  .timeline-step {
-    @apply relative flex gap-5 pl-0;
-  }
-
-  /* The spine segment belonging to this step: from just under its own marker
-     to the top of the next one. */
-  .timeline-step::before {
-    content: "";
-    position: absolute;
-    left: 1.375rem;
-    top: 3.25rem;
-    bottom: -2rem;
-    width: 2px;
-    background: linear-gradient(180deg, var(--color-brand-200),
-                                var(--color-ink-200));
-    border-radius: 2px;
-  }
-
-  .timeline-step:last-child::before {
-    display: none;
-  }
-
-  .timeline-marker {
-    @apply relative z-10 grid size-11 shrink-0 place-items-center text-sm
-           font-bold text-on-accent;
-    border-radius: var(--radius-md);
-    background: var(--gradient-brand);
-    box-shadow: var(--shadow-glow);
-  }
-
-  /* --- FAQ ---------------------------------------------------------------
-     `.disclosure` with the chrome turned down: on the landing page these sit
-     in a stack and a full card border around each makes the section look like
-     a table. One hairline between them instead. */
-  .faq-item {
-    @apply border-b border-ink-200 bg-transparent shadow-none;
-    border-radius: 0;
-  }
-
-  .faq-item:first-child {
-    @apply border-t border-ink-200;
-  }
-
-  .faq-item[open] {
-    box-shadow: none;
-  }
-
-  .faq-item .disclosure-summary {
-    @apply px-1 py-5 text-base font-semibold text-ink-900;
-  }
-
-  .faq-item .disclosure-summary:hover {
-    background-color: transparent;
-    @apply text-brand-700;
   }
 
   /* --- Footer ------------------------------------------------------------ */
@@ -3099,7 +2895,6 @@
   /* On a dark pane the separator lightens rather than whitens, for the same
      reason the glass fill does. */
   .glass-dark .chart-stack,
-  .bento-item.is-brand .chart-stack,
   .auth-visual .chart-stack {
     --stack-gap: rgb(255 255 255 / 0.22);
     background-color: rgb(255 255 255 / 0.12);
@@ -3206,12 +3001,9 @@
 
 :root[data-perf="lite"] .glass,
 :root[data-perf="lite"] .glass-dark,
-:root[data-perf="lite"] .problem-card,
-:root[data-perf="lite"] .bento-item.is-glass,
 :root[data-perf="lite"] .lp-nav.is-scrolled,
 :root[data-perf="lite"] .row-actions,
-:root[data-perf="lite"] .toast-info,
-:root[data-perf="lite"] .hero-badge {
+:root[data-perf="lite"] .toast-info {
   backdrop-filter: none;
 }
 

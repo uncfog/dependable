@@ -159,32 +159,32 @@
     </div>
     <dl class="grid gap-x-6 gap-y-4 px-5 py-5 sm:grid-cols-2">
       <div>
-        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Family</dt>
+        <dt class="text-xs font-semibold text-ink-500">Family</dt>
         <dd class="mt-1 text-sm"><a href="{{ txn.family.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">{{ txn.family.name }}</a></dd>
       </div>
       <div>
-        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Paid by</dt>
+        <dt class="text-xs font-semibold text-ink-500">Paid by</dt>
         <dd class="mt-1 text-sm text-ink-900">{{ txn.payer_name|default:"—" }}</dd>
       </div>
       <div>
-        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Method</dt>
+        <dt class="text-xs font-semibold text-ink-500">Method</dt>
         <dd class="mt-1 text-sm text-ink-900">{{ txn.get_method_display }}</dd>
       </div>
       <div>
-        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Reference</dt>
+        <dt class="text-xs font-semibold text-ink-500">Reference</dt>
         <dd class="numeric mt-1 text-sm text-ink-900">{{ txn.reference|default:"—" }}</dd>
       </div>
       <div>
-        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Campus</dt>
+        <dt class="text-xs font-semibold text-ink-500">Campus</dt>
         <dd class="mt-1 text-sm text-ink-900">{{ txn.branch.name }}</dd>
       </div>
       <div>
-        <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Recorded by</dt>
+        <dt class="text-xs font-semibold text-ink-500">Recorded by</dt>
         <dd class="mt-1 text-sm text-ink-900">{{ txn.recorded_by|default:"—" }}</dd>
       </div>
       {% if txn.note %}
         <div class="sm:col-span-2">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Note</dt>
+          <dt class="text-xs font-semibold text-ink-500">Note</dt>
           <dd class="mt-1 text-sm text-ink-900">{{ txn.note }}</dd>
         </div>
       {% endif %}

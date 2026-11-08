@@ -72,9 +72,9 @@ report is a thing you open on purpose.
 
     {% include "reports/_stats.html" with stats=report.stats %}
 
-    <div class="glass-ground grid gap-4 rounded-2xl lg:grid-cols-2">
+    <div class="grid gap-4 rounded-2xl lg:grid-cols-2">
       {% for chart in report.charts %}
-        <div class="card card-glass p-5 sm:p-6">
+        <div class="card p-5 sm:p-6">
           {% include "reports/_chart.html" with chart=chart %}
         </div>
       {% endfor %}

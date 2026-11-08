@@ -1120,13 +1120,13 @@ class AboutContentTests(UITestCase):
                 at = body.index(url)
                 self.assertIn('rel="noopener noreferrer"', body[at - 250: at + 350])
 
-    def test_it_carries_the_glass_and_reveal_treatment(self):
-        """Asserted because both are load-bearing for how the page reads, and
-        both degrade on their own -- glass drops its blur on low-end devices and
-        the reveal is skipped under prefers-reduced-motion."""
+    def test_it_uses_solid_cards_and_the_reveal(self):
+        """Solid cards, as the mockup draws them: the frosted panels over a
+        blue-violet glow read as a template. The reveal is skipped under
+        prefers-reduced-motion, so it is safe to keep."""
         body = self.body()
-        self.assertIn("card-glass", body)
-        self.assertIn("glass-ground", body)
+        self.assertNotIn("card-glass", body)
+        self.assertNotIn("glass-ground", body)
         self.assertIn("reveal", body)
         self.assertIn("data-reveal-group", body)
 

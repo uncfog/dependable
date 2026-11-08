@@ -63,13 +63,13 @@
 
       <dl class="grid gap-x-6 gap-y-4 px-5 py-5 sm:grid-cols-2">
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          <dt class="text-xs font-semibold text-ink-500">
             Admission number
           </dt>
           <dd class="numeric mt-1 text-sm text-ink-900">{{ student.admission_number }}</dd>
         </div>
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Class</dt>
+          <dt class="text-xs font-semibold text-ink-500">Class</dt>
           <dd class="mt-1 text-sm text-ink-900">
             {{ student.school_class.display_name }}
             <span class="text-ink-500">
@@ -79,7 +79,7 @@
           </dd>
         </div>
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          <dt class="text-xs font-semibold text-ink-500">
             Date of birth
           </dt>
           <dd class="mt-1 text-sm text-ink-900">
@@ -88,21 +88,21 @@
           </dd>
         </div>
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+          <dt class="text-xs font-semibold text-ink-500">
             Date admitted
           </dt>
           <dd class="mt-1 text-sm text-ink-900">{{ student.date_admitted|date:"j F Y" }}</dd>
         </div>
         {% if student.other_names %}
           <div>
-            <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+            <dt class="text-xs font-semibold text-ink-500">
               Other names
             </dt>
             <dd class="mt-1 text-sm text-ink-900">{{ student.other_names }}</dd>
           </div>
         {% endif %}
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Branch</dt>
+          <dt class="text-xs font-semibold text-ink-500">Branch</dt>
           <dd class="mt-1 text-sm text-ink-900">{{ student.branch.name }}</dd>
         </div>
       </dl>
@@ -114,19 +114,19 @@
       </div>
       <dl class="grid gap-x-6 gap-y-4 px-5 py-5 sm:grid-cols-2">
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Name</dt>
+          <dt class="text-xs font-semibold text-ink-500">Name</dt>
           <dd class="mt-1 text-sm text-ink-900">{{ student.parent_name }}</dd>
         </div>
         {% if family_membership and "view_families" in capabilities %}
           <div>
-            <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Family</dt>
+            <dt class="text-xs font-semibold text-ink-500">Family</dt>
             <dd class="mt-1 text-sm">
               <a href="{{ family_membership.family.get_absolute_url }}" class="font-medium text-brand-800 hover:underline">{{ family_membership.family.name }}</a>
             </dd>
           </div>
         {% endif %}
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Phone</dt>
+          <dt class="text-xs font-semibold text-ink-500">Phone</dt>
           <dd class="mt-1 text-sm">
             <a href="{{ student.parent_phone_link }}"
                class="numeric text-brand-800 hover:underline">
@@ -135,7 +135,7 @@
           </dd>
         </div>
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Second phone</dt>
+          <dt class="text-xs font-semibold text-ink-500">Second phone</dt>
           <dd class="mt-1 text-sm">
             {% if student.parent_phone_alt %}
               <a href="{{ student.parent_phone_alt_link }}"
@@ -146,7 +146,7 @@
           </dd>
         </div>
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Email</dt>
+          <dt class="text-xs font-semibold text-ink-500">Email</dt>
           <dd class="mt-1 text-sm">
             {% if student.parent_email %}
               <a href="mailto:{{ student.parent_email }}"
@@ -155,7 +155,7 @@
           </dd>
         </div>
         <div class="sm:col-span-2">
-          <dt class="text-xs font-semibold uppercase tracking-wide text-ink-500">Address</dt>
+          <dt class="text-xs font-semibold text-ink-500">Address</dt>
           <dd class="mt-1 whitespace-pre-line text-sm text-ink-900">
             {% if student.address %}{{ student.address }}
             {% else %}<span class="text-ink-400">Not recorded</span>{% endif %}

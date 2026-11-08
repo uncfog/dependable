@@ -10,10 +10,9 @@ apps/core/branding.py -- so this page, the landing page, the footer, the
 structured data and llms.txt cannot drift into describing different products or
 carrying different links. Add a feature or an account there and it appears here.
 
-On the treatment: the glass panels are the design system's own `.card-glass` on a
-`.glass-ground`, which is the one case glass is actually for -- a tinted surface
-over something with colour in it. The blur drops away on low-end devices
-(`[data-perf="lite"]`) and the entrance animations are `.reveal`, which
+On the treatment: the panels are the design system's solid `.card`, as the
+mockup draws them, not frosted glass over a blue-violet glow. The entrance
+animations are `.reveal`, which
 `initReveals` skips entirely under `prefers-reduced-motion`. Every hover state is
 paired with something non-motion, so nothing here is only legible in movement.
 {% endcomment %}
@@ -21,11 +20,10 @@ paired with something non-motion, so nothing here is only legible in movement.
 <div class="about-page">
 
   {# ===== Opening ======================================================== #}
-  <div class="glass-ground overflow-hidden rounded-none">
+  <div class="overflow-hidden rounded-none">
     <div class="mx-auto max-w-3xl px-4 py-14 sm:px-6 lg:py-20" data-reveal-group>
       <p class="reveal inline-flex items-center gap-2 rounded-full border
-                border-brand-200 bg-brand-50/70 px-3 py-1 text-xs font-semibold
-                uppercase tracking-wider text-brand-700">
+                border-brand-200 bg-brand-50/70 px-3 py-1 text-xs font-semibold text-brand-700">
         <span class="status-dot status-dot-paid" aria-hidden="true"></span>
         Built for Nigerian schools
       </p>
@@ -80,10 +78,10 @@ paired with something non-motion, so nothing here is only legible in movement.
       <h2 class="text-xl font-semibold tracking-tight text-brand-900">
         What it does
       </h2>
-      <dl class="glass-ground mt-5 grid gap-4 rounded-2xl sm:grid-cols-2"
+      <dl class="mt-5 grid gap-4 rounded-2xl sm:grid-cols-2"
           data-reveal-group>
         {% for title, description in features %}
-          <div class="reveal card card-glass card-interactive group p-5">
+          <div class="reveal card card-interactive group p-5">
             <dt class="flex items-center gap-2 text-sm font-semibold text-ink-900">
               <span class="about-tick" aria-hidden="true">
                 <svg class="size-3.5" fill="none" viewBox="0 0 24 24"
@@ -135,7 +133,7 @@ paired with something non-motion, so nothing here is only legible in movement.
       </p>
       <p class="reveal mt-4 text-[15px] leading-relaxed text-ink-700">
         What we hold, who it is shared with, how long it is kept, and how to ask to
-        see, correct or delete it — including under Nigeria's NDPA — is set out in
+        see, correct or delete it (including under Nigeria's NDPA) is set out in
         full in the
         <a href="{% url 'core:privacy' %}"
            class="font-medium text-brand-700 underline decoration-brand-300
@@ -160,18 +158,18 @@ paired with something non-motion, so nothing here is only legible in movement.
       carries its own glyph, label and handle -- the handle in text, not only in
       the icon, because an icon alone is a guess about which account it is.
       {% endcomment %}
-      <div class="glass-ground mt-5 grid gap-4 rounded-2xl sm:grid-cols-3"
+      <div class="mt-5 grid gap-4 rounded-2xl sm:grid-cols-3"
            data-reveal-group>
         {% for account in social_links %}
           <a href="{{ account.url }}"
              {% if account.icon != "mail" %}target="_blank" rel="noopener noreferrer"{% endif %}
-             class="reveal card card-glass card-interactive about-contact group
+             class="reveal card card-interactive about-contact group
                     flex items-center gap-3 p-4">
             <span class="about-contact-icon" aria-hidden="true">
               {% include "partials/_social_icon.html" with icon=account.icon size="size-5" %}
             </span>
             <span class="min-w-0">
-              <span class="block text-xs font-semibold uppercase tracking-wide
+              <span class="block text-xs font-semibold
                            text-ink-500">
                 {{ account.label }}
               </span>
@@ -198,8 +196,8 @@ paired with something non-motion, so nothing here is only legible in movement.
     </section>
 
     {# ===== The two doors ================================================ #}
-    <section class="glass-ground mt-14 rounded-2xl">
-      <div class="card card-glass px-5 py-8 text-center sm:px-8 sm:py-10">
+    <section class="mt-14 rounded-2xl">
+      <div class="card px-5 py-8 text-center sm:px-8 sm:py-10">
         <h2 class="text-xl font-semibold tracking-tight text-brand-900 sm:text-2xl">
           Run your school's fees on {{ product_name }}
         </h2>
