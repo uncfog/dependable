@@ -100,7 +100,8 @@
   Skip to main content
 </a>
 
-{% if user.is_authenticated %}
+{% comment %} public_preview: the platform owner looking at the public landing page while signed in. {% endcomment %}
+{% if user.is_authenticated and not public_preview %}
 <div class="min-h-full lg:flex">
 
   {% comment %}

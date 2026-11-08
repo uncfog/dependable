@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% comment %}
+The platform owner's price editor. Saving changes the PlanPrice rows, which the
+landing page, the checkout, Plans & billing and a school owner's settings all read,
+and writes every change to PlanPriceChange.
+{% endcomment %}
+
+{% block shell_class %}band-overlap no-bottom-nav{% endblock %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">What each plan costs per term, and who it is for</p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'core:platform_billing' %}" class="btn btn-ghost text-sm">Cancel</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+  {% csrf_token %}
+
+  <section class="card card-pad space-y-4" aria-labelledby="prices-heading">
+    <h2 id="prices-heading" class="card-heading">Plans</h2>
+    {% for offer, row, form in rows %}
+      <fieldset class="rounded-2xl bg-ink-50 p-4">
+        <legend class="sr-only">{{ offer.name }}</legend>
+        <p class="mb-3 text-base font-extrabold text-ink-900">{{ offer.name }}</p>
+        <div class="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_minmax(0,1fr)]">
+          {% if offer.plan == "free" %}
+            <div>
+              <p class="field-label">Price per term (₦)</p>
+              <p class="py-2.5 text-sm font-bold text-ink-900">Free</p>
+              <input type="hidden" name="{{ form.price_naira.html_name }}" value="0">
+            </div>
+          {% else %}
+            {% include "partials/_field.html" with field=form.price_naira %}
+          {% endif %}
+          {% include "partials/_field.html" with field=form.students_label %}
+          {% include "partials/_field.html" with field=form.max_students %}
+        </div>
+      </fieldset>
+    {% endfor %}
+  </section>
+
+  <section class="card card-pad lg:sticky lg:top-4" aria-labelledby="save-heading">
+    <h2 id="save-heading" class="card-heading">Before you save</h2>
+    <ul class="space-y-2 text-sm text-ink-700">
+      <li>New prices show on the landing page and the checkout as soon as you save.</li>
+      <li>Transfers already ordered keep the price they were placed at.</li>
+      <li>Leave a price blank to show it as quoted; nobody can pay for it at the checkout.</li>
+      <li>Every change is logged with your name.</li>
+    </ul>
+    <div class="form-cta mt-4">
+      <button type="submit" class="btn btn-lime btn-full">Save prices</button>
+    </div>
+
+    {% if history %}
+      <h3 class="mt-6 text-sm font-extrabold text-ink-900">Recent changes</h3>
+      <ul class="mt-2 divide-y divide-ink-100 text-sm">
+        {% for change in history %}
+          <li class="py-2">
+            <b class="text-ink-900">{{ change.get_plan_display }}</b>
+            <span class="text-ink-700">{{ change.summary }}</span>
+            <span class="sub-line">{{ change.changed_by.get_full_name|default:change.changed_by|default:"Someone" }} &middot; {{ change.changed_at|date:"j M Y, H:i" }}</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+</form>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% comment %}
+The price cards. One template for the landing page and the platform owner's Plans &
+billing screen, both drawing `plan_offers` from apps/schools/plans.py, the list the
+checkout charges from. `show_signup` gives each card its sign-up button; without it
+each card says how many schools are on the plan.
+{% endcomment %}
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {% for offer in plan_offers %}
+        <article class="lp-reveal flex flex-col rounded-[24px] p-6 shadow-card {% if offer.plan == 'growth' %}bg-panel text-white{% else %}bg-white{% endif %}">
+          <h3 class="text-lg font-extrabold {% if offer.plan != 'growth' %}text-ink-900{% endif %}">{{ offer.name }}</h3>
+          <p class="mt-1 text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">{{ offer.students }}</p>
+          <p class="mt-5 text-3xl font-extrabold tabular-nums">{{ offer.price_display }}</p>
+          <p class="text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">
+            {% if offer.price_naira %}per term{% elif offer.price_naira == 0 %}for good{% else %}priced for your schools{% endif %}
+          </p>
+          <div class="mt-6 flex-1"></div>
+          {% if not show_signup %}
+            <p class="text-sm font-semibold {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">
+              {{ offer.school_count }} school{{ offer.school_count|pluralize }} on it
+            </p>
+          {% elif offer.price_naira is None %}
+            <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-line w-full">Talk to us</a>
+          {% elif offer.plan == 'growth' %}
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime w-full">Choose {{ offer.name }}</a>
+          {% elif offer.price_naira == 0 %}
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-line w-full">Start free</a>
+          {% else %}
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-blue w-full">Choose {{ offer.name }}</a>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>

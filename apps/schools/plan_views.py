@@ -12,9 +12,13 @@ the app.
 from __future__ import annotations
 
 import uuid
+from types import SimpleNamespace
 
 from django.conf import settings
+from django import forms
 from django.contrib import messages
+from django.db import transaction
+from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -23,14 +27,12 @@ from django.views.generic import TemplateView
 
 from apps.core.branding import SUPPORT_EMAIL
 from apps.core.permissions import Capability, CapabilityRequiredMixin
+from apps.core.views import RoleDashboardMixin
 
-from .models import PlanOrder
-from .plans import OFFERS, offer_for
+from .models import Plan, PlanOrder, PlanPrice, PlanPriceChange, School
+from .plans import offer_for, offers
 
-OPEN_STATUSES = (
-    PlanOrder.Status.AWAITING_TRANSFER,
-    PlanOrder.Status.TRANSFER_REPORTED,
-)
+from .billing import OPEN_STATUSES, confirm_order
 
 
 def bank_details() -> dict[str, str]:
@@ -73,7 +75,7 @@ class PlanCheckoutView(ManagePlanMixin, TemplateView):
         )
         return super().get_context_data(
             school=self._school(),
-            offers=OFFERS,
+            offers=offers(),
             open_order=open_order,
             bank_ready=bank_details_ready(),
             support_email=SUPPORT_EMAIL,
@@ -140,3 +142,170 @@ class PlanOrderReportView(ManagePlanMixin, View):
                 "Thanks. We'll switch your plan on once the payment arrives.",
             )
         return redirect("billing:order", reference=order.reference)
+
+
+def plan_cards(counts: dict[str, int] | None = None) -> list[SimpleNamespace]:
+    """The offers as the pricing cards draw them, with how many schools are on each."""
+    return [
+        SimpleNamespace(
+            plan=offer.plan, name=offer.name, students=offer.students,
+            price_naira=offer.price_naira, price_display=offer.price_display,
+            school_count=(counts or {}).get(offer.plan, 0),
+        )
+        for offer in offers()
+    ]
+
+
+class PlatformBillingView(RoleDashboardMixin, TemplateView):
+    """The platform owner's Plans & billing: the price list the landing page and the
+    checkout share, the transfers waiting to be confirmed, and every school's plan."""
+
+    template_name = "schools/platform_billing.html"
+    home_url_name = "core:platform_overview"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        counts = dict(
+            School.objects.values_list("plan").annotate(n=Count("id")).values_list("plan", "n")
+        )
+        orders = PlanOrder.all_objects.select_related("school")
+        context.update(
+            plan_offers=plan_cards(counts),
+            waiting=list(
+                orders.filter(status__in=OPEN_STATUSES).order_by("-status", "created_at")
+            ),
+            recently_paid=list(orders.filter(status=PlanOrder.Status.PAID).order_by("-paid_at")[:10]),
+            schools=list(School.objects.order_by("name")),
+            unlisted_plans=[
+                (Plan(plan).label, n) for plan, n in counts.items() if offer_for(plan) is None
+            ],
+            bank_ready=bank_details_ready(),
+            page_title="Plans & billing",
+        )
+        return context
+
+
+class PlatformConfirmOrderView(RoleDashboardMixin, View):
+    """Confirm one transfer from the Plans & billing screen."""
+
+    home_url_name = "core:platform_overview"
+
+    def post(self, request, pk):
+        order = get_object_or_404(PlanOrder.all_objects.select_related("school"), pk=pk)
+        if confirm_order(order):
+            messages.success(
+                request,
+                f"{order.school.name} is now on the {offer_for(order.plan).name} plan.",
+            )
+        else:
+            messages.info(request, "That order was already paid or cancelled.")
+        return redirect("core:platform_billing")
+
+
+class PlanPriceForm(forms.Form):
+    """One plan's row in the price editor."""
+
+    price_naira = forms.IntegerField(
+        label="Price per term (₦)", required=False, min_value=0,
+        widget=forms.NumberInput(attrs={"class": "field-input", "inputmode": "numeric", "placeholder": "Quoted"}),
+    )
+    students_label = forms.CharField(
+        label="Who it is for", max_length=60,
+        widget=forms.TextInput(attrs={"class": "field-input"}),
+    )
+    max_students = forms.IntegerField(
+        label="Student limit", required=False, min_value=1,
+        widget=forms.NumberInput(attrs={"class": "field-input", "inputmode": "numeric", "placeholder": "No limit"}),
+    )
+
+    def __init__(self, *args, plan, **kwargs):
+        self.plan = plan
+        super().__init__(*args, prefix=plan, **kwargs)
+
+    def clean_price_naira(self):
+        price = self.cleaned_data.get("price_naira")
+        if self.plan == Plan.FREE and price not in (0, None):
+            raise forms.ValidationError("The Free plan has to stay free. Use another plan for a price.")
+        return 0 if self.plan == Plan.FREE else price
+
+
+def _describe(value, *, money=False, limit=False) -> str:
+    if value is None:
+        return "no limit" if limit else "quoted"
+    return f"₦{value:,}" if money else (f"{value:,}" if limit else str(value))
+
+
+class PlatformPricesView(RoleDashboardMixin, TemplateView):
+    """The platform owner edits what each plan costs and who it is for.
+
+    One form for the whole price list, so a change that moves two plans together is
+    one save. Every field that changes is written to PlanPriceChange.
+    """
+
+    template_name = "schools/platform_prices.html"
+    home_url_name = "core:platform_overview"
+
+    def _rows(self):
+        stored = {row.plan: row for row in PlanPrice.objects.all()}
+        rows = []
+        for offer in offers():
+            row = stored.get(offer.plan) or PlanPrice(
+                plan=offer.plan, price_naira=offer.price_naira,
+                students_label=offer.students, max_students=offer.max_students,
+            )
+            rows.append((offer, row))
+        return rows
+
+    def _forms(self, data=None):
+        return [
+            (offer, row, PlanPriceForm(
+                data, plan=offer.plan,
+                initial={"price_naira": row.price_naira, "students_label": row.students_label,
+                         "max_students": row.max_students},
+            ))
+            for offer, row in self._rows()
+        ]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault("rows", self._forms())
+        context["history"] = PlanPriceChange.objects.select_related("changed_by")[:20]
+        context["page_title"] = "Edit prices"
+        return context
+
+    def post(self, request, *args, **kwargs):
+        rows = self._forms(request.POST)
+        if not all(form.is_valid() for _, _, form in rows):
+            return self.render_to_response(self.get_context_data(rows=rows))
+        changed = 0
+        with transaction.atomic():
+            for offer, row, form in rows:
+                notes = []
+                for field, money, limit, label in (
+                    ("price_naira", True, False, "price"),
+                    ("students_label", False, False, "description"),
+                    ("max_students", False, True, "student limit"),
+                ):
+                    old, new = getattr(row, field), form.cleaned_data[field]
+                    if old != new:
+                        notes.append(f"{label} {_describe(old, money=money, limit=limit)} to "
+                                     f"{_describe(new, money=money, limit=limit)}")
+                        setattr(row, field, new)
+                if notes or row.pk is None:
+                    row.updated_by = request.user
+                    row.save()
+                if notes:
+                    PlanPriceChange.objects.create(
+                        plan=offer.plan, summary="; ".join(notes)[:300], changed_by=request.user
+                    )
+                    changed += 1
+        if changed:
+            messages.success(
+                request,
+                f"Saved. {changed} plan{'s' if changed != 1 else ''} changed; the landing page "
+                "and the checkout show the new prices now. Open orders keep the price they "
+                "were placed at.",
+            )
+        else:
+            messages.info(request, "Nothing changed.")
+        return redirect("core:platform_billing")

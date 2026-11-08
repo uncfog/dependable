@@ -60,6 +60,41 @@ RATE_LIMIT = 20
 RATE_WINDOW_SECONDS = 60
 
 
+def plan_summary(user) -> dict | None:
+    """The school's plan, for a school owner's account settings; ``None`` for anyone else.
+
+    The plan is the proprietor's decision (MANAGE_SCHOOL_PROFILE, as the checkout
+    requires), so principals and bursars do not see this section.
+    """
+    from apps.core.permissions import Capability, has_capability
+    from apps.schools.billing import OPEN_STATUSES
+    from apps.schools.models import PlanOrder
+    from apps.schools.plans import offer_for
+    from apps.students.models import Student, StudentStatus
+
+    school = getattr(user, "school", None)
+    if school is None or not has_capability(user, Capability.MANAGE_SCHOOL_PROFILE):
+        return None
+    offer = offer_for(school.plan)
+    students = Student.all_objects.filter(
+        branch__school=school, status=StudentStatus.ACTIVE
+    ).count()
+    ceiling = offer.max_students if offer else None
+    return {
+        "name": offer.name if offer else school.get_plan_display(),
+        "price": offer.price_display if offer else None,
+        "per_term": bool(offer and offer.price_naira),
+        "students": students,
+        "max_students": ceiling,
+        "percent": min(int(students * 100 / ceiling), 100) if ceiling else None,
+        "over": bool(ceiling and students > ceiling),
+        "status": school.get_status_display(),
+        "open_order": PlanOrder.all_objects.filter(school=school, status__in=OPEN_STATUSES)
+        .order_by("-created_at")
+        .first(),
+    }
+
+
 class AccountSettingsView(LoginRequiredMixin, TemplateView):
     """Anyone's own account: how they are named, their email, their password.
 
@@ -81,6 +116,7 @@ class AccountSettingsView(LoginRequiredMixin, TemplateView):
         context.setdefault("email_form", EmailChangeForm(user))
         context.setdefault("password_form", AccountPasswordForm(user))
         context["temporary_password"] = user.must_change_password
+        context["plan"] = plan_summary(user)
         context["page_title"] = "Account settings"
         return context
 

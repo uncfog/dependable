@@ -269,7 +269,7 @@ NAVIGATION: tuple[NavSection, ...] = (
             # apps/messaging/views.py::MessagingIdentityView.
             NavItem("Sender IDs", "messaging:identity", "identity",
                     (Role.PLATFORM_OWNER,)),
-            NavItem("Plans & Billing", "billing:index", "money", (Role.PLATFORM_OWNER,)),
+            NavItem("Plans & billing", "core:platform_billing", "money", (Role.PLATFORM_OWNER,)),
         ),
     ),
     NavSection(
