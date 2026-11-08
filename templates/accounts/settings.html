@@ -169,5 +169,32 @@
       {% endif %}
     </section>
   {% endif %}
+
+  {% comment %}
+  The school's owner only. Handing the school over is in apps/accounts/ownership.py;
+  this card starts it, and shows it while it waits so it can be cancelled.
+  {% endcomment %}
+  {% if ownership %}
+    <section class="card card-pad" id="ownership" aria-labelledby="ownership-heading">
+      <h2 id="ownership-heading" class="text-sm font-semibold text-ink-900">Ownership</h2>
+      {% if ownership.open %}
+        <p class="mt-1 text-sm text-ink-700">
+          Waiting for <strong class="text-ink-900">{{ ownership.open.to_name }}</strong>
+          ({{ ownership.open.to_email }}) to accept. The link works until
+          {{ ownership.open.expires_at|date:"j F, g:i A" }}. Nothing changes until they accept.
+        </p>
+        <form method="post" action="{% url 'accounts:ownership_cancel' %}" class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary btn-sm">Cancel the transfer</button>
+        </form>
+      {% else %}
+        <p class="mt-1 text-sm text-ink-700">
+          You own {{ ownership.school.name }}. To hand it to someone else, we email them a
+          link; when they accept, they become the owner and your account changes as you choose.
+        </p>
+        <a href="{% url 'accounts:ownership_start' %}" class="btn btn-secondary btn-sm mt-3">Transfer ownership</a>
+      {% endif %}
+    </section>
+  {% endif %}
 </div>
 {% endblock %}

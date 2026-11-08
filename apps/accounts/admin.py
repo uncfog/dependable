@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 
 from apps.core.admin import TenantScopedAdminMixin
 
-from .models import User
+from .models import OwnershipTransfer, User
 
 
 @admin.register(User)
@@ -57,3 +57,29 @@ class UserAdmin(TenantScopedAdminMixin, DjangoUserAdmin):
     @admin.display(description="Name", ordering="last_name")
     def get_full_name(self, obj):
         return obj.get_full_name()
+
+
+@admin.register(OwnershipTransfer)
+class OwnershipTransferAdmin(admin.ModelAdmin):
+    """Read only. A transfer is started from Account settings or the
+    ``transfer_school_ownership`` command, and decided from its emailed link."""
+
+    list_display = ("school", "to_email", "status", "started_by", "created_at", "expires_at")
+    list_filter = ("status",)
+    search_fields = ("school__name", "to_email", "to_name")
+    # Never the token hash: it is not secret on its own, but nobody needs it here.
+    fields = ("school", "started_by", "to_name", "to_email", "to_user", "afterwards",
+              "stay_branch", "status", "created_at", "expires_at", "decided_at")
+    readonly_fields = fields
+
+    def get_queryset(self, request):
+        return OwnershipTransfer.all_objects.select_related("school", "started_by", "to_user")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

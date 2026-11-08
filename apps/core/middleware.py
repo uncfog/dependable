@@ -70,7 +70,13 @@ _OPEN_WHEN_LOCKED = frozenset(
 
 #: What a read-only school can still change: a person's own account and their way out.
 _WRITABLE_WHEN_READ_ONLY = frozenset(
-    {"logout", "accounts:settings", "accounts:generate_password"}
+    {
+        "logout", "accounts:settings", "accounts:generate_password",
+        # Handing the school over is about the accounts, not the records, and a
+        # school behind on its bill may be changing hands for exactly that reason.
+        "accounts:ownership_start", "accounts:ownership_cancel",
+        "accounts:ownership_accept",
+    }
 )
 
 _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})

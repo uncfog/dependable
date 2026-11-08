@@ -1,0 +1,8 @@
+# Findings reviewed and accepted, one Gitleaks fingerprint per line
+# (commit:file:rule:line). Each entry matches only that exact commit and line,
+# so a new secret anywhere else is still caught.
+
+# A made-up test password in the ownership-transfer tests, never used for any
+# real account. Replaced with secrets.token_urlsafe in f1fba09; this entry only
+# covers the original commit, which is still in the PR's history.
+3390f2f3998e273aa234ed87df4455baa88aeba3:apps/accounts/tests_ownership.py:generic-api-key:43

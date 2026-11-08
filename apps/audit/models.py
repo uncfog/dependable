@@ -46,6 +46,10 @@ ACTION_LABELS = {
     "paymenttransaction.confirmed": "Confirmed",
     "paymenttransaction.voided": "Voided",
     "paymenttransaction.deleted": "Deleted",
+    "ownership.transfer_started": "Ownership transfer started",
+    "ownership.transfer_cancelled": "Ownership transfer cancelled",
+    "ownership.transfer_declined": "Ownership transfer declined",
+    "ownership.transferred": "Ownership transferred",
 }
 
 

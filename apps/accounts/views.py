@@ -95,6 +95,16 @@ def plan_summary(user) -> dict | None:
     }
 
 
+def ownership_summary(user) -> dict | None:
+    """The school's owner only: whether a handover is waiting. ``None`` for anyone else."""
+    from .ownership import open_transfer
+    from .ownership_views import is_school_owner
+
+    if not is_school_owner(user):
+        return None
+    return {"school": user.school, "open": open_transfer(user.school)}
+
+
 class AccountSettingsView(LoginRequiredMixin, TemplateView):
     """Anyone's own account: how they are named, their email, their password.
 
@@ -117,6 +127,7 @@ class AccountSettingsView(LoginRequiredMixin, TemplateView):
         context.setdefault("password_form", AccountPasswordForm(user))
         context["temporary_password"] = user.must_change_password
         context["plan"] = plan_summary(user)
+        context["ownership"] = ownership_summary(user)
         context["page_title"] = "Account settings"
         return context
 

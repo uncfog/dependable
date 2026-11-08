@@ -1,0 +1,44 @@
+{% extends "email/_base.html" %}{% comment %}
+To the owner who started a transfer: a record of it, and the way to stop it if it
+was not them.
+{% endcomment %}
+
+{% block subject %}You started handing {{ school.name }} to {{ transfer.to_name }}{% endblock %}
+
+{% block preheader %}Nothing changes until they accept. You can cancel until then.{% endblock %}
+
+{% block heading %}Ownership transfer started{% endblock %}
+
+{% block body %}
+  <p style="margin:0 0 14px 0;">
+    Hello{% if transfer.started_by.get_full_name %} {{ transfer.started_by.get_full_name }}{% endif %},
+  </p>
+  <p style="margin:0 0 14px 0;">
+    You asked to hand <strong style="color:#1c2432;">{{ school.name }}</strong> to
+    <strong style="color:#1c2432;">{{ transfer.to_name }}</strong> ({{ transfer.to_email }}).
+    Nothing changes until they accept, and the link we sent them stops working on
+    {{ expires_at|date:"j F Y" }}.
+  </p>
+  <p style="margin:0 0 14px 0;">
+    When they accept,
+    {% if transfer.afterwards == "stay_principal" %}you stay on as principal of {{ transfer.stay_branch.name }}.{% else %}your account is switched off. Nothing you recorded is deleted.{% endif %}
+  </p>
+  <table role="presentation" cellpadding="0" cellspacing="0" border="0"
+         style="width:100%;margin:4px 0 0;">
+    <tr>
+      <td style="padding:14px 16px;border-radius:10px;background-color:#fdf0ef;
+                 border:1px solid #f3c9c5;
+                 font-family:'Public Sans',-apple-system,'Segoe UI',Roboto,
+                 Helvetica,Arial,sans-serif;font-size:15px;line-height:23px;
+                 color:#8a2a22;">
+        <strong>Not you?</strong> Cancel it from Account settings now, change your
+        password, and write to
+        <a href="mailto:{{ contact_email }}" style="color:#8a2a22;">{{ contact_email }}</a>.
+      </td>
+    </tr>
+  </table>
+{% endblock %}
+
+{% block cta %}
+  {% include "email/_button.html" with url=settings_url label="See or cancel the transfer" %}
+{% endblock %}

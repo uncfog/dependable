@@ -1,0 +1,48 @@
+{% extends "email/_base.html" %}{% comment %}
+To the person a school is being handed to. See apps.accounts.ownership.start_transfer.
+The button is the only way to accept, and works once.
+{% endcomment %}
+
+{% block subject %}You have been asked to take over {{ school.name }}{% endblock %}
+
+{% block preheader %}
+  Accept from the link in this email. It works once, until {{ expires_at|date:"j F" }}.
+{% endblock %}
+
+{% block heading %}Take over {{ school.name }}{% endblock %}
+
+{% block body %}
+  <p style="margin:0 0 14px 0;">Hello {{ transfer.to_name }},</p>
+  <p style="margin:0 0 14px 0;">
+    {% if transfer.started_by %}{{ transfer.started_by.get_full_name|default:transfer.started_by.username }}, the owner of
+    <strong style="color:#1c2432;">{{ school.name }}</strong>, has asked you{% else %}The {{ product_name }} team has asked you,
+    on behalf of <strong style="color:#1c2432;">{{ school.name }}</strong>,{% endif %}
+    to become the school's owner on {{ product_name }}.
+  </p>
+  <p style="margin:0 0 14px 0;">
+    As the owner you see every campus, student and payment, decide who works there,
+    and look after the school's plan and billing.
+  </p>
+  <p style="margin:0 0 14px 0;">
+    Nothing changes until you accept. The link works once, until
+    <strong style="color:#1c2432;">{{ expires_at|date:"j F Y" }} at {{ expires_at|date:"g:i A" }}</strong>.
+  </p>
+{% endblock %}
+
+{% block cta %}
+  {% include "email/_button.html" with url=accept_url label="Review and accept" %}
+{% endblock %}
+
+{% block outro %}
+  <tr>
+    <td style="padding:12px 28px 24px 28px;
+               font-family:'Public Sans',-apple-system,'Segoe UI',Roboto,
+               Helvetica,Arial,sans-serif;font-size:13px;line-height:21px;
+               color:#6b7891;">
+      <p style="margin:0;">
+        Not expecting this? You can ignore it, or open the link and choose Decline.
+        Questions: <a href="mailto:{{ contact_email }}" style="color:#1d3f79;">{{ contact_email }}</a>.
+      </p>
+    </td>
+  </tr>
+{% endblock %}

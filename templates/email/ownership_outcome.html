@@ -1,0 +1,46 @@
+{% extends "email/_base.html" %}{% comment %}
+How a transfer ended, for each person it concerns. `outcome` is one of:
+  received     to the new owner
+  handed_over  to the outgoing owner
+  declined     to the owner who started it
+{% endcomment %}
+
+{% block subject %}{% if outcome == "received" %}You now own {{ school.name }}{% elif outcome == "handed_over" %}{{ school.name }} has a new owner{% else %}{{ transfer.to_name }} declined{% endif %}{% endblock %}
+
+{% block preheader %}{% if outcome == "declined" %}Nothing has changed.{% else %}The handover is complete.{% endif %}{% endblock %}
+
+{% block heading %}{% if outcome == "received" %}You now own {{ school.name }}{% elif outcome == "handed_over" %}{{ school.name }} has a new owner{% else %}The transfer was declined{% endif %}{% endblock %}
+
+{% block body %}
+  {% if outcome == "received" %}
+    <p style="margin:0 0 14px 0;">Hello{% if person.get_full_name %} {{ person.get_full_name }}{% endif %},</p>
+    <p style="margin:0 0 14px 0;">
+      You are now the owner of <strong style="color:#1c2432;">{{ school.name }}</strong>.
+      Everything the school had is there, unchanged: its campuses, students, payments,
+      plan and history. Sign in with {{ person.email }}.
+    </p>
+  {% elif outcome == "handed_over" %}
+    <p style="margin:0 0 14px 0;">Hello{% if person.get_full_name %} {{ person.get_full_name }}{% endif %},</p>
+    <p style="margin:0 0 14px 0;">
+      {{ transfer.to_name }} ({{ transfer.to_email }}) accepted and now owns
+      <strong style="color:#1c2432;">{{ school.name }}</strong>.
+      {% if transfer.afterwards == "stay_principal" %}You are principal of {{ transfer.stay_branch.name }} and can sign in as before.{% else %}Your account has been switched off. Nothing you recorded has been deleted.{% endif %}
+    </p>
+  {% else %}
+    <p style="margin:0 0 14px 0;">
+      {{ transfer.to_name }} ({{ transfer.to_email }}) declined to take over
+      <strong style="color:#1c2432;">{{ school.name }}</strong>. Nothing has changed: you
+      are still the owner. You can start a new transfer from Account settings.
+    </p>
+  {% endif %}
+  <p style="margin:0 0 14px 0;">
+    Not what you expected? Write to
+    <a href="mailto:{{ contact_email }}" style="color:#1d3f79;">{{ contact_email }}</a>.
+  </p>
+{% endblock %}
+
+{% block cta %}
+  {% if outcome != "handed_over" or transfer.afterwards == "stay_principal" %}
+    {% include "email/_button.html" with url=site_url label="Sign in" %}
+  {% endif %}
+{% endblock %}

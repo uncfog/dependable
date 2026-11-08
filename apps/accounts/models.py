@@ -6,11 +6,18 @@ changed afterwards without a painful data migration.
 
 from __future__ import annotations
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, UserManager
 from django.db import models
+from django.utils import timezone
 
 from apps.core.roles import Role, Scope, scope_for
-from apps.core.tenancy import TenantQuerySet, get_current_context
+from apps.core.tenancy import (
+    TenantManager,
+    TenantQuerySet,
+    UnscopedManager,
+    get_current_context,
+)
 
 
 class UserQuerySet(TenantQuerySet):
@@ -133,3 +140,107 @@ class User(AbstractUser):
             raise ValidationError(
                 {"school": "Non-platform accounts must belong to a school."}
             )
+
+
+class OwnershipTransferQuerySet(TenantQuerySet):
+    # A transfer belongs to one school and to no campus.
+    tenant_school_field = "school_id"
+    tenant_branch_field = None
+
+
+class OwnershipTransferManager(TenantManager.from_queryset(OwnershipTransferQuerySet)):
+    """Auto-scoped: a school sees its own transfers and nobody else's."""
+
+
+class OwnershipTransferUnscopedManager(
+    UnscopedManager.from_queryset(OwnershipTransferQuerySet)
+):
+    """Every transfer. The acceptance link is opened by someone with no school yet."""
+
+
+class OwnershipTransfer(models.Model):
+    """A school's owner handing the school to someone else, by email.
+
+    The owner starts it; the person it is for accepts from a single-use link; the
+    two roles swap in one transaction (see ``apps.accounts.ownership``). Nothing
+    the school owns moves: students, payments, the plan and the audit history are
+    the school's, and only the two accounts change.
+
+    Only a SHA-256 of the link's token is stored, so a copy of this table cannot
+    be used to accept anything.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = "pending", "Waiting to be accepted"
+        ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
+        CANCELLED = "cancelled", "Cancelled"
+        EXPIRED = "expired", "Expired"
+
+    class Afterwards(models.TextChoices):
+        """What happens to the outgoing owner's account."""
+
+        STAY_PRINCIPAL = "stay_principal", "Stay on as principal of a campus"
+        LEAVE = "leave", "Stop having access"
+
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.CASCADE, related_name="ownership_transfers"
+    )
+    #: Null when the platform started it (the owner had lost access).
+    started_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ownership_transfers_started",
+    )
+    to_email = models.EmailField()
+    to_name = models.CharField(max_length=150)
+    #: Set when accepted: the account that became the owner.
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="ownership_transfers_received",
+    )
+    afterwards = models.CharField(max_length=20, choices=Afterwards.choices)
+    #: The campus the outgoing owner runs afterwards, for STAY_PRINCIPAL.
+    stay_branch = models.ForeignKey(
+        "schools.Branch",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    token_hash = models.CharField(max_length=64, unique=True)
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.PENDING
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    objects = OwnershipTransferManager()
+    all_objects = OwnershipTransferUnscopedManager()
+
+    class Meta:
+        ordering = ["-created_at"]
+        base_manager_name = "all_objects"
+        default_manager_name = "objects"
+        constraints = [
+            # One open handover at a time, enforced where two tabs cannot race it.
+            models.UniqueConstraint(
+                fields=["school"],
+                condition=models.Q(status="pending"),
+                name="one_pending_ownership_transfer_per_school",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.school} to {self.to_email} ({self.get_status_display()})"
+
+    @property
+    def is_open(self) -> bool:
+        """Pending and not yet past its expiry."""
+        return self.status == self.Status.PENDING and self.expires_at > timezone.now()

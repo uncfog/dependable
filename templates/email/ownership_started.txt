@@ -1,0 +1,12 @@
+{% autoescape off %}Hello{% if transfer.started_by.get_full_name %} {{ transfer.started_by.get_full_name }}{% endif %},
+
+You asked to hand {{ school.name }} to {{ transfer.to_name }} ({{ transfer.to_email }}). Nothing changes until they accept, and the link we sent them stops working on {{ expires_at|date:"j F Y" }}.
+
+When they accept, {% if transfer.afterwards == "stay_principal" %}you stay on as principal of {{ transfer.stay_branch.name }}.{% else %}your account is switched off. Nothing you recorded is deleted.{% endif %}
+
+Not you? Cancel it from Account settings now, change your password, and write to {{ contact_email }}:
+
+{{ settings_url }}
+
+-- {{ product_name }} - {{ product_tagline }}
+{% endautoescape %}
