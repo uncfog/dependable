@@ -74,7 +74,7 @@
         {% for column in columns %}
           <section class="flex flex-col rounded-lg bg-ink-100/70 p-3">
             <header class="mb-3 flex items-center justify-between gap-2">
-              <h2 class="text-xs font-semibold uppercase tracking-wide text-ink-600">
+              <h2 class="text-xs font-semibold text-ink-600">
                 {{ column.label }}
               </h2>
               <span class="chip">{{ column.count }}</span>
@@ -138,7 +138,7 @@
             <div class="mx-auto mt-5 max-w-xl space-y-3 text-left">
               {% for row in enquiry_links %}
                 <div class="rounded-md border border-ink-200 bg-ink-50 px-4 py-3">
-                  <p class="text-xs font-semibold uppercase tracking-wide text-ink-500">
+                  <p class="text-xs font-semibold text-ink-500">
                     {{ row.school.name }} — public enquiry page
                   </p>
                   <p class="numeric mt-1 break-all text-sm text-brand-800">{{ row.url }}</p>

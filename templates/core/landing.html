@@ -18,9 +18,12 @@ such, it contains no form, and its script never calls the server: recording a
 payment only edits an array in the page, and "WhatsApp" shows the message it would
 send instead of opening WhatsApp to a stranger's number.
 
-The product picture in the hero is the real Overview screen drawn in HTML with a
-sample school's figures, not a photograph. Title, meta description and JSON-LD
-come from apps/core/seo.py.
+The page follows one school term, in the order a bursar does the work: fees set,
+transfers arriving, each one checked and receipted, reminders, the owner's end of
+term. The hero is a sample receipt drawn in HTML, not a dashboard: it is the thing
+a parent actually holds. Every name, figure and reference on it is invented.
+Under each step, where the owner's copy had one, is how the same step goes on
+paper. Title, meta description and JSON-LD come from apps/core/seo.py.
 {% endcomment %}
 
 {% block html_attrs %} data-theme="light" data-theme-lock{% endblock %}
@@ -35,7 +38,7 @@ come from apps/core/seo.py.
 <div class="lp-lattice lp-drawn min-h-full">
 
   <a href="#live-demo" class="block bg-ink-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:underline">
-    See it working: try the interactive demo &rarr;
+    See it working: try the demo with sample students
   </a>
 
   {# ===== Band: navigation and the opening claim ============================ #}
@@ -49,7 +52,7 @@ come from apps/core/seo.py.
         </a>
 
         <nav class="hidden items-center gap-7 text-sm font-semibold text-white lg:flex" aria-label="Page sections">
-          <a href="#features" class="hover:underline">Product</a>
+          <a href="#term" class="hover:underline">How a term runs</a>
           <a href="#calculator" class="hover:underline">Fee recovery</a>
           <a href="#live-demo" class="hover:underline">Demo</a>
           <a href="#pricing" class="hover:underline">Pricing</a>
@@ -68,7 +71,7 @@ come from apps/core/seo.py.
       <div id="mobile-menu" class="hidden lg:hidden">
         <div class="lp-frame pb-5">
           <div class="space-y-1 rounded-2xl bg-white p-3 text-base font-semibold text-ink-900 shadow-panel">
-            <a href="#features" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Product</a>
+            <a href="#term" class="block rounded-xl px-3 py-3 hover:bg-ink-100">How a term runs</a>
             <a href="#calculator" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Fee recovery</a>
             <a href="#live-demo" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Demo</a>
             <a href="#pricing" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Pricing</a>
@@ -81,60 +84,48 @@ come from apps/core/seo.py.
 
   <main id="main">
   <div class="lp-band">
-    <section class="lp-frame grid items-center gap-10 pb-28 pt-6 sm:pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:pb-36">
+    <section class="lp-frame grid items-center gap-12 pb-28 pt-6 sm:pt-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16 lg:pb-36">
       <div class="lp-reveal">
-        <h1 class="lp-display text-white">Where school financial clarity is built.</h1>
+        <h1 class="lp-display text-white">{{ product_tagline }}</h1>
         <p class="mt-6 max-w-xl text-lg leading-relaxed text-panel-copy sm:text-xl">
-          Keep student records, school-fee payments and outstanding balances in one secure place.
-          Built for Nigerian private school proprietors.
+          {{ product_subhead }} Your bursar records each payment, checks it against the bank
+          and sends the parent a receipt on WhatsApp. Built for Nigerian private schools.
         </p>
         <div class="mt-8 flex flex-wrap items-center gap-3">
-          <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime lp-btn-lg">Set up my school &rarr;</a>
+          <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime lp-btn-lg">Set up my school</a>
           <a href="#live-demo" class="lp-btn lp-btn-ghost lp-btn-lg">Try the demo</a>
         </div>
-        <ul class="mt-8 flex flex-wrap gap-2 text-sm font-semibold text-white" aria-label="What schools see">
-          <li class="lp-chip"><span class="size-2 rounded-full bg-lime" aria-hidden="true"></span>Fulfilled Academy &middot; &#8358;3.4M collected</li>
-          <li class="lp-chip"><span class="size-2 rounded-full bg-white" aria-hidden="true"></span>Tuition debt reduced by 88%</li>
-          <li class="lp-chip"><span class="size-2 rounded-full bg-partial" aria-hidden="true"></span>WhatsApp reminders active</li>
-        </ul>
       </div>
 
-      {# The product itself: the Overview, drawn as it is in the app, with a sample school. #}
-      <div class="lp-reveal" data-ui aria-label="The SCHOOLCORD overview, with a sample school's figures" role="img">
-        <div class="lp-app overflow-hidden rounded-[22px] bg-ink-50 shadow-[0_24px_60px_rgb(15_23_60/0.35)]"> {# taste-skill-ignore: the product picture floats over the band #}
-          <div class="bg-panel px-5 pb-14 pt-5 text-white sm:px-7">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <p class="text-lg font-extrabold">Overview</p>
-                <p class="text-xs text-panel-copy">Sample school &middot; First Term</p>
-              </div>
-              <span class="rounded-[10px] bg-lime px-3 py-1.5 text-xs font-bold text-on-lime">Record a payment</span>
+      {# The thing a parent holds: a receipt, checked and sent. Sample data only. #}
+      <div class="lp-reveal relative mx-auto w-full max-w-[25rem] pb-10 lg:mr-0"
+           role="img"
+           aria-label="A sample fee receipt: Amara Nwachukwu, JSS 1, paid 58,500 naira by bank transfer, checked against the bank and sent to her mother on WhatsApp. 12,000 naira left to pay.">
+        <div class="lp-receipt" aria-hidden="true">
+          <div class="flex items-start justify-between gap-4 border-b border-dashed border-ink-200 pb-4">
+            <div>
+              <p class="text-xs font-semibold text-ink-600">Sample school</p>
+              <p class="text-lg font-extrabold">Fee receipt</p>
             </div>
-            <p class="mt-5 text-xs text-panel-copy">Collected this term</p>
-            <p class="text-3xl font-extrabold tabular-nums sm:text-4xl">&#8358;2,770,500</p>
-            <p class="text-xs text-panel-copy">of &#8358;5,202,000 expected &middot; 53%</p>
-            <span class="mt-3 block h-2.5 max-w-sm overflow-hidden rounded-full bg-white/25"><i class="block h-full w-[53%] rounded-full bg-lime"></i></span>
+            <p class="text-right text-xs leading-relaxed text-ink-600 tabular-nums">RCP-000214<br>6 Nov 2026</p>
           </div>
-          <div class="-mt-9 space-y-3 px-4 pb-5 sm:px-6">
-            <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
-              <span class="lp-mini-tile bg-[#e8ebfa]"><span>Enrolled</span><b>58</b></span>
-              <span class="lp-mini-tile bg-paid-soft"><span>Paid in full</span><b>21</b></span>
-              <span class="lp-mini-tile bg-partial-soft"><span>Part paid</span><b>21</b></span>
-              <span class="lp-mini-tile bg-unpaid-soft"><span>Unpaid</span><b>16</b></span>
-            </div>
-            <div class="rounded-2xl bg-white p-4 shadow-card">
-              <p class="text-sm font-extrabold text-ink-900">Waiting for you</p>
-              <div class="mt-2 flex items-center justify-between gap-3 border-b border-ink-100 py-2"> {# taste-skill-ignore: a real table, receipt or footer rule #}
-                <span><b class="block text-sm text-ink-900">Khadija Usman</b><span class="text-xs text-ink-600">&#8358;58,500 &middot; paid 6 Nov</span></span>
-                <span class="rounded-[10px] bg-lime px-3 py-1 text-xs font-bold text-on-lime">Check</span>
-              </div>
-              <div class="flex items-center justify-between gap-3 pt-2">
-                <span><b class="block text-sm text-ink-900">Folasade Odunsi</b><span class="text-xs text-ink-600">&#8358;56,000 &middot; paid 5 Nov</span></span>
-                <span class="rounded-[10px] bg-lime px-3 py-1 text-xs font-bold text-on-lime">Check</span>
-              </div>
-            </div>
+          <dl class="mt-4 space-y-1.5 text-sm">
+            <div class="flex justify-between gap-4"><dt class="text-ink-600">Student</dt><dd class="font-bold">Amara Nwachukwu &middot; JSS 1</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-ink-600">Term</dt><dd class="font-semibold">First Term 2026/27</dd></div>
+            <div class="flex justify-between gap-4"><dt class="text-ink-600">Paid by</dt><dd class="font-semibold">Bank transfer</dd></div>
+          </dl>
+          <div class="mt-4 space-y-1.5 border-t border-ink-100 pt-4 text-sm tabular-nums"> {# taste-skill-ignore: a real table, receipt or footer rule #}
+            <p class="flex justify-between gap-4"><span>Tuition</span><span>&#8358;45,000</span></p>
+            <p class="flex justify-between gap-4"><span>Feeding</span><span>&#8358;13,500</span></p>
+            <p class="flex justify-between gap-4 pt-1.5 text-base font-extrabold"><span>Paid today</span><span>&#8358;58,500</span></p>
+            <p class="flex justify-between gap-4 text-ink-600"><span>Left to pay (transport)</span><span>&#8358;12,000</span></p>
           </div>
+          <p class="lp-stamp">Checked against<br>the bank</p>
         </div>
+        <p class="lp-bubble" aria-hidden="true">
+          Receipt sent to Mrs Nwachukwu on WhatsApp
+          <span class="mt-1 block text-xs text-ink-600">10:51 &middot; delivered</span>
+        </p>
       </div>
     </section>
   </div>
@@ -158,41 +149,91 @@ come from apps/core/seo.py.
     </figure>
   </section>
 
-  {# ===== Product ============================================================ #}
-  <section id="features" class="lp-frame lp-section">
+  {# ===== One term, in the order the bursar works it ======================= #}
+  <section id="term" class="lp-frame lp-section">
     <div class="lp-reveal max-w-3xl">
-      <h2 class="lp-heading">Run the money side of your school from your phone.</h2>
-      <p class="lp-lede">Records, payments, reminders and reports, kept accurate across every class and campus.</p>
+      <h2 class="lp-heading">One school term, without the paperwork.</h2>
+      <p class="lp-lede">What SCHOOLCORD does, in the order your bursar does it. Under each step, how it goes on paper.</p>
     </div>
 
-    <div class="mt-10 grid gap-4 md:grid-cols-3">
-      <article class="lp-reveal lp-tile bg-[#efe9fd]">
-        <span class="lp-icon bg-[#7b5cf0]" aria-hidden="true">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 11a3 3 0 1 0 0-6M21 20c0-2.6-1.7-4.8-4-5.6"/></svg>
-        </span>
-        <h3 class="lp-tile-title">Student profiles and siblings</h3>
-        <p class="lp-tile-copy">Group a family's children so one parent payment can cover all of them, with each child's balance kept on its own.</p>
-      </article>
+    <ol class="lp-term mt-12">
+      <li class="lp-term-step lp-reveal">
+        <p class="lp-term-when">Before resumption</p>
+        <div>
+          <h3 class="lp-term-title">Set each class's fees</h3>
+          <p class="lp-term-copy">Tuition, transport, feeding and uniform for each class, with a discount for one child where you need it. Bring your students in from one Excel workbook and group brothers and sisters into families, so one parent payment can cover all of them.</p>
+        </div>
+        <div class="lp-art" aria-hidden="true">
+          <p class="font-extrabold">JSS 1 &middot; First Term</p>
+          <div class="mt-2 space-y-1 tabular-nums text-ink-700">
+            <p class="flex justify-between"><span>Tuition</span><span>&#8358;45,000</span></p>
+            <p class="flex justify-between"><span>Feeding</span><span>&#8358;13,500</span></p>
+            <p class="flex justify-between"><span>Transport</span><span>&#8358;12,000</span></p>
+            <p class="flex justify-between border-t border-ink-100 pt-1 font-bold text-ink-900"><span>Per child</span><span>&#8358;70,500</span></p> {# taste-skill-ignore: a real table, receipt or footer rule #}
+          </div>
+        </div>
+      </li>
 
-      <article class="lp-reveal lp-tile bg-paid-soft">
-        <span class="lp-icon bg-[#2fb383]" aria-hidden="true">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.8A8 8 0 1 1 21 12z"/></svg>
-        </span>
-        <h3 class="lp-tile-title">Reminders parents actually read</h3>
-        <p class="lp-tile-copy">Send polite, itemised balance reminders to parents' phones, written in your school's name.</p>
-        <p class="mt-4 rounded-2xl bg-white p-4 text-sm text-ink-900 shadow-card">&ldquo;Dear Chief Adebayo, kindly note Emeka's JSS1 term balance is &#8358;40,000&hellip;&rdquo;</p>
-      </article>
+      <li class="lp-term-step lp-reveal">
+        <p class="lp-term-when">Week one</p>
+        <div>
+          <h3 class="lp-term-title">Transfers start arriving</h3>
+          <p class="lp-term-copy">The bursar records each one from the bank alert, and the cash paid at the office too. You see each one the moment it is recorded.</p>
+          <p class="lp-term-paper"><span>On paper:</span> cash paid to a bursar, or a transfer, and nobody tells the proprietor.</p>
+        </div>
+        <div class="lp-art" aria-hidden="true">
+          <p class="text-xs font-semibold text-ink-600">Bank alert &middot; 6 Nov, 10:42</p>
+          <p class="mt-1 font-extrabold tabular-nums">Credit &#8358;58,500.00</p>
+          <p class="text-ink-700">From NWACHUKWU C. &middot; AMARA JSS1 FEES</p>
+          <p class="mt-3 border-t border-ink-100 pt-2 text-xs font-semibold text-ink-600">Recorded by the bursar &middot; waiting to be checked</p> {# taste-skill-ignore: a real table, receipt or footer rule #}
+        </div>
+      </li>
 
-      <article class="lp-reveal lp-tile bg-panel text-white">
-        <span class="lp-icon bg-lime text-on-lime" aria-hidden="true">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
-        </span>
-        <h3 class="lp-tile-title text-white">Full control from anywhere</h3>
-        <p class="lp-tile-copy text-panel-copy">See the bursar's entries, bank transfers and cash as they are recorded, with every change in the audit trail.</p>
-        <p class="mt-4 text-3xl font-extrabold tabular-nums">&#8358;415,000</p>
-        <p class="text-sm text-panel-copy">Expected this term, live</p>
-      </article>
-    </div>
+      <li class="lp-term-step lp-reveal">
+        <p class="lp-term-when">The same day</p>
+        <div>
+          <h3 class="lp-term-title">Checked, then receipted</h3>
+          <p class="lp-term-copy">A payment counts toward a balance only once it is checked against the bank. Then the receipt goes to the parent, with what is still owed printed on it.</p>
+          <p class="lp-term-paper"><span>On paper:</span> &ldquo;I paid last month,&rdquo; in the exam hall, with no quick way to check.</p>
+        </div>
+        <div class="lp-art" aria-hidden="true">
+          <p class="text-sm font-extrabold">Waiting for you</p>
+          <div class="mt-2 flex items-center justify-between gap-3">
+            <span><b class="block">Amara Nwachukwu</b><span class="text-xs text-ink-600">&#8358;58,500 &middot; paid 6 Nov</span></span>
+            <span class="rounded-[10px] bg-lime px-3 py-1 text-xs font-bold text-on-lime">Check</span>
+          </div>
+          <div class="mt-2 flex items-center justify-between gap-3 border-t border-ink-100 pt-2"> {# taste-skill-ignore: a real table, receipt or footer rule #}
+            <span><b class="block">Khadija Usman</b><span class="text-xs text-ink-600">&#8358;56,000 &middot; paid 5 Nov</span></span>
+            <span class="status-pill status-paid">Checked</span>
+          </div>
+        </div>
+      </li>
+
+      <li class="lp-term-step lp-reveal">
+        <p class="lp-term-when">Mid-term</p>
+        <div>
+          <h3 class="lp-term-title">Reminders for what is still owed</h3>
+          <p class="lp-term-copy">Outstanding balances, oldest debt first. Send each parent a polite, itemised reminder in your school's name, with your bank details so they can pay from their banking app.</p>
+          <p class="lp-term-paper"><span>On paper:</span> letters home that never leave the school bag.</p>
+        </div>
+        <p class="lp-art lp-bubble-flat" aria-hidden="true">&ldquo;Dear Chief Adebayo, kindly note Emeka's JSS1 term balance is &#8358;40,000&hellip;&rdquo;</p>
+      </li>
+
+      <li class="lp-term-step lp-reveal">
+        <p class="lp-term-when">End of term</p>
+        <div>
+          <h3 class="lp-term-title">You see the whole term</h3>
+          <p class="lp-term-copy">What was expected, what came in and what is still owed, by class and campus, with every change in the audit trail. The bursar records payments; your controls stay locked.</p>
+          <p class="lp-term-paper"><span>On paper:</span> weekends spent balancing ledger notebooks.</p>
+        </div>
+        <div class="lp-art" aria-hidden="true">
+          <p class="text-xs font-semibold text-ink-600">Collected this term</p>
+          <p class="text-2xl font-extrabold tabular-nums">&#8358;2,770,500</p>
+          <p class="text-xs text-ink-600">of &#8358;5,202,000 expected &middot; 53%</p>
+          <span class="mt-3 block h-2.5 overflow-hidden rounded-full bg-ink-100"><i class="block h-full w-[53%] rounded-full bg-panel"></i></span>
+        </div>
+      </li>
+    </ol>
   </section>
 
   {# ===== Fee recovery calculator ============================================ #}
@@ -240,37 +281,7 @@ come from apps/core/seo.py.
           <p class="mt-1 text-sm text-panel-copy">At a 90% recovery rate</p>
         </div>
 
-        <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime mt-6 w-full lg:mt-auto">Recover your unpaid fees &rarr;</a>
-      </div>
-    </div>
-  </section>
-
-  {# ===== Paper against SCHOOLCORD ========================================== #}
-  <section class="lp-frame lp-section">
-    <div class="lp-reveal max-w-3xl">
-      <h2 class="lp-heading">Why paper registers and spreadsheets fail.</h2>
-      <p class="lp-lede">Notebooks and scattered WhatsApp messages lose money, start awkward arguments with parents and leave you blind when you are away from school.</p>
-    </div>
-
-    <div class="mt-10 grid gap-4 md:grid-cols-2">
-      <div class="lp-reveal rounded-[24px] bg-overdue-soft p-6 sm:p-8">
-        <h3 class="text-xl font-extrabold text-ink-900">The paper way</h3>
-        <ul class="mt-5 space-y-4 text-base text-ink-900">
-          <li><strong>Unreported payments.</strong> Cash paid to a bursar, or a transfer, and nobody tells the proprietor.</li>
-          <li><strong>Exam hall disputes.</strong> &ldquo;I paid last month,&rdquo; with no quick way to check.</li>
-          <li><strong>Endless reconciliation.</strong> Weekends spent balancing ledger notebooks.</li>
-          <li><strong>Lost reminders.</strong> Letters home that never leave the school bag.</li>
-        </ul>
-      </div>
-
-      <div class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
-        <h3 class="text-xl font-extrabold text-ink-900">The SCHOOLCORD way</h3>
-        <ul class="mt-5 space-y-4 text-base text-ink-900">
-          <li><strong>One overview.</strong> Expected fees, confirmed cash and transfers, and what is still owed, as it happens.</li>
-          <li><strong>Reminders in one tap.</strong> Polite, itemised reminders to parents' phones.</li>
-          <li><strong>Receipts on the spot.</strong> A receipt for every payment, with an audit trail behind it.</li>
-          <li><strong>Roles that protect you.</strong> The bursar records payments; the proprietor's controls stay locked.</li>
-        </ul>
+        <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime mt-6 w-full lg:mt-auto">Recover your unpaid fees</a>
       </div>
     </div>
   </section>
@@ -345,32 +356,6 @@ come from apps/core/seo.py.
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
-  <section id="how-it-works" class="lp-frame lp-section">
-    <div class="lp-reveal max-w-3xl">
-      <h2 class="lp-heading">Set up your school in three steps.</h2>
-      <p class="lp-lede">No technical knowledge needed. Most schools are running the same day.</p>
-    </div>
-
-    <ol class="mt-10 grid gap-4 md:grid-cols-3">
-      <li class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
-        <p class="text-sm font-semibold text-panel">Roster</p>
-        <h3 class="mt-1 text-xl font-extrabold text-ink-900">Add your classes and students</h3>
-        <p class="mt-2 text-ink-600">Bring your list in from one Excel workbook, or type them in. Group siblings into families.</p>
-      </li>
-      <li class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
-        <p class="text-sm font-semibold text-panel">Fees</p>
-        <h3 class="mt-1 text-xl font-extrabold text-ink-900">Set each class's term fees</h3>
-        <p class="mt-2 text-ink-600">Tuition, transport, uniform and feeding for each class, with adjustments for a child where you need them.</p>
-      </li>
-      <li class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
-        <p class="text-sm font-semibold text-panel">Payments</p>
-        <h3 class="mt-1 text-xl font-extrabold text-ink-900">Record payments and remind</h3>
-        <p class="mt-2 text-ink-600">Log transfers and cash as they come in, hand over a receipt, and watch what is owed come down.</p>
-      </li>
-    </ol>
-  </section>
-
   {# ===== Pricing: from apps/schools/plans.py, the list the checkout charges from #}
   <section id="pricing" class="lp-frame lp-section">
     <div class="lp-reveal max-w-3xl">
@@ -393,63 +378,53 @@ come from apps/core/seo.py.
     </div>
   </section>
 
-  {# ===== Questions ========================================================= #}
+  {# ===== Questions, then the way in ======================================= #}
   <section id="faq" class="lp-frame lp-section">
-    <div class="lp-reveal max-w-3xl">
-      <h2 class="lp-heading">Answers for school proprietors.</h2>
-    </div>
-
-    <div class="mt-10 grid gap-3 lg:grid-cols-2">
-      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+    <div class="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+      <div class="lp-reveal">
+        <h2 class="lp-heading">Answers for school proprietors.</h2>
+        <p class="lp-lede">Most schools are running the same day. If something here is not answered, ask us on WhatsApp.</p>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-blue lp-btn-lg">Create my school account</a>
+          <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-line lp-btn-lg">Chat with us on WhatsApp</a>
+        </div>
+      </div>
+      <div class="divide-y divide-ink-200 border-y border-ink-200"> {# taste-skill-ignore: a real table, receipt or footer rule #}
+      <details class="lp-faq lp-reveal py-4">
         <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
           <span>Can I use SCHOOLCORD if my bursar is not good with computers?</span>
           <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-3 text-ink-600">Yes. The screens use plain buttons and short forms. If your bursar can send a WhatsApp message, they can record a payment and issue a receipt after a few minutes of showing.</p>
+        <p class="mt-2 max-w-2xl text-ink-600">Yes. The screens use plain buttons and short forms. If your bursar can send a WhatsApp message, they can record a payment and issue a receipt after a few minutes of showing.</p>
       </details>
-
-      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+      <details class="lp-faq lp-reveal py-4">
         <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
           <span>How does it help me when I am not at school?</span>
           <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-3 text-ink-600">Sign in from any phone or tablet. You see payments as your bursar records them, so no money goes unreported.</p>
+        <p class="mt-2 max-w-2xl text-ink-600">Sign in from any phone or tablet. You see payments as your bursar records them, so no money goes unreported.</p>
       </details>
-
-      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+      <details class="lp-faq lp-reveal py-4">
         <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
           <span>What if the network is poor at our school?</span>
           <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-3 text-ink-600">SCHOOLCORD uses very little data and works on 3G and 4G. It needs a connection to save an entry. Nothing is kept on the phone, so a lost phone does not lose or leak your records.</p>
+        <p class="mt-2 max-w-2xl text-ink-600">SCHOOLCORD uses very little data and works on 3G and 4G. It needs a connection to save an entry. Nothing is kept on the phone, so a lost phone does not lose or leak your records.</p>
       </details>
-
-      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+      <details class="lp-faq lp-reveal py-4">
         <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
           <span>Can parents pay from the reminder?</span>
           <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-3 text-ink-600">Reminders carry the child's balance and your school's bank details, so a parent can transfer straight from their banking app. You record the payment when it arrives.</p>
+        <p class="mt-2 max-w-2xl text-ink-600">Reminders carry the child's balance and your school's bank details, so a parent can transfer straight from their banking app. You record the payment when it arrives.</p>
       </details>
-
-      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+      <details class="lp-faq lp-reveal py-4">
         <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
           <span>How do I pay for a plan?</span>
           <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-3 text-ink-600">From your school's settings, choose a plan and you get our bank details and a reference. Pay by transfer with that reference, tell us you have paid, and your plan switches on when the money arrives.</p>
+        <p class="mt-2 max-w-2xl text-ink-600">From your school's settings, choose a plan and you get our bank details and a reference. Pay by transfer with that reference, tell us you have paid, and your plan switches on when the money arrives.</p>
       </details>
-    </div>
-  </section>
-
-  {# ===== Close ============================================================== #}
-  <section class="lp-frame lp-section">
-    <div class="lp-reveal rounded-[28px] bg-panel px-6 py-12 text-center text-white sm:px-12 sm:py-16">
-      <h2 class="mx-auto max-w-3xl text-3xl font-extrabold leading-tight sm:text-5xl">Stop chasing unpaid fees on paper.</h2>
-      <p class="mx-auto mt-4 max-w-xl text-lg text-panel-copy">Join Nigerian school proprietors using SCHOOLCORD for clear records and faster fee recovery.</p>
-      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
-        <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime lp-btn-lg">Create my school account &rarr;</a>
-        <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-ghost lp-btn-lg">Chat with us on WhatsApp</a>
       </div>
     </div>
   </section>
@@ -820,8 +795,8 @@ come from apps/core/seo.py.
       <div>
         <h2 class="text-base font-bold">On this page</h2>
         <ul class="mt-3 space-y-2 text-panel-copy">
-          <li><a href="#features" class="hover:text-white hover:underline">Product</a></li>
-          <li><a href="#how-it-works" class="hover:text-white hover:underline">How it works</a></li>
+          <li><a href="#term" class="hover:text-white hover:underline">How a term runs</a></li>
+          <li><a href="#calculator" class="hover:text-white hover:underline">Fee recovery</a></li>
           <li><a href="#live-demo" class="hover:text-white hover:underline">Interactive demo</a></li>
           <li><a href="#pricing" class="hover:text-white hover:underline">Pricing</a></li>
         </ul>

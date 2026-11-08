@@ -31,18 +31,18 @@ Blocks:
   <section class="card overflow-hidden">
     <div class="grid divide-y divide-ink-200 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
       <div class="px-5 py-4">
-        <p class="text-xs uppercase tracking-wide text-ink-500">Rows read</p>
+        <p class="text-xs text-ink-500">Rows read</p>
         <p class="numeric mt-1 text-2xl font-semibold text-ink-900">{{ report.total }}</p>
       </div>
       <div class="px-5 py-4">
-        <p class="text-xs uppercase tracking-wide text-ink-500">Ready to import</p>
+        <p class="text-xs text-ink-500">Ready to import</p>
         <p class="numeric mt-1 text-2xl font-semibold
                   {% if report.ready_count %}text-paid-strong{% else %}text-ink-400{% endif %}">
           {{ report.ready_count }}
         </p>
       </div>
       <div class="px-5 py-4">
-        <p class="text-xs uppercase tracking-wide text-ink-500">Need correcting</p>
+        <p class="text-xs text-ink-500">Need correcting</p>
         <p class="numeric mt-1 text-2xl font-semibold
                   {% if report.failed_count %}text-overdue-strong{% else %}text-ink-400{% endif %}">
           {{ report.failed_count }}
