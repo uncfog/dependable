@@ -126,5 +126,48 @@
       <button type="submit" class="btn btn-primary text-sm">Change email</button>
     </div>
   </form>
+
+  {% if plan %}
+    <section class="card card-pad" id="plan" aria-labelledby="plan-heading">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 id="plan-heading" class="text-sm font-semibold text-ink-900">Plan and billing</h2>
+          <p class="mt-1 text-2xl font-extrabold text-ink-900">{{ plan.name }}</p>
+          <p class="text-sm text-ink-600">
+            {% if plan.price %}{{ plan.price }}{% if plan.per_term %} per term{% endif %} &middot; {% endif %}{{ plan.status }}
+          </p>
+        </div>
+        <a href="{% url 'billing:checkout' %}" class="btn btn-lime text-sm">
+          {% if plan.open_order %}See your transfer{% else %}Subscribe or change plan{% endif %}
+        </a>
+      </div>
+
+      {% if plan.max_students %}
+        <div class="mt-4">
+          <div class="flex justify-between text-sm">
+            <span class="text-ink-600">Active students</span>
+            <span class="font-bold tabular-nums {% if plan.over %}text-overdue-strong{% else %}text-ink-900{% endif %}">{{ plan.students }} of {{ plan.max_students }}</span>
+          </div>
+          <span class="progress mt-2" role="img" aria-label="{{ plan.students }} of {{ plan.max_students }} students on this plan">
+            <i style="width: {{ plan.percent }}%"></i>
+          </span>
+          {% if plan.over %}
+            <p class="mt-2 text-sm text-overdue-strong">Your school has more students than this plan is for. Choose a larger plan.</p>
+          {% endif %}
+        </div>
+      {% endif %}
+
+      {% if plan.open_order %}
+        <p class="note-banner mt-4">
+          <span>
+            <strong>Transfer in progress</strong> for {{ plan.open_order.get_plan_display }},
+            reference <span class="tabular-nums">{{ plan.open_order.reference }}</span>.
+            {% if plan.open_order.status == "transfer_reported" %}We'll switch your plan on once it arrives.{% else %}Tell us once you have sent it.{% endif %}
+          </span>
+          <a href="{% url 'billing:order' plan.open_order.reference %}" class="btn btn-primary btn-sm">Open</a>
+        </p>
+      {% endif %}
+    </section>
+  {% endif %}
 </div>
 {% endblock %}

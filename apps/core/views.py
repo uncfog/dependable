@@ -96,9 +96,20 @@ class LandingView(TemplateView):
     HERO_IMAGE: str | None = "img/hero-classroom.jpg"
 
     def get(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and not self.previewing():
             return HttpResponseRedirect(home_url_for(request.user))
         return super().get(request, *args, **kwargs)
+
+    def previewing(self) -> bool:
+        """The platform owner may look at the public page while signed in, from Plans &
+        billing, to see the prices exactly as visitors do. Everyone else signed in still
+        goes to their own dashboard."""
+        if self.request.GET.get("preview") != "1":
+            return False
+        # The effective role, as the dashboards read it: a superuser counts as platform.
+        tenant = getattr(self.request, "tenant", None)
+        role = tenant.role if tenant is not None else getattr(self.request.user, "role", None)
+        return home_url_name(role) == "core:platform_overview"
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -108,6 +119,7 @@ class LandingView(TemplateView):
         from apps.schools.plans import OFFERS
 
         context["plan_offers"] = OFFERS
+        context["public_preview"] = self.request.user.is_authenticated
         return context
 
 

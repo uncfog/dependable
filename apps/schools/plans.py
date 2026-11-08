@@ -25,6 +25,8 @@ class PlanOffer:
     price_naira: int | None
     #: The student range, worded the way the pricing page words it.
     students: str
+    #: The most active students the plan is for. ``None`` means no ceiling.
+    max_students: int | None
     #: Whether the billing screen can take payment for it.
     orderable: bool
 
@@ -38,14 +40,16 @@ class PlanOffer:
 
 
 OFFERS: tuple[PlanOffer, ...] = (
-    PlanOffer(Plan.FREE, "Free", 0, "Up to 100 students", orderable=False),
-    PlanOffer(Plan.STARTER, "Starter", 45_000, "Up to 200 students", orderable=True),
-    PlanOffer(Plan.GROWTH, "Growth", 90_000, "Up to 600 students", orderable=True),
+    PlanOffer(Plan.FREE, "Free", 0, "Up to 100 students", 100, orderable=False),
+    PlanOffer(Plan.STARTER, "Starter", 45_000, "Up to 200 students", 200, orderable=True),
+    PlanOffer(Plan.GROWTH, "Growth", 90_000, "Up to 600 students", 600, orderable=True),
     PlanOffer(
-        Plan.PROFESSIONAL, "Professional", 180_000, "Up to 1,200 students", orderable=True
+        Plan.PROFESSIONAL, "Professional", 180_000, "Up to 1,200 students", 1_200,
+        orderable=True,
     ),
     PlanOffer(
-        Plan.ENTERPRISE, "Enterprise", None, "More than 1,200 students", orderable=False
+        Plan.ENTERPRISE, "Enterprise", None, "More than 1,200 students", None,
+        orderable=False,
     ),
 )
 

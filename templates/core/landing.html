@@ -378,28 +378,7 @@ come from apps/core/seo.py.
       <p class="lp-lede">Choose by the number of students. Pay by bank transfer from your school's settings; no card needed and no hidden charges.</p>
     </div>
 
-    <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      {% for offer in plan_offers %}
-        <article class="lp-reveal flex flex-col rounded-[24px] p-6 shadow-card {% if offer.plan == 'growth' %}bg-panel text-white{% else %}bg-white{% endif %}">
-          <h3 class="text-lg font-extrabold {% if offer.plan != 'growth' %}text-ink-900{% endif %}">{{ offer.name }}</h3>
-          <p class="mt-1 text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">{{ offer.students }}</p>
-          <p class="mt-5 text-3xl font-extrabold tabular-nums">{{ offer.price_display }}</p>
-          <p class="text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">
-            {% if offer.price_naira %}per term{% elif offer.price_naira == 0 %}for good{% else %}priced for your schools{% endif %}
-          </p>
-          <div class="mt-6 flex-1"></div>
-          {% if offer.price_naira is None %}
-            <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-line w-full">Talk to us</a>
-          {% elif offer.plan == 'growth' %}
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime w-full">Choose {{ offer.name }}</a>
-          {% elif offer.price_naira == 0 %}
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-line w-full">Start free</a>
-          {% else %}
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-blue w-full">Choose {{ offer.name }}</a>
-          {% endif %}
-        </article>
-      {% endfor %}
-    </div>
+    {% include "core/_pricing_cards.html" with show_signup=True %}
 
     <div class="lp-reveal mt-4 rounded-[24px] bg-white p-6 shadow-card sm:p-8">
       <h3 class="text-lg font-extrabold text-ink-900">Every plan includes</h3>

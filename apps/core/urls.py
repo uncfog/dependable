@@ -1,5 +1,7 @@
 from django.urls import path
 
+from apps.schools import plan_views
+
 from . import views
 
 app_name = "core"
@@ -16,6 +18,12 @@ urlpatterns = [
 
     # One per role -- see navigation.ROLE_HOME, which decides who lands where.
     path("platform/", views.PlatformOverviewView.as_view(), name="platform_overview"),
+    path("platform/billing/", plan_views.PlatformBillingView.as_view(), name="platform_billing"),
+    path(
+        "platform/billing/orders/<int:pk>/confirm/",
+        plan_views.PlatformConfirmOrderView.as_view(),
+        name="platform_billing_confirm",
+    ),
     # The grid, on a URL of its own. It shared /platform/ with the dashboard
     # above for a while, which gave the sidebar two rows pointing at one screen
     # and lit both of them -- see PlatformOverviewView.

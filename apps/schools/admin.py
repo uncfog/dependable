@@ -7,7 +7,7 @@ from django.utils.html import format_html
 
 from apps.core.admin import TenantScopedAdminMixin
 
-from . import teardown
+from . import billing, teardown
 from .models import Branch, PlanOrder, School, SchoolModule, SchoolStatus
 
 _STATUS_COLOURS = {
@@ -214,19 +214,6 @@ class PlanOrderAdmin(admin.ModelAdmin):
 
     @admin.action(description="Confirm payment and switch the school to this plan")
     def mark_paid_and_activate(self, request, queryset):
-        now = timezone.now()
-        switched = 0
-        with transaction.atomic():
-            open_orders = queryset.exclude(
-                status__in=(PlanOrder.Status.PAID, PlanOrder.Status.CANCELLED)
-            ).select_related("school")
-            for order in open_orders:
-                school = order.school
-                school.plan = order.plan
-                school.status = SchoolStatus.ACTIVE
-                school.save(update_fields=["plan", "status", "updated_at"])
-                order.status = PlanOrder.Status.PAID
-                order.paid_at = now
-                order.save(update_fields=["status", "paid_at", "updated_at"])
-                switched += 1
+        # The same function the Plans & billing screen uses.
+        switched = sum(1 for order in queryset if billing.confirm_order(order))
         self.message_user(request, f"{switched} school(s) switched to the plan they paid for.")

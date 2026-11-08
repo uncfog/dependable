@@ -12,9 +12,11 @@ the app.
 from __future__ import annotations
 
 import uuid
+from types import SimpleNamespace
 
 from django.conf import settings
 from django.contrib import messages
+from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.utils import timezone
@@ -23,14 +25,12 @@ from django.views.generic import TemplateView
 
 from apps.core.branding import SUPPORT_EMAIL
 from apps.core.permissions import Capability, CapabilityRequiredMixin
+from apps.core.views import RoleDashboardMixin
 
-from .models import PlanOrder
+from .models import Plan, PlanOrder, School
 from .plans import OFFERS, offer_for
 
-OPEN_STATUSES = (
-    PlanOrder.Status.AWAITING_TRANSFER,
-    PlanOrder.Status.TRANSFER_REPORTED,
-)
+from .billing import OPEN_STATUSES, confirm_order
 
 
 def bank_details() -> dict[str, str]:
@@ -140,3 +140,61 @@ class PlanOrderReportView(ManagePlanMixin, View):
                 "Thanks. We'll switch your plan on once the payment arrives.",
             )
         return redirect("billing:order", reference=order.reference)
+
+
+def plan_cards(counts: dict[str, int] | None = None) -> list[SimpleNamespace]:
+    """The offers as the pricing cards draw them, with how many schools are on each."""
+    return [
+        SimpleNamespace(
+            plan=offer.plan, name=offer.name, students=offer.students,
+            price_naira=offer.price_naira, price_display=offer.price_display,
+            school_count=(counts or {}).get(offer.plan, 0),
+        )
+        for offer in OFFERS
+    ]
+
+
+class PlatformBillingView(RoleDashboardMixin, TemplateView):
+    """The platform owner's Plans & billing: the price list the landing page and the
+    checkout share, the transfers waiting to be confirmed, and every school's plan."""
+
+    template_name = "schools/platform_billing.html"
+    home_url_name = "core:platform_overview"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        counts = dict(
+            School.objects.values_list("plan").annotate(n=Count("id")).values_list("plan", "n")
+        )
+        orders = PlanOrder.all_objects.select_related("school")
+        context.update(
+            plan_offers=plan_cards(counts),
+            waiting=list(
+                orders.filter(status__in=OPEN_STATUSES).order_by("-status", "created_at")
+            ),
+            recently_paid=list(orders.filter(status=PlanOrder.Status.PAID).order_by("-paid_at")[:10]),
+            schools=list(School.objects.order_by("name")),
+            unlisted_plans=[
+                (Plan(plan).label, n) for plan, n in counts.items() if offer_for(plan) is None
+            ],
+            bank_ready=bank_details_ready(),
+            page_title="Plans & billing",
+        )
+        return context
+
+
+class PlatformConfirmOrderView(RoleDashboardMixin, View):
+    """Confirm one transfer from the Plans & billing screen."""
+
+    home_url_name = "core:platform_overview"
+
+    def post(self, request, pk):
+        order = get_object_or_404(PlanOrder.all_objects.select_related("school"), pk=pk)
+        if confirm_order(order):
+            messages.success(
+                request,
+                f"{order.school.name} is now on the {offer_for(order.plan).name} plan.",
+            )
+        else:
+            messages.info(request, "That order was already paid or cancelled.")
+        return redirect("core:platform_billing")
