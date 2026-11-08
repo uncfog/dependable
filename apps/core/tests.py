@@ -238,9 +238,9 @@ class NavigationTests(TestCase):
         """The shell stays honest while feature screens are still being built.
 
         The pair moves as features land. Payments was the unbuilt half of this
-        assertion until the payments app shipped; Reports was next and has now
-        shipped too, so Plans & Billing carries it -- which is why the unbuilt
-        side is checked on a role that can see one at all.
+        assertion until the payments app shipped; Reports was next, then Plans &
+        billing. Every destination in the sidebar exists now, so this checks that
+        each of them resolves rather than one that does not.
         """
         sections = {s.label: s.items for s in nav_for(Role.SCHOOL_OWNER, "/")}
         students = next(i for i in sections["School"] if i.label == "Students")
@@ -251,8 +251,8 @@ class NavigationTests(TestCase):
         self.assertTrue(reports.available)    # and the report does as well
 
         platform = {s.label: s.items for s in nav_for(Role.PLATFORM_OWNER, "/")}
-        billing = next(i for i in platform["Platform"] if i.label == "Plans & Billing")
-        self.assertFalse(billing.available)   # feature screen not built yet
+        billing = next(i for i in platform["Platform"] if i.label == "Plans & billing")
+        self.assertTrue(billing.available)    # and Plans & billing has shipped
 
     def test_dashboard_is_marked_active_on_its_own_path(self):
         from django.urls import reverse
