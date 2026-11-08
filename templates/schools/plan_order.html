@@ -1,95 +1,78 @@
 {% extends "base.html" %}
 
+{% comment %}
+One bank-transfer order: the amount, where to pay, the reference to put on the
+transfer, and what happens next. Nothing here moves money.
+{% endcomment %}
+
 {% block page_subtitle %}
   <p class="truncate text-sm text-ink-600">
     {{ offer.name }} plan &middot; reference {{ order.reference }}
   </p>
 {% endblock %}
 
+{% block page_actions %}
+  <a href="{% url 'billing:checkout' %}" class="btn btn-ghost text-sm">All plans</a>
+{% endblock %}
+
 {% block content %}
-<div class="mx-auto grid max-w-3xl gap-5">
-  <section class="card p-5">
-    <div class="flex flex-wrap items-center justify-between gap-3">
+<div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+
+  <section class="card card-pad" aria-labelledby="pay-heading">
+    <div class="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <div class="text-xs uppercase tracking-wide text-ink-500">Amount</div>
-        <div class="text-2xl font-semibold text-ink-900">
-          {{ offer.price_display }}
-          <span class="text-sm font-normal text-ink-500">per term</span>
-        </div>
+        <h2 id="pay-heading" class="text-sm font-semibold text-ink-600">Amount to pay</h2>
+        <p class="mt-1 text-4xl font-extrabold tabular-nums text-ink-900">{{ offer.price_display }}</p>
+        <p class="text-sm text-ink-600">per term, {{ offer.students|lower }}</p>
       </div>
       {% if order.status == "paid" %}
         <span class="status-pill status-paid">{{ order.get_status_display }}</span>
       {% elif order.status == "cancelled" %}
-        <span class="status-pill status-unpaid">{{ order.get_status_display }}</span>
+        <span class="status-pill status-void">{{ order.get_status_display }}</span>
+      {% elif order.status == "transfer_reported" %}
+        <span class="status-pill status-pending">{{ order.get_status_display }}</span>
       {% else %}
         <span class="status-pill status-partial">{{ order.get_status_display }}</span>
       {% endif %}
     </div>
+
+    {% if order.status == "awaiting_transfer" or order.status == "transfer_reported" %}
+      <h3 class="mt-6 text-base font-extrabold text-ink-900">Pay this amount to</h3>
+      {% if bank_ready %}
+        <dl class="mt-2">
+          <div class="kv-row"><dt>Bank</dt><dd class="font-bold">{{ bank.bank }}</dd></div>
+          <div class="kv-row"><dt>Account name</dt><dd class="font-bold">{{ bank.account_name }}</dd></div>
+          <div class="kv-row"><dt>Account number</dt><dd class="font-bold tabular-nums">{{ bank.account_number }}</dd></div>
+          <div class="kv-row kv-row-total"><dt>Reference</dt><dd class="tabular-nums">{{ order.reference }}</dd></div>
+        </dl>
+        <p class="mt-2 text-sm text-ink-600">Put the reference in the transfer's narration, so we can match your payment.</p>
+      {% else %}
+        <p class="mt-2 text-sm text-ink-700">Bank details aren't set up yet. Contact support before you pay.</p>
+      {% endif %}
+    {% endif %}
   </section>
 
-  {% if order.status == "awaiting_transfer" or order.status == "transfer_reported" %}
-    <section class="card p-5">
-      <h2 class="text-sm font-semibold text-ink-900">Pay this amount to</h2>
-      {% if bank_ready %}
-        <dl class="mt-3 grid gap-4 text-sm sm:grid-cols-2">
-          <div>
-            <dt class="text-xs text-ink-500">Bank</dt>
-            <dd class="font-medium text-ink-900">{{ bank.bank }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-ink-500">Account name</dt>
-            <dd class="font-medium text-ink-900">{{ bank.account_name }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-ink-500">Account number</dt>
-            <dd class="font-mono font-medium text-ink-900">{{ bank.account_number }}</dd>
-          </div>
-          <div>
-            <dt class="text-xs text-ink-500">Narration: put this reference on the transfer</dt>
-            <dd class="font-mono font-medium text-ink-900">{{ order.reference }}</dd>
-          </div>
-        </dl>
-      {% else %}
-        <p class="mt-3 text-sm text-ink-700">
-          Bank details aren't set up yet. Contact support before you pay.
-        </p>
-      {% endif %}
-    </section>
-  {% endif %}
-
-  {% if order.status == "awaiting_transfer" %}
-    <section class="card p-5">
-      <p class="text-sm text-ink-700">
-        After you send the transfer, tap below so we know to look for it.
-      </p>
-      <form method="post" action="{% url 'billing:order_reported' order.reference %}" class="mt-3">
+  <section class="card card-pad" aria-labelledby="next-heading">
+    <h2 id="next-heading" class="card-heading">What happens next</h2>
+    {% if order.status == "awaiting_transfer" %}
+      <p class="text-sm text-ink-700">After you send the transfer, tell us so we know to look for it.</p>
+      <form method="post" action="{% url 'billing:order_reported' order.reference %}" class="mt-4">
         {% csrf_token %}
-        <button type="submit" class="btn btn-primary text-sm">I have sent the transfer</button>
+        <button type="submit" class="btn btn-lime btn-full">I have sent the transfer</button>
       </form>
-    </section>
-  {% elif order.status == "transfer_reported" %}
-    <section class="card p-5">
+    {% elif order.status == "transfer_reported" %}
       <p class="text-sm text-ink-700">
-        Thanks. We have your note about the transfer and will switch your plan on once the
-        payment arrives.
+        Thanks. We have your note about the transfer and will switch your plan on once the payment arrives.
       </p>
-    </section>
-  {% elif order.status == "paid" %}
-    <section class="card p-5">
+    {% elif order.status == "paid" %}
+      <p class="text-sm text-ink-700">Paid. Your school is on the {{ offer.name }} plan.</p>
+    {% else %}
       <p class="text-sm text-ink-700">
-        Paid. Your school is on the {{ offer.name }} plan.
+        This order was cancelled.
+        <a class="font-medium text-brand-800 underline" href="{% url 'billing:checkout' %}">Choose a plan</a> to start again.
       </p>
-    </section>
-  {% else %}
-    <section class="card p-5">
-      <p class="text-sm text-ink-700">
-        This order was cancelled. <a class="underline" href="{% url 'billing:checkout' %}">Choose a plan</a> to start again.
-      </p>
-    </section>
-  {% endif %}
+    {% endif %}
+  </section>
 
-  <p class="text-center text-xs text-ink-500">
-    <a class="underline" href="{% url 'billing:checkout' %}">Back to plans</a>
-  </p>
 </div>
 {% endblock %}

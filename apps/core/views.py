@@ -104,6 +104,10 @@ class LandingView(TemplateView):
         context = super().get_context_data(**kwargs)
         context["structured_data"] = structured_data(self.request)
         context["hero_image"] = self.HERO_IMAGE
+        # The prices the checkout charges, so the page and the bill cannot disagree.
+        from apps.schools.plans import OFFERS
+
+        context["plan_offers"] = OFFERS
         return context
 
 

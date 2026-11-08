@@ -42,15 +42,15 @@ class CallToActionTests(LandingTestCase):
     def test_login_goes_to_the_login_route_and_has_no_arrow(self):
         login = reverse("login")
         self.assertRegex(
-            self.html, rf'<a href="{re.escape(login)}"[^>]*>\s*<span>Login</span>'
+            self.html, rf'<a href="{re.escape(login)}"[^>]*>\s*Log in'
         )
         self.assertNotIn("Login ↗", self.html)
 
     def test_every_set_up_and_plan_button_goes_to_signup(self):
         signup = reverse("core:signup")
-        for label in ("SET UP MY SCHOOL NOW", "RECOVER YOUR SCHOOL'S UNPAID FEES",
-                      "CHOOSE STARTER", "GET STARTED NOW",
-                      "CREATE MY SCHOOL ACCOUNT"):
+        for label in ("Set up my school", "Recover your unpaid fees",
+                      "Start free", "Choose Starter", "Choose Growth",
+                      "Choose Professional", "Create my school account"):
             with self.subTest(label=label):
                 pattern = (
                     rf'<a href="{re.escape(signup)}"[^>]*>\s*(<span>)?'
@@ -61,7 +61,7 @@ class CallToActionTests(LandingTestCase):
     def test_whatsapp_links_read_the_branding_config(self):
         self.assertEqual(
             self.html.count(f'href="{SUPPORT_WHATSAPP_URL}" target="_blank" rel="noopener"'),
-            2,  # "Contact sales" and "Chat with us on WhatsApp"
+            2,  # Enterprise's "Talk to us" and "Chat with us on WhatsApp"
         )
 
     def test_whatsapp_and_footer_use_the_real_support_line(self):
@@ -170,3 +170,17 @@ class SignedInVisitorTests(TestCase):
         self.client.force_login(user)
         response = self.client.get(reverse("core:landing"))
         self.assertEqual(response.status_code, 302)
+
+
+class PricingMatchesTheCheckoutTests(LandingTestCase):
+    """The page advertises exactly what apps/schools/plans.py charges."""
+
+    def test_every_plan_and_price_is_the_checkouts(self):
+        from apps.schools.plans import OFFERS
+
+        pricing = self.html[self.html.index('id="pricing"'):self.html.index('id="faq"')]
+        for offer in OFFERS:
+            with self.subTest(plan=offer.plan):
+                self.assertIn(offer.name, pricing)
+                self.assertIn(offer.price_display, pricing)
+                self.assertIn(offer.students, pricing)

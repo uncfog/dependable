@@ -77,6 +77,7 @@ class PlanCheckoutView(ManagePlanMixin, TemplateView):
             open_order=open_order,
             bank_ready=bank_details_ready(),
             support_email=SUPPORT_EMAIL,
+            page_title="Plan",
             **kwargs,
         )
 
@@ -120,6 +121,7 @@ class PlanOrderView(ManagePlanMixin, TemplateView):
             offer=offer_for(order.plan),
             bank=bank_details(),
             bank_ready=bank_details_ready(),
+            page_title="Pay for your plan",
             **kwargs,
         )
 

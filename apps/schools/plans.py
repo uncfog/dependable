@@ -2,8 +2,9 @@
 
 ``School.plan`` says which plan a school is on. This module says what that plan
 costs per term and whether a school can pay for it from the billing screens.
-The prices match the public pricing page; Enterprise is quoted, so it has no
-price here.
+The landing page's pricing section is rendered from this list too, so the price a
+school sees advertised is the price it is charged. Enterprise is quoted, so it has
+no price here.
 
 Trial is not offered. A school on trial is moved onto a paid plan by the
 platform owner, not bought from the billing screen.
