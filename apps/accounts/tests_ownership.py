@@ -9,6 +9,7 @@ and the swap leaves exactly one owner, never two and never none.
 from __future__ import annotations
 
 import re
+import secrets
 from datetime import timedelta
 from io import StringIO
 
@@ -39,8 +40,8 @@ User = get_user_model()
 Status = OwnershipTransfer.Status
 Afterwards = OwnershipTransfer.Afterwards
 
-STRONG = "violet-harbour-lantern-92"
-NEW_PASSWORD = "copper-meadow-violin-47"
+STRONG = secrets.token_urlsafe(16)
+NEW_PASSWORD = secrets.token_urlsafe(16)
 ACCEPT_PATH = re.compile(r"/accounts/ownership/accept/([^/\s]+)/")
 
 
