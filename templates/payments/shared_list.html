@@ -8,6 +8,7 @@
 {% endblock %}
 
 {% block page_actions %}
+  <a href="{% url 'payments:index' %}" class="btn btn-ghost text-sm">All payments</a>
   {% if showing_all %}
     <a href="{% url 'payments:shared_list' %}" class="btn btn-ghost text-sm">Waiting only</a>
   {% else %}

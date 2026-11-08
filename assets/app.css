@@ -3980,3 +3980,11 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 
 @media (min-width: 1024px) { #lp-menu-button { display: none; } }
 .lp-drawn .filter-chip { min-height: 2.75rem; }
+
+/* --- Families in Quick access, and links between family and child payments ---- */
+.quick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+@media (min-width: 640px) { .quick-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; } }
+@media (min-width: 1280px) { .quick-grid { grid-template-columns: repeat(8, minmax(0, 1fr)); } }
+
+.family-link { display: block; margin-top: 0.125rem; }
+.table-cards tr.card-row > td.card-lead a.family-link { display: flex; }

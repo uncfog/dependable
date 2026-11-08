@@ -103,7 +103,8 @@ class PaymentListView(ViewPaymentsMixin, TermMixin, ListView):
 
     def _filtered(self, *, ignoring_status=False):
         queryset = super().get_queryset().select_related(
-            "student", "student__school_class", "term", "recorded_by"
+            "student", "student__school_class", "term", "recorded_by",
+            "transaction", "transaction__family",
         )
         form = self.get_filter_form()
         filters = form.cleaned_data if form.is_bound and form.is_valid() else {}
@@ -156,6 +157,7 @@ class PaymentListView(ViewPaymentsMixin, TermMixin, ListView):
         context["status_selected"] = self.request.GET.get("status", "")
         if "view_families" in _capabilities(self.request):
             context["unallocated_total"] = shared.unallocated_total()
+            context["family_payment_count"] = shared.transactions().count()
         context["page_title"] = "Payments"
         return context
 

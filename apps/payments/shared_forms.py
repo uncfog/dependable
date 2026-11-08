@@ -46,15 +46,25 @@ class ReceiveForm(StyledFormMixin, forms.Form):
         label="Amount (₦)", max_digits=12, decimal_places=2, min_value=MINIMUM, widget=_money_input()
     )
     date_paid = forms.DateField(
-        label="Date paid", widget=forms.DateInput(attrs={"type": "date"}, format="%Y-%m-%d")
+        label="Date paid",
+        help_text="Day / month / year",
+        # Typed as dd/mm/yyyy, like a single child's payment; ISO is still accepted.
+        input_formats=["%d/%m/%Y", "%Y-%m-%d"],
+        widget=forms.DateInput(
+            attrs={"placeholder": "dd/mm/yyyy", "inputmode": "numeric", "autocomplete": "off"},
+            format="%d/%m/%Y",
+        ),
     )
-    method = forms.ChoiceField(choices=PaymentMethod.choices, initial=PaymentMethod.TRANSFER)
+    method = forms.ChoiceField(
+        label="How was it paid", choices=PaymentMethod.choices,
+        initial=PaymentMethod.TRANSFER, widget=forms.RadioSelect,
+    )
     reference = forms.CharField(
-        max_length=120, required=False,
-        widget=forms.TextInput(attrs={"placeholder": "Teller / transfer ref", "autocomplete": "off"}),
+        label="Reference (optional)", max_length=120, required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Teller or transfer ref", "autocomplete": "off"}),
     )
     payer_name = forms.CharField(
-        label="Paid by", max_length=160, required=False,
+        label="Paid by (optional)", max_length=160, required=False,
         help_text="Printed on the receipt. Leave blank to use the family's contact.",
     )
     receipt = forms.FileField(
@@ -62,7 +72,10 @@ class ReceiveForm(StyledFormMixin, forms.Form):
         help_text="Optional. Image or PDF.",
         widget=forms.ClearableFileInput(attrs={"accept": "image/*,application/pdf"}),
     )
-    note = forms.CharField(max_length=250, required=False)
+    note = forms.CharField(
+        label="Note (optional)", max_length=250, required=False,
+        widget=forms.TextInput(attrs={"placeholder": "Anything the receipt does not say"}),
+    )
     confirm_now = forms.BooleanField(
         required=False, initial=False, label="Confirm this payment now",
         help_text="Leave unticked to hold it until someone has checked it. Nothing counts "

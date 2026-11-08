@@ -1,11 +1,11 @@
 {% comment %}
-The phone overview's tiles. `quick_access` comes from core.views.quick_access, which
+The overview's quick-access tiles, on a phone and a desktop alike. `quick_access` comes from core.views.quick_access, which
 asks the sidebar what this account may open. Each colour marks the section it opens.
 {% endcomment %}
 {% if quick_access %}
-  <section class="card card-pad sm:hidden" aria-labelledby="quick-access-heading">
+  <section class="card card-pad" aria-labelledby="quick-access-heading">
     <h2 id="quick-access-heading" class="card-heading">Quick access</h2>
-    <div class="grid grid-cols-3 gap-2">
+    <div class="quick-grid">
       {% for tile in quick_access %}
         <a href="{{ tile.href }}" class="quick-tile tint-{{ tile.tint }}">
           <span class="quick-icon icon-{{ tile.tint }}" aria-hidden="true">
@@ -16,6 +16,8 @@ asks the sidebar what this account may open. Each colour marks the section it op
               {% elif tile.icon == "alert" %}<path d="M12 4 3 20h18L12 4z"/><path d="M12 10v4M12 17h.01"/>
               {% elif tile.icon == "person" %}<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/>
               {% elif tile.icon == "lines" %}<path d="M5 6h14M5 12h14M5 18h9"/>
+              {% elif tile.icon == "family" %}<circle cx="8" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.1"/><path d="M3.5 19c0-2.6 2-4.6 4.5-4.6s4.5 2 4.5 4.6M13.5 19c.2-2 1.4-3.6 3-3.6 1.8 0 3 1.6 3 3.6"/>
+              {% elif tile.icon == "wallet" %}<path d="M4 7.5h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-11a2 2 0 0 1 2-2h10"/><path d="M15.5 13h.01"/>
               {% else %}<path d="M5 20V10M12 20V4M19 20v-7"/>{% endif %}
             </svg>
             {% endif %}
