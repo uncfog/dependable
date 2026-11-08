@@ -30,7 +30,7 @@ class LandingTestCase(TestCase):
     def demo(self) -> str:
         """The demo section, plus its three dialogs and the page script."""
         section = self.html[
-            self.html.index('id="live-demo"'):self.html.index("<!-- HOW IT WORKS -->")
+            self.html.index('id="live-demo"'):self.html.index('id="pricing"')
         ]
         dialogs_and_script = self.html[
             self.html.index("<!-- DEMO DIALOG: RECORD PAYMENT"):self.html.index("<footer")

@@ -3766,6 +3766,114 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 }
 .lp-faq[open] .lp-faq-mark { transform: rotate(45deg); background-color: #d2f04e; }
 
+/* --- The term ------------------------------------------------------------
+   The page's one idea: a school term in the order the bursar works it. The hero
+   is the receipt a parent holds; the steps hang off a single rail, dated the way
+   a school speaks ("Week one", "Mid-term"), each beside the paperwork it makes.
+   The landing page is light-only, so these are literal mockup colours. */
+.lp-receipt {
+  position: relative;
+  padding: 1.5rem 1.5rem 5.25rem;
+  border-radius: 6px 6px 0 0;
+  background-color: #ffffff;
+  color: #1b2140;
+  box-shadow: 0 24px 60px rgb(15 23 60 / 0.35);
+  transform: rotate(-1.5deg);
+}
+/* The torn foot: scallops cut out of a strip of the same paper. */
+.lp-receipt::after {
+  content: "";
+  position: absolute;
+  inset: 100% 0 auto 0;
+  height: 10px;
+  background: radial-gradient(circle at 8px 10px, transparent 6px, #ffffff 6.5px) 0 0 / 16px 10px repeat-x;
+}
+/* The bursar's stamp: ink, slightly crooked, pressed over the figures. */
+.lp-stamp {
+  position: absolute;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  padding: 0.375rem 0.625rem;
+  white-space: nowrap;
+  border: 2.5px solid var(--color-paid-strong);
+  border-radius: 6px;
+  color: var(--color-paid-strong);
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  transform: rotate(-9deg);
+  opacity: 0.88;
+  mix-blend-mode: multiply;
+}
+.lp-bubble {
+  position: absolute;
+  left: -0.25rem;
+  bottom: -1.5rem;
+  max-width: 15rem;
+  padding: 0.75rem 1rem;
+  border-radius: 16px 16px 16px 4px;
+  background-color: var(--color-paid-soft);
+  color: #1b2140;
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1.35;
+  box-shadow: 0 12px 30px rgb(15 23 60 / 0.25);
+}
+@media (min-width: 640px) { .lp-bubble { left: -2rem; } }
+
+.lp-term { position: relative; }
+.lp-term-step {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding: 0 0 3rem 1.75rem;
+  border-left: 2px solid #d5dbec;
+}
+.lp-term-step > * { align-self: start; }
+.lp-term-step:last-child { padding-bottom: 0; border-left-color: transparent; }
+.lp-term-step::before {
+  content: "";
+  position: absolute;
+  top: 0.2rem;
+  left: -8px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: #4a5fc0;
+  box-shadow: 0 0 0 4px #f4f6fb;
+}
+.lp-term-step:last-child::before { background-color: #d2f04e; box-shadow: 0 0 0 4px #f4f6fb, 0 0 0 5px #1b2140; }
+@media (min-width: 1024px) {
+  .lp-term-step {
+    grid-template-columns: 10rem minmax(0, 1fr) minmax(0, 21rem);
+    gap: 2.5rem;
+    padding-left: 2.5rem;
+    padding-bottom: 4rem;
+  }
+}
+.lp-term-when { font-size: 0.9375rem; font-weight: 800; color: #3b4da6; }
+.lp-term-title { font-size: 1.375rem; font-weight: 800; line-height: 1.2; color: #1b2140; }
+.lp-term-copy { margin-top: 0.5rem; max-width: 34rem; color: #444c6e; }
+.lp-term-paper { margin-top: 0.875rem; max-width: 34rem; font-size: 0.9375rem; color: #5f6788; }
+.lp-term-paper span { font-weight: 700; color: var(--color-overdue-strong); }
+
+.lp-art {
+  padding: 1rem 1.125rem;
+  border: 1px solid #e4e8f3;
+  border-radius: 16px;
+  background-color: #ffffff;
+  color: #1b2140;
+  font-size: 0.875rem;
+}
+.lp-bubble-flat {
+  border-color: transparent;
+  border-radius: 16px 16px 16px 4px;
+  background-color: var(--color-paid-soft);
+  font-weight: 600;
+  line-height: 1.5;
+}
+
 .lp-drawn .tile { box-shadow: none; }
 .lp-drawn .note-banner { width: 100%; }
 .lp-drawn #demo-table-body tr { height: 3.75rem; }
