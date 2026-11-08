@@ -1,0 +1,12 @@
+{% autoescape off %}{% if outcome == "received" %}Hello{% if person.get_full_name %} {{ person.get_full_name }}{% endif %},
+
+You are now the owner of {{ school.name }}. Everything the school had is there, unchanged: its campuses, students, payments, plan and history. Sign in with {{ person.email }} at {{ site_url }}
+{% elif outcome == "handed_over" %}Hello{% if person.get_full_name %} {{ person.get_full_name }}{% endif %},
+
+{{ transfer.to_name }} ({{ transfer.to_email }}) accepted and now owns {{ school.name }}. {% if transfer.afterwards == "stay_principal" %}You are principal of {{ transfer.stay_branch.name }} and can sign in as before.{% else %}Your account has been switched off. Nothing you recorded has been deleted.{% endif %}
+{% else %}{{ transfer.to_name }} ({{ transfer.to_email }}) declined to take over {{ school.name }}. Nothing has changed: you are still the owner. You can start a new transfer from Account settings.
+{% endif %}
+Not what you expected? Write to {{ contact_email }}.
+
+-- {{ product_name }} - {{ product_tagline }}
+{% endautoescape %}

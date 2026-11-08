@@ -1,0 +1,136 @@
+{% extends "registration/_auth_base.html" %}
+
+{% comment %}
+What the ownership transfer link opens. One page for every state the link can be
+in, set by AcceptTransferView.state():
+
+  invalid        no transfer has this token (404)
+  closed         accepted, declined, cancelled or expired
+  unavailable    the email now signs in somewhere it cannot be moved from
+  sign_in        the email belongs to staff here; sign in as them first
+  wrong_account  signed in as somebody else
+  new            nobody has this email yet: choose a name and password
+  staff          signed in as the right staff account: confirm
+  declined       just declined
+
+Shown in the sign-in shell even when someone is signed in (`public_preview`), so
+the page reads the same whoever opens it.
+{% endcomment %}
+
+{% block title %}Take over a school{% endblock %}
+{% block auth_width %}max-w-md{% endblock %}
+{% block auth_eyebrow %}{% if transfer %}{{ transfer.school.name }}{% else %}Ownership transfer{% endif %}{% endblock %}
+
+{% block auth_heading %}
+  {% if state == "invalid" %}This link does not work
+  {% elif state == "closed" %}This transfer is closed
+  {% elif state == "declined" %}You declined
+  {% elif state == "unavailable" %}This email cannot take over the school
+  {% else %}Take over {{ transfer.school.name }}{% endif %}
+{% endblock %}
+
+{% block auth_body %}
+  {% if error %}
+    <div class="mt-4 rounded-md border border-overdue/30 bg-overdue-soft px-3 py-2.5 text-sm text-overdue-strong" role="alert">
+      <p>{{ error }}</p>
+    </div>
+  {% endif %}
+
+  {% if state == "invalid" %}
+    <p class="mt-2 text-sm text-ink-600">
+      The link may have been copied wrongly. Open it again from the email, or ask the
+      school's owner to send a new one.
+    </p>
+
+  {% elif state == "closed" %}
+    <p class="mt-2 text-sm text-ink-600">
+      {% if transfer.status == "accepted" %}It has already been accepted.
+      {% elif transfer.status == "declined" %}It was declined.
+      {% elif transfer.status == "cancelled" %}The owner cancelled it.
+      {% else %}The link stopped working three days after it was sent.{% endif %}
+      If you still expect to take over {{ transfer.school.name }}, ask its owner to start again.
+    </p>
+
+  {% elif state == "declined" %}
+    <p class="mt-2 text-sm text-ink-600">
+      Nothing has changed, and we have let {% if transfer.started_by %}{{ transfer.started_by.get_full_name|default:"the owner" }}{% else %}the platform{% endif %} know.
+    </p>
+
+  {% elif state == "unavailable" %}
+    <p class="mt-2 text-sm text-ink-600">
+      {{ transfer.to_email }} now signs in to an account that cannot be moved to this
+      school. Ask the owner to start the transfer again with another email address.
+    </p>
+
+  {% else %}
+    <p class="mt-2 text-sm text-ink-600">
+      {% if transfer.started_by %}{{ transfer.started_by.get_full_name|default:transfer.started_by.username }} has asked you{% else %}You have been asked{% endif %}
+      to become the owner of <strong class="text-ink-900">{{ transfer.school.name }}</strong>
+      on {{ product_name }}.
+    </p>
+    <ul class="mt-4 space-y-2 rounded-md bg-ink-50 px-4 py-3 text-sm text-ink-700">
+      <li>You will see every campus, every student and every payment.</li>
+      <li>You will decide who works here and what they can do.</li>
+      <li>The school's plan and its billing will be yours.</li>
+      <li>
+        {% if transfer.afterwards == "stay_principal" %}The current owner stays on as principal of {{ transfer.stay_branch.name|default:"a campus" }}.
+        {% else %}The current owner will stop having access.{% endif %}
+      </li>
+    </ul>
+    <p class="mt-3 text-xs text-ink-600">This link is for {{ transfer.to_email }} and works until {{ transfer.expires_at|date:"j F Y, g:i A" }}.</p>
+
+    {% if state == "sign_in" %}
+      <p class="mt-4 text-sm text-ink-600">
+        {{ transfer.to_email }} already has an account at {{ transfer.school.name }}. Sign in
+        with it, and you will come back here to accept.
+      </p>
+      <a href="{{ login_url }}" class="btn btn-primary mt-4 w-full">Sign in to accept</a>
+
+    {% elif state == "wrong_account" %}
+      <p class="mt-4 text-sm text-ink-600">
+        You are signed in as {{ user.email|default:user.username }}, but this transfer is for
+        {{ transfer.to_email }}. Sign out, then open the link again.
+      </p>
+      <form method="post" action="{% url 'logout' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="btn btn-primary w-full">Sign out</button>
+      </form>
+
+    {% else %}
+      <form method="post" class="mt-5 space-y-4" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}
+          <div class="rounded-md border border-overdue/30 bg-overdue-soft px-3 py-2.5 text-sm text-overdue-strong" role="alert">
+            {% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        {% if state == "new" %}
+          <div class="grid gap-4 sm:grid-cols-2">
+            {% include "partials/_field.html" with field=form.first_name %}
+            {% include "partials/_field.html" with field=form.last_name %}
+          </div>
+          {% include "partials/_field.html" with field=form.password %}
+          {% include "partials/_field.html" with field=form.password_confirm %}
+          <p class="text-xs text-ink-600">You will sign in with {{ transfer.to_email }} and this password.</p>
+        {% endif %}
+
+        <div>
+          <label class="flex items-start gap-2.5 text-sm font-medium text-ink-900">
+            {{ form.understood }}
+            <span>{{ form.understood.label }}</span>
+          </label>
+          {% for e in form.understood.errors %}<p class="field-error">{{ e }}</p>{% endfor %}
+        </div>
+
+        <button type="submit" name="action" value="accept" class="btn btn-primary w-full">
+          Accept and take over
+        </button>
+        <button type="submit" name="action" value="decline" formnovalidate class="btn btn-secondary w-full">
+          Decline
+        </button>
+      </form>
+    {% endif %}
+  {% endif %}
+{% endblock %}

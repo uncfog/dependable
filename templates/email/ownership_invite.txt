@@ -1,0 +1,14 @@
+{% autoescape off %}Hello {{ transfer.to_name }},
+
+{% if transfer.started_by %}{{ transfer.started_by.get_full_name|default:transfer.started_by.username }}, the owner of {{ school.name }}, has asked you{% else %}The {{ product_name }} team has asked you, on behalf of {{ school.name }},{% endif %} to become the school's owner on {{ product_name }}.
+
+As the owner you see every campus, student and payment, decide who works there, and look after the school's plan and billing.
+
+Nothing changes until you accept. Review and accept here (the link works once, until {{ expires_at|date:"j F Y" }} at {{ expires_at|date:"g:i A" }}):
+
+{{ accept_url }}
+
+Not expecting this? Ignore it, or open the link and choose Decline. Questions: {{ contact_email }}
+
+-- {{ product_name }} - {{ product_tagline }}
+{% endautoescape %}
