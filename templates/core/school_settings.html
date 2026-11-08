@@ -164,6 +164,18 @@
       </div>
     </section>
 
+    {% if can_edit %}
+    <section class="card p-5">
+      <h2 class="text-sm font-semibold text-ink-900">Plan</h2>
+      <p class="mt-2 text-sm text-ink-600">
+        You are on the <strong class="text-ink-900">{{ object.get_plan_display }}</strong> plan.
+      </p>
+      <a href="{% url 'billing:checkout' %}" class="btn btn-ghost mt-3 w-full text-sm">
+        Change plan
+      </a>
+    </section>
+    {% endif %}
+
     <section class="card p-5">
       <h2 class="text-sm font-semibold text-ink-900">Who sees this</h2>
       <ul class="mt-2 space-y-1.5 text-xs text-ink-600">

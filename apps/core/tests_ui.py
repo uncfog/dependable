@@ -444,7 +444,7 @@ class FooterTests(UITestCase):
 
         body = self.body(reverse("core:landing"))
         footer = body[body.index("<footer"):body.index("</footer>")]
-        self.assertIn("CONTACT &amp; SUPPORT", footer)
+        self.assertIn("Contact and support", footer)
         self.assertIn(f'href="mailto:{CONTACT_EMAIL}"', footer)
         self.assertIn('aria-label="Social accounts"', footer)
 

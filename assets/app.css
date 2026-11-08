@@ -3841,3 +3841,142 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 .auth-orb { display: none; }
 
 .receipt-link { display: block; margin-top: 0.25rem; white-space: nowrap; }
+
+/* =========================================================================
+   The landing page in the redesign's style. Scoped to `.lp-drawn`, outside the
+   layers so it wins over the older `.lp-lattice` type and ground it sits inside.
+   ========================================================================= */
+.lp-drawn {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  background-color: #f4f6fb;
+  color: #1b2140;
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+.lp-frame { width: 100%; max-width: 80rem; margin-inline: auto; padding-inline: 1rem; }
+@media (min-width: 640px) { .lp-frame { padding-inline: 2rem; } }
+
+.lp-band { background-color: #4a5fc0; color: #ffffff; }
+.lp-section { padding-top: 5.5rem; }
+@media (min-width: 1024px) { .lp-section { padding-top: 8rem; } }
+.lp-drawn main > .lp-section:last-child { padding-bottom: 6rem; }
+
+.lp-display {
+  font-size: clamp(2.5rem, 4.6vw, 4.125rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+.lp-heading {
+  font-size: clamp(1.875rem, 4vw, 3rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: #1b2140;
+  text-wrap: balance;
+}
+.lp-lede { margin-top: 1rem; max-width: 42rem; font-size: 1.125rem; color: #5f6788; }
+
+.lp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0 1.125rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+}
+.lp-btn:active { transform: translateY(1px); }
+.lp-btn:focus-visible { outline: 3px solid #d2f04e; outline-offset: 2px; }
+.lp-btn-lg { min-height: 3.25rem; padding: 0 1.5rem; font-size: 1rem; }
+.lp-btn-sm { min-height: 2.75rem; padding: 0 0.875rem; font-size: 0.8125rem; }
+@media (min-width: 640px) { .lp-btn-sm { min-height: 2.125rem; } }
+.lp-btn-lime { background-color: #d2f04e; color: #1b2140; }
+.lp-btn-lime:hover { background-color: #c4e23f; }
+.lp-btn-blue { background-color: #4a5fc0; color: #ffffff; }
+.lp-btn-blue:hover { background-color: #3b4da6; }
+.lp-btn-ghost { background-color: transparent; color: #ffffff; border-color: rgb(255 255 255 / 0.75); }
+.lp-btn-ghost:hover { background-color: rgb(255 255 255 / 0.12); }
+.lp-btn-line { background-color: #ffffff; color: #3b4da6; border-color: #d5dbec; }
+.lp-btn-line:hover { background-color: #eef1f9; }
+
+.lp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.875rem;
+  border-radius: 999px;
+  background-color: rgb(255 255 255 / 0.14);
+}
+
+.lp-mini-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  border-radius: 14px;
+  color: #1b2140;
+  font-size: 0.75rem;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgb(27 33 64 / 0.08);
+}
+.lp-mini-tile b { font-size: 1.375rem; font-weight: 800; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+.lp-tile { display: flex; flex-direction: column; padding: 1.75rem; border-radius: 24px; color: #1b2140; }
+.lp-tile-title { margin-top: 1.25rem; font-size: 1.25rem; font-weight: 800; line-height: 1.25; color: #1b2140; }
+.lp-tile-copy { margin-top: 0.5rem; color: #444c6e; }
+.lp-icon { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; border-radius: 50%; color: #ffffff; }
+.lp-icon svg { width: 1.25rem; height: 1.25rem; }
+
+.lp-value {
+  padding: 0.25rem 0.75rem;
+  border-radius: 10px;
+  background-color: #eef1f9;
+  color: #1b2140;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.lp-range { width: 100%; height: 2.75rem; accent-color: #4a5fc0; cursor: pointer; }
+
+.lp-check { position: relative; padding-left: 1.75rem; }
+.lp-check::before {
+  content: "";
+  position: absolute;
+  top: 0.3rem;
+  left: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: #d2f04e url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231b2140' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / 0.75rem no-repeat;
+}
+
+.lp-faq summary { list-style: none; min-height: 2.75rem; }
+.lp-faq summary::-webkit-details-marker { display: none; }
+.lp-faq-mark {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background-color: #eef1f9;
+  font-size: 1.25rem;
+  transition: transform 150ms ease;
+}
+.lp-faq[open] .lp-faq-mark { transform: rotate(45deg); background-color: #d2f04e; }
+
+.lp-drawn .tile { box-shadow: none; }
+.lp-drawn .note-banner { width: 100%; }
+.lp-drawn #demo-table-body tr { height: 3.75rem; }
+
+@media (min-width: 1024px) { #lp-menu-button { display: none; } }
+.lp-drawn .filter-chip { min-height: 2.75rem; }

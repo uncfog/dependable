@@ -48,9 +48,11 @@ def logo_upload_to(instance: "School", filename: str) -> str:
 
 
 class Plan(models.TextChoices):
+    FREE = "free", "Free"
     TRIAL = "trial", "Trial"
     STARTER = "starter", "Starter"
     GROWTH = "growth", "Growth"
+    PROFESSIONAL = "professional", "Professional"
     ENTERPRISE = "enterprise", "Enterprise"
 
 
@@ -202,6 +204,57 @@ class Branch(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.school.name} - {self.name}"
+
+
+class PlanOrderQuerySet(TenantQuerySet):
+    # An order belongs to one school and to no campus: the school pays for its plan.
+    tenant_school_field = "school_id"
+    tenant_branch_field = None
+
+
+class PlanOrderManager(TenantManager.from_queryset(PlanOrderQuerySet)):
+    """Auto-scoped: a school sees its own orders and nobody else's."""
+
+
+class PlanOrderUnscopedManager(UnscopedManager.from_queryset(PlanOrderQuerySet)):
+    """Every order. The platform owner confirms payments across schools."""
+
+
+class PlanOrder(TimeStampedModel):
+    """A school's request to move onto a paid plan, paid by bank transfer.
+
+    The order is the record of the money, not of the plan. The school's plan only
+    changes when the platform owner marks the order paid in the admin, so an order
+    that is waiting, reported or cancelled changes nothing anyone sees in the app.
+    """
+
+    class Status(models.TextChoices):
+        AWAITING_TRANSFER = "awaiting_transfer", "Awaiting transfer"
+        TRANSFER_REPORTED = "transfer_reported", "Transfer reported"
+        PAID = "paid", "Paid"
+        CANCELLED = "cancelled", "Cancelled"
+
+    school = models.ForeignKey(
+        School, on_delete=models.CASCADE, related_name="plan_orders"
+    )
+    plan = models.CharField(max_length=20, choices=Plan.choices)
+    amount_naira = models.PositiveIntegerField()
+    #: The narration the school puts on its transfer, so the payment can be matched.
+    reference = models.CharField(max_length=24, unique=True)
+    status = models.CharField(
+        max_length=24, choices=Status.choices, default=Status.AWAITING_TRANSFER
+    )
+    transfer_reported_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+
+    objects = PlanOrderManager()
+    all_objects = PlanOrderUnscopedManager()
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.reference} ({self.school.name})"
 
 
 class SchoolModuleQuerySet(TenantQuerySet):

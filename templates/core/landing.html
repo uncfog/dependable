@@ -1,33 +1,26 @@
 {% extends "base.html" %}
 
 {% comment %}
-The public home page, rebuilt from the SCHOOLCORD_Landing_Page.html design.
+The public home page, in the redesign's style (docs/design-references/schoolcord-
+redesign.html): blue band, lime for the one action, white rounded cards, tinted
+tiles and pills, Public Sans. Light-only: `html_attrs` pins data-theme="light" and
+`theme_init` drops the script that would follow a stored choice into dark mode.
 
-Light-only by design: `html_attrs` pins data-theme="light" and adds
-data-theme-lock, which ui.js respects, and `theme_init` drops the script that
-would otherwise follow a stored choice or the OS into dark mode. There is no
-theme switch on this page.
+Every way in goes to a real route: Log in to `login`, every set-up button to
+`core:signup`. The WhatsApp links read `support_whatsapp_url` from
+apps/core/branding.py, and the footer prints `support_phone`.
 
-Type is the design's own -- Plus Jakarta Sans and Playfair Display -- loaded in
-`fonts` and applied through `.lp-lattice` (assets/app.css), which re-points
-Tailwind's `font-sans` / `font-serif` inside this page only. The palette is the
-`lattice-*` colours in the same file. No CDN Tailwind: everything compiles into
-static/css/app.css like every other page.
+The prices are not typed here. They come from apps/schools/plans.py, the same list
+the billing screen charges from, so the page and the checkout cannot disagree.
 
-Every way in goes to a real route: Login to `login`, every "set up" / "create"
-/ "get started" / plan button to `core:signup`. The WhatsApp links read
-`support_whatsapp_url` from apps/core/branding.py, and the footer prints the
-same line as `support_phone`.
+The "Try it" section is a client-side demo with made-up records. It is labelled as
+such, it contains no form, and its script never calls the server: recording a
+payment only edits an array in the page, and "WhatsApp" shows the message it would
+send instead of opening WhatsApp to a stranger's number.
 
-The "Test Drive" section is a client-side demo with made-up records. It is
-labelled as such, it contains no form, and its script never calls the server --
-recording a payment only edits an array in the page, and "WhatsApp" shows the
-message it would send instead of opening WhatsApp to a stranger's number.
-
-The image slots are gradients only (`.lp-hero-bg`, `.lp-section-bg`,
-`.lp-cta-bg`): the design's stock photos are not licensed for use.
-
-Title, meta description and JSON-LD come from apps/core/seo.py as before.
+The product picture in the hero is the real Overview screen drawn in HTML with a
+sample school's figures, not a photograph. Title, meta description and JSON-LD
+come from apps/core/seo.py.
 {% endcomment %}
 
 {% block html_attrs %} data-theme="light" data-theme-lock{% endblock %}
@@ -39,385 +32,244 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
 {% endblock %}
 
 {% block anonymous_content %}
-<div class="lp-lattice min-h-full selection:bg-lattice-dark selection:text-white">
+<div class="lp-lattice lp-drawn min-h-full">
 
-  <!-- TOP ANNOUNCEMENT BANNER -->
-  <div class="bg-lattice-dark text-white text-xs font-semibold uppercase tracking-widest py-2.5 px-4 text-center flex items-center justify-center gap-3">
-    <span>ACADEMIC SESSION IS LIVE</span>
-    <span class="hidden md:inline text-gray-500">•</span>
-    <span class="hidden md:inline">🇳🇬 NIGERIA</span>
-    <span class="text-gray-500">|</span>
-    <a href="#live-demo" class="underline underline-offset-4 decoration-emerald-400 hover:text-emerald-300 transition">TRY INTERACTIVE DEMO &rarr;</a>
-  </div>
+  <a href="#live-demo" class="block bg-ink-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:underline">
+    See it working: try the interactive demo &rarr;
+  </a>
 
-  <!-- NAVIGATION BAR -->
-  <header class="sticky top-0 z-40 bg-[#F6F6F3]/90 backdrop-blur-sm border-b border-lattice-border/60">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
-
-      <a href="{% url 'core:landing' %}" class="flex items-center gap-3 group" aria-label="{{ product_name }} home">
-        <div class="flex items-center gap-2">
-          <div class="w-10 h-10 bg-white rounded-xl shadow-sm border border-slate-200/80 flex items-center justify-center p-2 group-hover:scale-105 transition-transform duration-200">
-            {% include "core/_lattice_mark.html" with svg_class="w-full h-full text-[#253E76]" %}
-          </div>
-          <span class="font-serif text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0f172a] uppercase">
-            SCHOOL<span class="text-[#253E76]">CORD</span>
+  {# ===== Band: navigation and the opening claim ============================ #}
+  <header class="lp-band relative z-40">
+      <div class="lp-frame flex h-20 items-center justify-between gap-4">
+        <a href="{% url 'core:landing' %}" class="flex items-center gap-2.5" aria-label="{{ product_name }} home">
+          <span class="grid size-10 place-items-center rounded-xl bg-white p-2">
+            {% include "core/_lattice_mark.html" with svg_class="w-full h-full text-panel" %}
           </span>
+          <span class="text-xl font-extrabold tracking-tight text-white">SCHOOLCORD</span>
+        </a>
+
+        <nav class="hidden items-center gap-7 text-sm font-semibold text-white lg:flex" aria-label="Page sections">
+          <a href="#features" class="hover:underline">Product</a>
+          <a href="#calculator" class="hover:underline">Fee recovery</a>
+          <a href="#live-demo" class="hover:underline">Demo</a>
+          <a href="#pricing" class="hover:underline">Pricing</a>
+          <a href="{% url 'core:about' %}" class="hover:underline">About</a>
+        </nav>
+
+        <div class="flex items-center gap-2.5">
+          <a href="{% url 'login' %}" class="lp-btn lp-btn-ghost">Log in</a>
+          <button type="button" id="lp-menu-button" class="lp-btn lp-btn-ghost lg:hidden"
+                  aria-controls="mobile-menu" aria-expanded="false" aria-label="Menu">
+            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
         </div>
-      </a>
-
-      <nav class="hidden lg:flex items-center gap-8 text-sm font-medium text-lattice-text" aria-label="Page sections">
-        <a href="#features" class="hover:text-black transition-colors">Product</a>
-        <a href="#how-it-works" class="hover:text-black transition-colors">Services</a>
-        <a href="#calculator" class="hover:text-black transition-colors">Fee Recovery</a>
-        <a href="#pricing" class="hover:text-black transition-colors">Pricing</a>
-        <a href="{% url 'core:about' %}" class="hover:text-black transition-colors">About</a>
-      </nav>
-
-      <div class="flex items-center gap-3 sm:gap-4">
-        <a href="#live-demo" class="hidden sm:flex items-center justify-center p-2 text-lattice-text hover:text-black hover:bg-lattice-pill rounded-full transition" aria-label="Jump to the interactive demo">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        </a>
-
-        <a href="{% url 'login' %}" class="bg-[#253E76] hover:bg-[#1d315e] text-white px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition duration-200 flex items-center gap-2 shadow-sm">
-          <span>Login</span>
-        </a>
-
-        <button type="button" id="lp-menu-button" class="lg:hidden p-2 rounded-lg bg-lattice-pill text-lattice-text"
-                aria-controls="mobile-menu" aria-expanded="false" aria-label="Menu">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
-        </button>
       </div>
-    </div>
 
-    <!-- MOBILE MENU DROPDOWN -->
-    <div id="mobile-menu" class="hidden lg:hidden bg-white border-b border-lattice-border px-6 py-6 space-y-4 text-sm font-medium">
-      <a href="#features" class="block py-2 text-lattice-text hover:text-black">Product</a>
-      <a href="#how-it-works" class="block py-2 text-lattice-text hover:text-black">Services</a>
-      <a href="#calculator" class="block py-2 text-lattice-text hover:text-black">Fee Recovery</a>
-      <a href="#pricing" class="block py-2 text-lattice-text hover:text-black">Pricing</a>
-      <a href="{% url 'core:about' %}" class="block py-2 text-lattice-text hover:text-black">About</a>
-      <a href="#live-demo" class="block w-full text-center bg-[#253E76] text-white py-3 rounded-full">Explore App Demo ↗</a>
-    </div>
+      <div id="mobile-menu" class="hidden lg:hidden">
+        <div class="lp-frame pb-5">
+          <div class="space-y-1 rounded-2xl bg-white p-3 text-base font-semibold text-ink-900 shadow-panel">
+            <a href="#features" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Product</a>
+            <a href="#calculator" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Fee recovery</a>
+            <a href="#live-demo" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Demo</a>
+            <a href="#pricing" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Pricing</a>
+            <a href="{% url 'core:about' %}" class="block rounded-xl px-3 py-3 hover:bg-ink-100">About</a>
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime mt-2 w-full">Set up my school</a>
+          </div>
+        </div>
+      </div>
   </header>
 
   <main id="main">
-
-  <!-- HERO SECTION -->
-  <section class="pt-12 sm:pt-20 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="text-center max-w-4xl mx-auto space-y-6 mb-12 sm:mb-16">
-
-      <div class="inline-flex items-center gap-2 bg-lattice-pill border border-lattice-border px-4 py-1.5 rounded-full text-xs font-semibold tracking-wider uppercase text-lattice-text lp-reveal">
-        <span>SCHOOL MANAGEMENT &amp; FINANCIAL RECOVERY</span>
-      </div>
-
-      <h1 class="text-4xl sm:text-6xl lg:text-7xl font-light tracking-tight text-lattice-text leading-[1.08] font-sans lp-animate-h1">
-        Where School Financial Clarity is <span class="font-serif italic font-normal">Built.</span>
-      </h1>
-
-      <p class="text-lg sm:text-xl text-lattice-muted max-w-2xl mx-auto font-normal leading-relaxed lp-reveal delay-100">
-        Keep student records, school-fee payments, and outstanding balances organized in one secure place. Built specifically for Nigerian private school proprietors.
-      </p>
-
-      <div class="flex flex-wrap items-center justify-center gap-4 pt-2 lp-reveal delay-200">
-        <a href="{% url 'core:signup' %}" class="bg-[#253E76] hover:bg-[#1d315e] text-white px-8 py-4 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 shadow-md hover:shadow-lg">
-          <span>SET UP MY SCHOOL NOW &rarr;</span>
-        </a>
-      </div>
-    </div>
-
-    <!-- HERO FEATURE BANNER -->
-    <div class="relative rounded-3xl overflow-hidden border border-lattice-border p-4 sm:p-8 lg:p-10 shadow-xl lp-hero-bg lp-reveal">
-
-      <div class="flex flex-wrap items-center justify-between gap-4 mb-6 sm:mb-10 z-10 relative">
-        <div class="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-semibold text-lattice-text shadow-sm">
-          <span>PLATFORM</span>
-          <span class="text-gray-400">•</span>
-          <span class="text-lattice-muted">SCHOOLCORD 2.0</span>
-          <span>&gt;</span>
-        </div>
-
-        <div class="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-semibold text-lattice-text shadow-sm">
-          <span>PROPRIETOR SUMMARY</span>
-          <span>↘</span>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-
-        <div class="lg:col-span-5 space-y-6">
-          <div class="inline-block bg-white/85 backdrop-blur-sm px-3 py-1 rounded-lg text-xs font-mono font-bold tracking-wider text-lattice-dark uppercase">
-            Executive Control
-          </div>
-
-          <h2 class="text-2xl sm:text-4xl font-normal text-lattice-text leading-tight">
-            Know your school’s numbers. Without being there every day.
-          </h2>
-
-          <p class="text-lattice-muted text-sm sm:text-base leading-relaxed">
-            Track real-time bank transfers, physical cash collected, and outstanding tuition balances straight from your mobile phone.
-          </p>
-
-          <div class="flex flex-wrap gap-2 pt-2">
-            <div class="bg-white/95 border border-lattice-border px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-sm">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-              <span>Fulfilled Academy • ₦3.4M Collected</span>
-            </div>
-
-            <div class="bg-white/95 border border-lattice-border px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-sm">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#253E76]"></span>
-              <span>Tuition Debt Reduced by 88%</span>
-            </div>
-
-            <div class="bg-white/95 border border-lattice-border px-3 py-2 rounded-full text-xs font-semibold flex items-center gap-2.5 shadow-sm">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-              <span>WhatsApp Reminders Active</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- RIGHT SIDE: the testimonial card is the whole block -->
-        <div class="lg:col-span-7 lg:self-stretch">
-          {# Enlarged from the design so the quote reads at a glance. #}
-          <figure class="h-full min-h-[260px] sm:min-h-[320px] flex flex-col bg-white rounded-2xl border border-lattice-border shadow-lg p-6 sm:p-8">
-            <span class="font-serif text-5xl leading-none text-lattice-border select-none" aria-hidden="true">&ldquo;</span>
-            <figcaption class="mt-2">
-              <p class="text-sm font-bold text-slate-900 uppercase tracking-wider">Mrs. G. Oveh</p>
-              <p class="text-xs text-slate-600">School Director, Delta State</p>
-            </figcaption>
-            <blockquote class="text-sm sm:text-base leading-relaxed text-slate-800 font-semibold mt-2">"SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records."</blockquote>
-
-            <div class="mt-auto pt-6 flex justify-end">
-              <div class="bg-[#253E76] text-white px-4 py-2.5 rounded-xl text-right shadow-sm">
-                <span class="block text-[10px] text-gray-300 uppercase tracking-widest font-mono">LIVE SESSION</span>
-                <span class="text-sm font-bold text-white">98.4% Fee Reconciled</span>
-              </div>
-            </div>
-          </figure>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- BENTO GRID SECTION -->
-  <section id="features" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="mb-12 lp-reveal">
-      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text tracking-tight mb-4">
-        Quickly Expand your <span class="font-serif italic">School Operations.</span>
-      </h2>
-      <p class="text-lattice-muted text-base sm:text-lg max-w-2xl font-normal">
-        Take advantage of our localized fee collection products to maintain 100% financial accuracy across all classes.
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-
-      <!-- CARD 1: STUDENTS DIRECTORY -->
-      <div class="md:col-span-4 bg-lattice-card rounded-3xl p-6 sm:p-8 border border-lattice-border flex flex-col justify-between relative overflow-hidden group hover:border-black/30 transition lp-reveal delay-100">
-        <div class="flex items-center justify-between mb-8">
-          <span class="bg-white/80 border border-lattice-border px-3 py-1 rounded-full text-xs font-semibold text-lattice-text">Students</span>
-          <span class="text-xs text-lattice-muted font-mono">01</span>
-        </div>
-
-        <div class="space-y-4">
-          <div class="flex -space-x-2 overflow-hidden py-1" aria-hidden="true">
-            <div class="h-10 w-10 rounded-full ring-2 ring-white bg-[#253E76] text-white font-bold text-xs flex items-center justify-center">EA</div>
-            <div class="h-10 w-10 rounded-full ring-2 ring-white bg-slate-700 text-white font-bold text-xs flex items-center justify-center">FA</div>
-            <div class="h-10 w-10 rounded-full ring-2 ring-white bg-amber-600 text-white font-bold text-xs flex items-center justify-center">CO</div>
-            <div class="h-10 w-10 rounded-full ring-2 ring-white bg-blue-900 text-white font-bold text-xs flex items-center justify-center">+240</div>
-          </div>
-          <h3 class="text-xl font-semibold text-lattice-text">Manage Student Profiles &amp; Siblings</h3>
-          <p class="text-lattice-muted text-sm">Group family records together to issue unified parent bills with single-click reconciliation.</p>
-        </div>
-
-        <div class="mt-8 pt-4 border-t border-lattice-border/60 flex items-center justify-between text-xs font-semibold">
-          <span>Class Roster View</span>
-          <span class="p-1.5 bg-white rounded-full" aria-hidden="true">↗</span>
-        </div>
-      </div>
-
-      <!-- CARD 2: WHATSAPP REMINDERS -->
-      <div class="md:col-span-4 bg-lattice-card rounded-3xl p-6 sm:p-8 border border-lattice-border flex flex-col justify-between relative overflow-hidden group hover:border-black/30 transition lp-reveal delay-200">
-        <div class="flex items-center justify-between mb-8">
-          <span class="bg-white/80 border border-lattice-border px-3 py-1 rounded-full text-xs font-semibold text-lattice-text">Automated Reminders</span>
-          <span class="text-xs text-lattice-muted font-mono">02</span>
-        </div>
-
-        <div class="space-y-4">
-          <div class="bg-[#253E76] text-white p-4 rounded-2xl text-xs font-mono border border-slate-700 shadow-inner">
-            <p class="text-blue-200 font-bold mb-1">WhatsApp Fee Alert ✓</p>
-            <p>"Dear Chief Adebayo, kindly note Emeka's JSS1 term balance is ₦40,000..."</p>
-          </div>
-          <h3 class="text-xl font-semibold text-lattice-text">1-Click WhatsApp Parent Notices</h3>
-          <p class="text-lattice-muted text-sm">Send polite, customized payment reminders straight to parents' mobile phones with zero friction.</p>
-        </div>
-
-        <div class="mt-8 pt-4 border-t border-lattice-border/60 flex items-center justify-between text-xs font-semibold">
-          <span>Instant Dispatch</span>
-          <span class="p-1.5 bg-white rounded-full" aria-hidden="true">↗</span>
-        </div>
-      </div>
-
-      <!-- CARD 3: DIRECTOR PORTAL -->
-      <div class="md:col-span-4 bg-[#253E76] text-white rounded-3xl p-6 sm:p-8 border border-slate-800 flex flex-col justify-between relative overflow-hidden group lp-reveal delay-300">
-        <div class="flex items-center justify-between mb-8">
-          <span class="bg-white/10 text-white border border-white/20 px-3 py-1 rounded-full text-xs font-semibold">DIRECTOR PORTAL</span>
-          <span class="text-xs text-gray-300 font-mono">03</span>
-        </div>
-
-        <div class="space-y-4">
-          <div class="text-3xl font-bold text-white tracking-tight">₦415,000</div>
-          <p class="text-xs text-gray-300 uppercase tracking-widest font-mono">Live Expected Term Revenue</p>
-          <h3 class="text-xl font-semibold text-white">Full Executive Control</h3>
-          <p class="text-gray-200 text-sm">Monitor bursar entries, bank transfers, and cash desk collection remotely with complete audit protection.</p>
-        </div>
-
-        <div class="mt-8 pt-4 border-t border-white/10 flex items-center justify-between text-xs font-semibold text-white">
-          <span>Real-time Sync</span>
-          <span class="p-1.5 bg-white/10 rounded-full text-white" aria-hidden="true">↗</span>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- UNCOLLECTED FEE ESTIMATOR CALCULATOR -->
-  <section id="calculator" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="rounded-3xl border border-lattice-border p-6 sm:p-10 lg:p-12 shadow-md relative overflow-hidden lp-section-bg lp-reveal">
-
-      <div class="max-w-3xl mb-10 relative z-10">
-        <span class="bg-white/80 border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">
-          FEE RECOVERY CALCULATOR
-        </span>
-        <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4 mb-3">
-          Uncollected Fee Estimator
-        </h2>
-        <p class="text-lattice-muted text-base sm:text-lg">
-          Slide the controls below to calculate how much tuition debt your school can recover this term with SCHOOLCORD.
+  <div class="lp-band">
+    <section class="lp-frame grid items-center gap-10 pb-28 pt-6 sm:pt-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14 lg:pb-36">
+      <div class="lp-reveal">
+        <h1 class="lp-display text-white">Where school financial clarity is built.</h1>
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-panel-copy sm:text-xl">
+          Keep student records, school-fee payments and outstanding balances in one secure place.
+          Built for Nigerian private school proprietors.
         </p>
-      </div>
-
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-        <div class="lg:col-span-7 bg-white/95 rounded-2xl p-6 sm:p-8 border border-lattice-border space-y-6 shadow-sm">
-
-          <div>
-            <div class="flex justify-between items-center gap-3 mb-2">
-              <label for="calc-students" class="text-xs font-bold text-lattice-text uppercase tracking-wider">Number of Enrolled Students:</label>
-              <span id="calc-students-val" class="text-base font-extrabold text-lattice-dark bg-lattice-pill px-3 py-1 rounded-lg whitespace-nowrap">250 Students</span>
-            </div>
-            <input type="range" id="calc-students" min="50" max="1500" step="10" value="250" class="w-full accent-[#253E76] cursor-pointer h-2 bg-gray-200 rounded-lg">
-            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
-              <span>50</span>
-              <span>750</span>
-              <span>1,500+</span>
-            </div>
-          </div>
-
-          <div>
-            <div class="flex justify-between items-center gap-3 mb-2">
-              <label for="calc-fee" class="text-xs font-bold text-lattice-text uppercase tracking-wider">Average Fee Per Student / Term:</label>
-              <span id="calc-fee-val" class="text-base font-extrabold text-lattice-dark bg-lattice-pill px-3 py-1 rounded-lg whitespace-nowrap">₦85,000</span>
-            </div>
-            <input type="range" id="calc-fee" min="20000" max="500000" step="5000" value="85000" class="w-full accent-[#253E76] cursor-pointer h-2 bg-gray-200 rounded-lg">
-            <div class="flex justify-between text-[10px] text-gray-500 mt-1 font-mono">
-              <span>₦20,000</span>
-              <span>₦250,000</span>
-              <span>₦500,000</span>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-100 rounded-xl border border-slate-300 text-slate-800 text-xs leading-relaxed">
-            💡 <strong>Proprietor Insight:</strong> Average uncollected debt in Nigerian private schools ranges between 18% to 25% per term without automated reminders.
-          </div>
+        <div class="mt-8 flex flex-wrap items-center gap-3">
+          <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime lp-btn-lg">Set up my school &rarr;</a>
+          <a href="#live-demo" class="lp-btn lp-btn-ghost lp-btn-lg">Try the demo</a>
         </div>
-
-        <div class="lg:col-span-5 bg-[#253E76] text-white rounded-2xl p-6 sm:p-8 space-y-6 shadow-xl border border-slate-700" aria-live="polite">
-          <div>
-            <span class="text-[10px] text-gray-300 font-mono uppercase tracking-widest">ESTIMATED TOTAL TERM EXPECTED:</span>
-            <p id="calc-total" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">₦21,250,000</p>
-          </div>
-
-          <div class="pt-4 border-t border-white/10">
-            <span class="text-[10px] text-rose-300 font-mono uppercase tracking-widest">TYPICAL UNPAID DEBT WITHOUT SCHOOLCORD (~22%):</span>
-            <p id="calc-debt" class="text-xl sm:text-2xl font-bold text-rose-200 mt-1">₦4,675,000</p>
-          </div>
-
-          <div class="pt-4 border-t border-white/10 bg-white/10 p-4 rounded-xl border border-white/20">
-            <span class="text-[10px] text-blue-200 font-mono uppercase tracking-widest">ESTIMATED RECOVERED WITH SCHOOLCORD:</span>
-            <p id="calc-recovered" class="text-2xl sm:text-3xl font-extrabold text-white mt-1">₦4,207,500</p>
-            <span class="inline-block mt-2 bg-white/20 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">+90% Debt Recovery Rate</span>
-          </div>
-
-          <a href="{% url 'core:signup' %}" class="block w-full text-center bg-white hover:bg-gray-100 text-[#253E76] font-bold py-3 rounded-full text-xs uppercase tracking-wider transition">
-            RECOVER YOUR SCHOOL'S UNPAID FEES &rarr;
-          </a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- COMPARISON SECTION -->
-  <section class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="text-center max-w-3xl mx-auto mb-12 lp-reveal">
-      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">THE PROPRIETOR'S DILEMMA</span>
-      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4">
-        Why Paper Registers &amp; Spreadsheets Fail.
-      </h2>
-      <p class="text-lattice-muted text-base sm:text-lg mt-3">
-        Managing fee payments with manual notebooks or scattered WhatsApp messages leads to lost money, awkward parent arguments, and zero visibility when you step out of school.
-      </p>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div class="bg-rose-50/50 border border-rose-200 rounded-3xl p-6 sm:p-8 space-y-4 lp-reveal delay-100">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center text-sm" aria-hidden="true">✕</div>
-          <h3 class="font-bold text-rose-950 text-lg uppercase tracking-wider">THE TRADITIONAL WAY</h3>
-        </div>
-        <p class="text-xs font-mono text-rose-700">PAPER REGISTERS &amp; MANUAL RECEIPTS</p>
-        <ul class="space-y-3 text-sm text-rose-900/80 pt-2">
-          <li class="flex items-start gap-2">
-            <span class="text-rose-500 font-bold" aria-hidden="true">•</span>
-            <span><strong>Unreported Payments:</strong> Cash paid to bursars or direct bank transfers without immediate proprietor notification.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-rose-500 font-bold" aria-hidden="true">•</span>
-            <span><strong>Exam Hall Disputes:</strong> Parents claiming "I paid last month" with no fast way to verify payment history.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-rose-500 font-bold" aria-hidden="true">•</span>
-            <span><strong>Endless Reconciliation:</strong> Spending hours every weekend trying to balance physical ledger notebooks.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-rose-500 font-bold" aria-hidden="true">•</span>
-            <span><strong>Lost Paper Reminders:</strong> Paper reminder letters given to students that get lost inside school bags.</span>
-          </li>
+        <ul class="mt-8 flex flex-wrap gap-2 text-sm font-semibold text-white" aria-label="What schools see">
+          <li class="lp-chip"><span class="size-2 rounded-full bg-lime" aria-hidden="true"></span>Fulfilled Academy &middot; &#8358;3.4M collected</li>
+          <li class="lp-chip"><span class="size-2 rounded-full bg-white" aria-hidden="true"></span>Tuition debt reduced by 88%</li>
+          <li class="lp-chip"><span class="size-2 rounded-full bg-partial" aria-hidden="true"></span>WhatsApp reminders active</li>
         </ul>
       </div>
 
-      <div class="bg-blue-50/60 border border-blue-200 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm lp-reveal delay-200">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-full bg-[#253E76] text-white font-bold flex items-center justify-center text-sm" aria-hidden="true">✓</div>
-          <h3 class="font-bold text-[#253E76] text-lg uppercase tracking-wider">THE SCHOOLCORD WAY</h3>
+      {# The product itself: the Overview, drawn as it is in the app, with a sample school. #}
+      <div class="lp-reveal" data-ui aria-label="The SCHOOLCORD overview, with a sample school's figures" role="img">
+        <div class="lp-app overflow-hidden rounded-[22px] bg-ink-50 shadow-[0_24px_60px_rgb(15_23_60/0.35)]"> {# taste-skill-ignore: the product picture floats over the band #}
+          <div class="bg-panel px-5 pb-14 pt-5 text-white sm:px-7">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-lg font-extrabold">Overview</p>
+                <p class="text-xs text-panel-copy">Sample school &middot; First Term</p>
+              </div>
+              <span class="rounded-[10px] bg-lime px-3 py-1.5 text-xs font-bold text-on-lime">Record a payment</span>
+            </div>
+            <p class="mt-5 text-xs text-panel-copy">Collected this term</p>
+            <p class="text-3xl font-extrabold tabular-nums sm:text-4xl">&#8358;2,770,500</p>
+            <p class="text-xs text-panel-copy">of &#8358;5,202,000 expected &middot; 53%</p>
+            <span class="mt-3 block h-2.5 max-w-sm overflow-hidden rounded-full bg-white/25"><i class="block h-full w-[53%] rounded-full bg-lime"></i></span>
+          </div>
+          <div class="-mt-9 space-y-3 px-4 pb-5 sm:px-6">
+            <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+              <span class="lp-mini-tile bg-[#e8ebfa]"><span>Enrolled</span><b>58</b></span>
+              <span class="lp-mini-tile bg-paid-soft"><span>Paid in full</span><b>21</b></span>
+              <span class="lp-mini-tile bg-partial-soft"><span>Part paid</span><b>21</b></span>
+              <span class="lp-mini-tile bg-unpaid-soft"><span>Unpaid</span><b>16</b></span>
+            </div>
+            <div class="rounded-2xl bg-white p-4 shadow-card">
+              <p class="text-sm font-extrabold text-ink-900">Waiting for you</p>
+              <div class="mt-2 flex items-center justify-between gap-3 border-b border-ink-100 py-2"> {# taste-skill-ignore: a real table, receipt or footer rule #}
+                <span><b class="block text-sm text-ink-900">Khadija Usman</b><span class="text-xs text-ink-600">&#8358;58,500 &middot; paid 6 Nov</span></span>
+                <span class="rounded-[10px] bg-lime px-3 py-1 text-xs font-bold text-on-lime">Check</span>
+              </div>
+              <div class="flex items-center justify-between gap-3 pt-2">
+                <span><b class="block text-sm text-ink-900">Folasade Odunsi</b><span class="text-xs text-ink-600">&#8358;56,000 &middot; paid 5 Nov</span></span>
+                <span class="rounded-[10px] bg-lime px-3 py-1 text-xs font-bold text-on-lime">Check</span>
+              </div>
+            </div>
+          </div>
         </div>
-        <p class="text-xs font-mono text-[#253E76]">AUTOMATED DIGITAL ACCURACY</p>
-        <ul class="space-y-3 text-sm text-slate-800 pt-2">
-          <li class="flex items-start gap-2">
-            <span class="text-[#253E76] font-bold" aria-hidden="true">✓</span>
-            <span><strong>Instant Executive Overview:</strong> Real-time total expected fees, verified cash/bank payments, and outstanding balances.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-[#253E76] font-bold" aria-hidden="true">✓</span>
-            <span><strong>1-Click WhatsApp Reminders:</strong> Send polite, itemized fee reminders straight to parents' WhatsApp phones.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-[#253E76] font-bold" aria-hidden="true">✓</span>
-            <span><strong>Digital E-Receipt Generation:</strong> Issue official stamped digital receipts with instant audit logging.</span>
-          </li>
-          <li class="flex items-start gap-2">
-            <span class="text-[#253E76] font-bold" aria-hidden="true">✓</span>
-            <span><strong>Role Security for Bursars:</strong> Staff record payments while keeping high-level proprietor controls locked and safe.</span>
-          </li>
+      </div>
+    </section>
+  </div>
+
+  {# ===== What a proprietor says, overlapping the band ====================== #}
+  <section class="lp-frame relative -mt-16 lg:-mt-20" aria-label="What a school director says">
+    <figure class="lp-reveal grid gap-6 rounded-[24px] bg-white p-6 shadow-card sm:p-9 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
+      <div>
+        <blockquote class="text-sm font-semibold leading-relaxed text-ink-900 sm:text-base lg:text-xl lg:leading-relaxed">
+          &ldquo;SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records.&rdquo;
+        </blockquote>
+        <figcaption class="mt-4">
+          <p class="text-sm font-bold text-ink-900">Mrs. G. Oveh</p>
+          <p class="text-sm text-ink-600">School Director, Delta State</p>
+        </figcaption>
+      </div>
+      <p class="justify-self-start rounded-2xl bg-panel px-5 py-3 text-white lg:justify-self-end">
+        <span class="block text-xs text-panel-copy">This term</span>
+        <span class="text-lg font-extrabold">98.4% Fee Reconciled</span>
+      </p>
+    </figure>
+  </section>
+
+  {# ===== Product ============================================================ #}
+  <section id="features" class="lp-frame lp-section">
+    <div class="lp-reveal max-w-3xl">
+      <h2 class="lp-heading">Run the money side of your school from your phone.</h2>
+      <p class="lp-lede">Records, payments, reminders and reports, kept accurate across every class and campus.</p>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-3">
+      <article class="lp-reveal lp-tile bg-[#efe9fd]">
+        <span class="lp-icon bg-[#7b5cf0]" aria-hidden="true">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 11a3 3 0 1 0 0-6M21 20c0-2.6-1.7-4.8-4-5.6"/></svg>
+        </span>
+        <h3 class="lp-tile-title">Student profiles and siblings</h3>
+        <p class="lp-tile-copy">Group a family's children so one parent payment can cover all of them, with each child's balance kept on its own.</p>
+      </article>
+
+      <article class="lp-reveal lp-tile bg-paid-soft">
+        <span class="lp-icon bg-[#2fb383]" aria-hidden="true">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-11.8 7L4 20l1.1-4.8A8 8 0 1 1 21 12z"/></svg>
+        </span>
+        <h3 class="lp-tile-title">Reminders parents actually read</h3>
+        <p class="lp-tile-copy">Send polite, itemised balance reminders to parents' phones, written in your school's name.</p>
+        <p class="mt-4 rounded-2xl bg-white p-4 text-sm text-ink-900 shadow-card">&ldquo;Dear Chief Adebayo, kindly note Emeka's JSS1 term balance is &#8358;40,000&hellip;&rdquo;</p>
+      </article>
+
+      <article class="lp-reveal lp-tile bg-panel text-white">
+        <span class="lp-icon bg-lime text-on-lime" aria-hidden="true">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>
+        </span>
+        <h3 class="lp-tile-title text-white">Full control from anywhere</h3>
+        <p class="lp-tile-copy text-panel-copy">See the bursar's entries, bank transfers and cash as they are recorded, with every change in the audit trail.</p>
+        <p class="mt-4 text-3xl font-extrabold tabular-nums">&#8358;415,000</p>
+        <p class="text-sm text-panel-copy">Expected this term, live</p>
+      </article>
+    </div>
+  </section>
+
+  {# ===== Fee recovery calculator ============================================ #}
+  <section id="calculator" class="lp-frame lp-section">
+    <div class="lp-reveal max-w-3xl">
+      <h2 class="lp-heading">How much could your school recover?</h2>
+      <p class="lp-lede">Move the sliders to estimate the unpaid fees SCHOOLCORD can help you collect this term.</p>
+    </div>
+
+    <div class="mt-10 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div class="lp-reveal space-y-7 rounded-[24px] bg-white p-6 shadow-card sm:p-8">
+        <div>
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <label for="calc-students" class="text-sm font-bold text-ink-900">Students enrolled</label>
+            <span id="calc-students-val" class="lp-value">250 Students</span>
+          </div>
+          <input type="range" id="calc-students" min="50" max="1500" step="10" value="250" class="lp-range">
+          <div class="mt-1.5 flex justify-between text-xs text-ink-600"><span>50</span><span>750</span><span>1,500+</span></div>
+        </div>
+
+        <div>
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <label for="calc-fee" class="text-sm font-bold text-ink-900">Average fee per student, per term</label>
+            <span id="calc-fee-val" class="lp-value">&#8358;85,000</span>
+          </div>
+          <input type="range" id="calc-fee" min="20000" max="500000" step="5000" value="85000" class="lp-range">
+          <div class="mt-1.5 flex justify-between text-xs text-ink-600"><span>&#8358;20,000</span><span>&#8358;250,000</span><span>&#8358;500,000</span></div>
+        </div>
+
+        <p class="note-banner">
+          <span><strong>Proprietor insight:</strong> uncollected fees in Nigerian private schools typically run at 18% to 25% a term without reminders.</span>
+        </p>
+      </div>
+
+      <div class="lp-reveal flex flex-col rounded-[24px] bg-panel p-6 text-white shadow-card sm:p-8" aria-live="polite">
+        <p class="text-sm text-panel-copy">Expected this term</p>
+        <p id="calc-total" class="text-3xl font-extrabold tabular-nums">&#8358;21,250,000</p>
+
+        <p class="mt-5 text-sm text-panel-copy">Typically unpaid without SCHOOLCORD (about 22%)</p>
+        <p id="calc-debt" class="text-2xl font-bold tabular-nums">&#8358;4,675,000</p>
+
+        <div class="mt-5 rounded-2xl bg-white/12 p-4">
+          <p class="text-sm text-panel-copy">Estimated recovered with SCHOOLCORD</p>
+          <p id="calc-recovered" class="text-3xl font-extrabold tabular-nums text-lime">&#8358;4,207,500</p>
+          <p class="mt-1 text-sm text-panel-copy">At a 90% recovery rate</p>
+        </div>
+
+        <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime mt-6 w-full lg:mt-auto">Recover your unpaid fees &rarr;</a>
+      </div>
+    </div>
+  </section>
+
+  {# ===== Paper against SCHOOLCORD ========================================== #}
+  <section class="lp-frame lp-section">
+    <div class="lp-reveal max-w-3xl">
+      <h2 class="lp-heading">Why paper registers and spreadsheets fail.</h2>
+      <p class="lp-lede">Notebooks and scattered WhatsApp messages lose money, start awkward arguments with parents and leave you blind when you are away from school.</p>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      <div class="lp-reveal rounded-[24px] bg-overdue-soft p-6 sm:p-8">
+        <h3 class="text-xl font-extrabold text-ink-900">The paper way</h3>
+        <ul class="mt-5 space-y-4 text-base text-ink-900">
+          <li><strong>Unreported payments.</strong> Cash paid to a bursar, or a transfer, and nobody tells the proprietor.</li>
+          <li><strong>Exam hall disputes.</strong> &ldquo;I paid last month,&rdquo; with no quick way to check.</li>
+          <li><strong>Endless reconciliation.</strong> Weekends spent balancing ledger notebooks.</li>
+          <li><strong>Lost reminders.</strong> Letters home that never leave the school bag.</li>
+        </ul>
+      </div>
+
+      <div class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
+        <h3 class="text-xl font-extrabold text-ink-900">The SCHOOLCORD way</h3>
+        <ul class="mt-5 space-y-4 text-base text-ink-900">
+          <li><strong>One overview.</strong> Expected fees, confirmed cash and transfers, and what is still owed, as it happens.</li>
+          <li><strong>Reminders in one tap.</strong> Polite, itemised reminders to parents' phones.</li>
+          <li><strong>Receipts on the spot.</strong> A receipt for every payment, with an audit trail behind it.</li>
+          <li><strong>Roles that protect you.</strong> The bursar records payments; the proprietor's controls stay locked.</li>
         </ul>
       </div>
     </div>
@@ -425,327 +277,200 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
 
   {% comment %}
   ===== The demo =============================================================
-  Illustrative only. Sample records in a JavaScript array; nothing here is a
-  form, nothing calls the server, and nothing is saved. The "DEMO" labels are
-  deliberate and are on the section, both dialogs and the printable receipt,
-  so no screenshot or printout of it can pass for a real record.
+  Illustrative only. Sample records in a JavaScript array; nothing here is a form,
+  nothing calls the server, and nothing is saved. The "Demo" labels are on the
+  section, both dialogs and the printable receipt, so no screenshot or printout of
+  it can pass for a real record.
   {% endcomment %}
-  <section id="live-demo" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto" data-demo="true">
-    <div class="bg-lattice-dark text-white rounded-3xl p-6 sm:p-10 border border-slate-800 shadow-2xl lp-reveal">
-
-      <p class="mb-6 rounded-xl border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-xs font-semibold text-amber-200">
-        Demo only &mdash; sample students and figures. Nothing you do here is saved, sent or charged.
-      </p>
-
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-slate-800">
-        <div>
-          <span class="bg-[#253E76] text-white border border-blue-400/30 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-            LIVE SYSTEM PREVIEW
-          </span>
-          <h2 class="text-2xl sm:text-4xl font-light text-white mt-3">
-            Test Drive SCHOOLCORD Right Now
-          </h2>
-          <p class="text-gray-400 text-sm mt-1">
-            Interact with sample student records below. Filter by class, record a payment in Naira (₦), or generate an e-receipt.
-          </p>
-        </div>
-
-        <div class="flex items-center gap-3">
-          <label for="demo-class-filter" class="text-xs font-mono text-gray-400 uppercase">CLASS FILTER:</label>
-          <select id="demo-class-filter" class="bg-slate-900 text-white border border-slate-700 rounded-xl px-4 py-2 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-[#253E76]">
-            <option value="ALL">ALL CLASSES (5)</option>
-            <option value="JSS 1">JSS 1</option>
-            <option value="JSS 2">JSS 2</option>
-            <option value="SSS 1">SSS 1</option>
-            <option value="PRIMARY 4">PRIMARY 4</option>
-          </select>
+  <section id="live-demo" class="lp-frame lp-section" data-demo="true">
+    <div class="lp-reveal overflow-hidden rounded-[24px] bg-ink-50 shadow-card ring-1 ring-ink-200">
+      <div class="bg-panel px-5 pb-16 pt-6 text-white sm:px-8">
+        <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h2 class="text-2xl font-extrabold sm:text-3xl">Try SCHOOLCORD right now</h2>
+            <p class="mt-2 max-w-xl text-panel-copy">Filter by class, record a payment in Naira or issue a receipt, using sample students.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <label for="demo-class-filter" class="text-sm font-semibold text-panel-copy">Class</label>
+            <select id="demo-class-filter" class="field-input w-auto min-w-44 bg-white text-ink-900">
+              <option value="ALL">All classes (5)</option>
+              <option value="JSS 1">JSS 1</option>
+              <option value="JSS 2">JSS 2</option>
+              <option value="SSS 1">SSS 1</option>
+              <option value="PRIMARY 4">Primary 4</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-6">
-        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-          <span class="text-[10px] text-gray-400 uppercase font-mono">TOTAL EXPECTED FEES</span>
-          <p id="summary-expected" class="text-xl sm:text-2xl font-bold text-white mt-1">₦415,000</p>
-          <span class="text-[10px] text-gray-500">First Term Total Bill</span>
+      <div class="-mt-10 space-y-4 px-4 pb-6 sm:px-8">
+        <p class="note-banner">
+          <span><strong>Demo only</strong> &mdash; sample students and figures. Nothing you do here is saved, sent or charged.</span>
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div class="tile tint-blue"><span>Expected</span><b id="summary-expected">&#8358;415,000</b></div>
+          <div class="tile tint-green"><span>Collected</span><b id="summary-collected">&#8358;250,000</b></div>
+          <div class="tile tint-red"><span>Outstanding</span><b id="summary-outstanding">&#8358;165,000</b></div>
+          <div class="tile tint-amber"><span>Collection rate</span><b id="summary-rate">60.2%</b></div>
         </div>
 
-        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-          <span class="text-[10px] text-blue-300 uppercase font-mono">TOTAL FEES COLLECTED</span>
-          <p id="summary-collected" class="text-xl sm:text-2xl font-bold text-blue-300 mt-1">₦250,000</p>
-          <span class="text-[10px] text-gray-500">Verified Cash &amp; Bank</span>
+        <div class="chip-row" role="group" aria-label="Filter by payment status">
+          <button type="button" data-demo-status="ALL" id="tab-ALL" class="demo-tab filter-chip filter-chip-lime">All</button>
+          <button type="button" data-demo-status="PAID" id="tab-PAID" class="demo-tab filter-chip">Paid</button>
+          <button type="button" data-demo-status="PARTIAL" id="tab-PARTIAL" class="demo-tab filter-chip">Part paid</button>
+          <button type="button" data-demo-status="UNPAID" id="tab-UNPAID" class="demo-tab filter-chip">Unpaid</button>
         </div>
 
-        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-          <span class="text-[10px] text-rose-400 uppercase font-mono">TOTAL OUTSTANDING DEBT</span>
-          <p id="summary-outstanding" class="text-xl sm:text-2xl font-bold text-rose-400 mt-1">₦165,000</p>
-          <span class="text-[10px] text-gray-500">Pending Debt</span>
+        <div class="overflow-x-auto rounded-[20px] bg-white shadow-card">
+          <table class="w-full text-left text-sm">
+            <thead class="table-head">
+              <tr>
+                <th scope="col" class="px-4 py-3">Student</th>
+                <th scope="col" class="px-4 py-3">Parent</th>
+                <th scope="col" class="px-4 py-3 text-right">Fee</th>
+                <th scope="col" class="px-4 py-3 text-right">Paid</th>
+                <th scope="col" class="px-4 py-3 text-right">Balance</th>
+                <th scope="col" class="px-4 py-3">Status</th>
+                <th scope="col" class="px-4 py-3"><span class="sr-only">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody id="demo-table-body" class="divide-y divide-ink-100"> {# taste-skill-ignore: a real table, receipt or footer rule #}
+            </tbody>
+          </table>
         </div>
 
-        <div class="bg-slate-900/90 p-4 rounded-2xl border border-slate-800">
-          <span class="text-[10px] text-amber-400 uppercase font-mono">COLLECTION RATE</span>
-          <p id="summary-rate" class="text-xl sm:text-2xl font-bold text-amber-300 mt-1">60.2%</p>
-          <span class="text-[10px] text-gray-500">Term Target: 95%+</span>
-        </div>
+        <p class="text-sm text-ink-600">Showing 5 sample students. Press <strong>Record</strong> to see a balance update and a receipt.</p>
       </div>
-
-      <div class="flex items-center gap-2 mb-4 overflow-x-auto pb-2" role="group" aria-label="Filter by payment status">
-        <button type="button" data-demo-status="ALL" id="tab-ALL" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-[#253E76] text-white">ALL</button>
-        <button type="button" data-demo-status="PAID" id="tab-PAID" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white">PAID</button>
-        <button type="button" data-demo-status="PARTIAL" id="tab-PARTIAL" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white">PARTIAL</button>
-        <button type="button" data-demo-status="UNPAID" id="tab-UNPAID" class="demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white">UNPAID</button>
-      </div>
-
-      <div class="overflow-x-auto rounded-2xl border border-slate-800">
-        <table class="w-full text-left text-xs font-sans">
-          <thead class="bg-slate-900/90 text-gray-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
-            <tr>
-              <th scope="col" class="p-3.5">STUDENT NAME</th>
-              <th scope="col" class="p-3.5">CLASS</th>
-              <th scope="col" class="p-3.5">PARENT &amp; PHONE</th>
-              <th scope="col" class="p-3.5">TOTAL FEE</th>
-              <th scope="col" class="p-3.5">PAID</th>
-              <th scope="col" class="p-3.5">BALANCE</th>
-              <th scope="col" class="p-3.5">STATUS</th>
-              <th scope="col" class="p-3.5 text-center">ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody id="demo-table-body" class="divide-y divide-slate-800/60 bg-slate-950/40">
-          </tbody>
-        </table>
-      </div>
-
-      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-400 font-mono gap-2">
-        <span>SHOWING DEMO RECORDS (5 OF 250 STUDENTS)</span>
-        <span class="text-blue-300">💡 TIP: CLICK "RECORD PAY" TO TEST LIVE RECONCILIATION</span>
-      </div>
-
     </div>
   </section>
 
   <!-- HOW IT WORKS -->
-  <section id="how-it-works" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t border-lattice-border/60">
-    <div class="text-center max-w-3xl mx-auto mb-16 lp-reveal">
-      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">SIMPLE ONBOARDING</span>
-      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4">
-        Set Up Your School in 3 Easy Steps.
-      </h2>
-      <p class="text-lattice-muted text-base sm:text-lg mt-3">
-        No technical knowledge or complicated training required. Get up and running in under 20 minutes.
-      </p>
+  <section id="how-it-works" class="lp-frame lp-section">
+    <div class="lp-reveal max-w-3xl">
+      <h2 class="lp-heading">Set up your school in three steps.</h2>
+      <p class="lp-lede">No technical knowledge needed. Most schools are running the same day.</p>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 lp-reveal delay-100">
-        <div>
-          <h3 class="text-xl font-bold text-lattice-text mt-4">ADD YOUR CLASSES &amp; STUDENTS</h3>
-          <p class="text-lattice-muted text-sm mt-2">
-            Upload your student list using Excel or type them in manually. Group siblings together for combined family fee bills.
-          </p>
-        </div>
-        <div class="pt-4 border-t border-lattice-border/60 text-xs font-mono font-bold text-lattice-text uppercase">
-          STEP 01 • ROSTER MANAGEMENT
-        </div>
-      </div>
+    <ol class="mt-10 grid gap-4 md:grid-cols-3">
+      <li class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
+        <p class="text-sm font-semibold text-panel">Roster</p>
+        <h3 class="mt-1 text-xl font-extrabold text-ink-900">Add your classes and students</h3>
+        <p class="mt-2 text-ink-600">Bring your list in from one Excel workbook, or type them in. Group siblings into families.</p>
+      </li>
+      <li class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
+        <p class="text-sm font-semibold text-panel">Fees</p>
+        <h3 class="mt-1 text-xl font-extrabold text-ink-900">Set each class's term fees</h3>
+        <p class="mt-2 text-ink-600">Tuition, transport, uniform and feeding for each class, with adjustments for a child where you need them.</p>
+      </li>
+      <li class="lp-reveal rounded-[24px] bg-white p-6 shadow-card sm:p-8">
+        <p class="text-sm font-semibold text-panel">Payments</p>
+        <h3 class="mt-1 text-xl font-extrabold text-ink-900">Record payments and remind</h3>
+        <p class="mt-2 text-ink-600">Log transfers and cash as they come in, hand over a receipt, and watch what is owed come down.</p>
+      </li>
+    </ol>
+  </section>
 
-      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 lp-reveal delay-200">
-        <div>
-          <h3 class="text-xl font-bold text-lattice-text mt-4">SET TERM SCHOOL FEES</h3>
-          <p class="text-lattice-muted text-sm mt-2">
-            Specify tuition fees, bus transport, uniform, and feeding charges for each class. Apply custom discounts for staff children.
-          </p>
-        </div>
-        <div class="pt-4 border-t border-lattice-border/60 text-xs font-mono font-bold text-lattice-text uppercase">
-          STEP 02 • BILLING SETUP
-        </div>
-      </div>
+  {# ===== Pricing: from apps/schools/plans.py, the list the checkout charges from #}
+  <section id="pricing" class="lp-frame lp-section">
+    <div class="lp-reveal max-w-3xl">
+      <h2 class="lp-heading">Simple pricing, paid once a term.</h2>
+      <p class="lp-lede">Choose by the number of students. Pay by bank transfer from your school's settings; no card needed and no hidden charges.</p>
+    </div>
 
-      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 lp-reveal delay-300">
-        <div>
-          <h3 class="text-xl font-bold text-lattice-text mt-4">RECORD PAYMENTS &amp; NOTIFY</h3>
-          <p class="text-lattice-muted text-sm mt-2">
-            Log bank transfers or cash payments as they come in. Issue digital e-receipts and watch your uncollected debt shrink.
+    <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {% for offer in plan_offers %}
+        <article class="lp-reveal flex flex-col rounded-[24px] p-6 shadow-card {% if offer.plan == 'growth' %}bg-panel text-white{% else %}bg-white{% endif %}">
+          <h3 class="text-lg font-extrabold {% if offer.plan != 'growth' %}text-ink-900{% endif %}">{{ offer.name }}</h3>
+          <p class="mt-1 text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">{{ offer.students }}</p>
+          <p class="mt-5 text-3xl font-extrabold tabular-nums">{{ offer.price_display }}</p>
+          <p class="text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">
+            {% if offer.price_naira %}per term{% elif offer.price_naira == 0 %}for good{% else %}priced for your schools{% endif %}
           </p>
-        </div>
-        <div class="pt-4 border-t border-lattice-border/60 text-xs font-mono font-bold text-lattice-text uppercase">
-          STEP 03 • FEE RECOVERY
-        </div>
-      </div>
+          <div class="mt-6 flex-1"></div>
+          {% if offer.price_naira is None %}
+            <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-line w-full">Talk to us</a>
+          {% elif offer.plan == 'growth' %}
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime w-full">Choose {{ offer.name }}</a>
+          {% elif offer.price_naira == 0 %}
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-line w-full">Start free</a>
+          {% else %}
+            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-blue w-full">Choose {{ offer.name }}</a>
+          {% endif %}
+        </article>
+      {% endfor %}
+    </div>
+
+    <div class="lp-reveal mt-4 rounded-[24px] bg-white p-6 shadow-card sm:p-8">
+      <h3 class="text-lg font-extrabold text-ink-900">Every plan includes</h3>
+      <ul class="mt-4 grid gap-x-8 gap-y-3 text-ink-900 sm:grid-cols-2 lg:grid-cols-3">
+        <li class="lp-check">Student records, classes and term fees</li>
+        <li class="lp-check">Payments with receipts and an audit trail</li>
+        <li class="lp-check">Outstanding balances, oldest debt first</li>
+        <li class="lp-check">Fee reminders to parents</li>
+        <li class="lp-check">Owner, principal and bursar roles</li>
+        <li class="lp-check">Works on any phone; add it to your home screen</li>
+      </ul>
     </div>
   </section>
 
-  <!-- PRICING SECTION -->
-  <section id="pricing" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="text-center max-w-3xl mx-auto mb-16 lp-reveal">
-      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">TRANSPARENT PRICING</span>
-      <h2 class="text-3xl sm:text-5xl font-light text-lattice-text mt-4">
-        Affordable for Every Nigerian School.
-      </h2>
-      <p class="text-lattice-muted text-base sm:text-lg mt-3">
-        Simple term-based subscription with zero hidden charges. Pay per academic term.
-      </p>
+  {# ===== Questions ========================================================= #}
+  <section id="faq" class="lp-frame lp-section">
+    <div class="lp-reveal max-w-3xl">
+      <h2 class="lp-heading">Answers for school proprietors.</h2>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 lp-reveal delay-100">
-        <div>
-          <span class="text-xs font-mono font-bold text-lattice-muted uppercase">SMALL SCHOOLS</span>
-          <h3 class="text-2xl font-bold text-lattice-text mt-1">STARTER PLAN</h3>
-          <p class="text-xs text-lattice-muted mt-1">Ideal for crèches, nursery, and small primary schools up to 100 students.</p>
-
-          <div class="mt-6 mb-6">
-            <span class="text-3xl font-extrabold text-lattice-dark">₦25,000</span>
-            <span class="text-xs text-lattice-muted font-medium">/ PER TERM</span>
-          </div>
-
-          <ul class="space-y-3 text-xs font-medium text-lattice-text border-t border-lattice-border/60 pt-6">
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Up to 100 Enrolled Students</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Student Fee Directory &amp; Ledger</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Digital E-Receipt Generation</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> WhatsApp Payment Reminders</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> 1 Admin / Bursar Account</li>
-          </ul>
-        </div>
-
-        <a href="{% url 'core:signup' %}" class="block text-center bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3.5 rounded-full text-xs uppercase tracking-wider transition">
-          CHOOSE STARTER
-        </a>
-      </div>
-
-      <div class="bg-lattice-dark text-white rounded-3xl p-8 border border-slate-800 flex flex-col justify-between space-y-6 shadow-xl relative lp-reveal delay-200">
-        <div class="absolute -top-3.5 right-8 bg-[#253E76] text-white text-[10px] font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-blue-400/30">
-          MOST POPULAR
-        </div>
-
-        <div>
-          <span class="text-xs font-mono font-bold text-gray-400 uppercase">GROWING SCHOOLS</span>
-          <h3 class="text-2xl font-bold text-white mt-1">STANDARD PLAN</h3>
-          <p class="text-xs text-gray-400 mt-1">For established primary and secondary schools up to 400 students.</p>
-
-          <div class="mt-6 mb-6">
-            <span class="text-3xl font-extrabold text-white">₦45,000</span>
-            <span class="text-xs text-gray-400 font-medium">/ PER TERM</span>
-          </div>
-
-          <ul class="space-y-3 text-xs font-medium text-gray-200 border-t border-slate-800 pt-6">
-            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold" aria-hidden="true">✓</span> Up to 400 Enrolled Students</li>
-            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold" aria-hidden="true">✓</span> Full Debtors Tracking &amp; Recovery</li>
-            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold" aria-hidden="true">✓</span> Unlimited E-Receipts</li>
-            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold" aria-hidden="true">✓</span> Automated WhatsApp Reminders</li>
-            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold" aria-hidden="true">✓</span> Multi-Staff Roles (Owner + Bursar)</li>
-            <li class="flex items-center gap-2"><span class="text-blue-300 font-bold" aria-hidden="true">✓</span> Daily SMS/Email Summary</li>
-          </ul>
-        </div>
-
-        <a href="{% url 'core:signup' %}" class="block text-center bg-[#253E76] hover:bg-[#1d315e] text-white font-extrabold py-3.5 rounded-full text-xs uppercase tracking-wider transition">
-          GET STARTED NOW &rarr;
-        </a>
-      </div>
-
-      <div class="bg-lattice-card rounded-3xl p-8 border border-lattice-border flex flex-col justify-between space-y-6 lp-reveal delay-300">
-        <div>
-          <span class="text-xs font-mono font-bold text-lattice-muted uppercase">LARGE INSTITUTIONS</span>
-          <h3 class="text-2xl font-bold text-lattice-text mt-1">EXECUTIVE PLAN</h3>
-          <p class="text-xs text-lattice-muted mt-1">For large group of schools and multi-campus institutions.</p>
-
-          <div class="mt-6 mb-6">
-            <span class="text-3xl font-extrabold text-lattice-dark">₦75,000</span>
-            <span class="text-xs text-lattice-muted font-medium">/ PER TERM</span>
-          </div>
-
-          <ul class="space-y-3 text-xs font-medium text-lattice-text border-t border-lattice-border/60 pt-6">
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Unlimited Enrolled Students</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Multi-Campus Support</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Dedicated Account Manager</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Custom Bank API Reconciliation</li>
-            <li class="flex items-center gap-2"><span class="text-[#253E76] font-bold" aria-hidden="true">✓</span> Priority Telephone Support</li>
-          </ul>
-        </div>
-
-        {# A conversation rather than a sign-up form, as in the design. #}
-        <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="block text-center bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3.5 rounded-full text-xs uppercase tracking-wider transition">
-          CONTACT SALES
-        </a>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- FREQUENTLY ASKED QUESTIONS -->
-  <section id="faq" class="py-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t border-lattice-border/60">
-    <div class="text-center mb-12 lp-reveal">
-      <span class="bg-lattice-pill border border-lattice-border px-3.5 py-1 rounded-full text-xs font-bold text-lattice-text uppercase tracking-widest">FREQUENTLY ASKED QUESTIONS</span>
-      <h2 class="text-3xl sm:text-4xl font-light text-lattice-text mt-4">
-        Answers for School Proprietors
-      </h2>
-    </div>
-
-    <div class="space-y-4">
-      <details class="lp-faq group bg-lattice-card rounded-2xl p-6 border border-lattice-border lp-reveal">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
-          <span>CAN I USE SCHOOLCORD IF MY BURSAR IS NOT COMPUTER LITERATE?</span>
-          <span class="transition group-open:rotate-180 text-lg" aria-hidden="true">↓</span>
+    <div class="mt-10 grid gap-3 lg:grid-cols-2">
+      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
+          <span>Can I use SCHOOLCORD if my bursar is not good with computers?</span>
+          <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
-          Yes! SCHOOLCORD is designed with simple buttons and straightforward forms. If your bursar can send a message on WhatsApp, they can easily record payments and issue e-receipts on SCHOOLCORD within 10 minutes of training.
-        </p>
+        <p class="mt-3 text-ink-600">Yes. The screens use plain buttons and short forms. If your bursar can send a WhatsApp message, they can record a payment and issue a receipt after a few minutes of showing.</p>
       </details>
 
-      <details class="lp-faq group bg-lattice-card rounded-2xl p-6 border border-lattice-border lp-reveal">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
-          <span>HOW DOES SCHOOLCORD HELP ME WHEN I AM NOT AT SCHOOL?</span>
-          <span class="transition group-open:rotate-180 text-lg" aria-hidden="true">↓</span>
+      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
+          <span>How does it help me when I am not at school?</span>
+          <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
-          You can log into your Director Portal from any smartphone or tablet anywhere in the world. You see real-time updates as payments are entered by your bursar, ensuring zero unreported money.
-        </p>
+        <p class="mt-3 text-ink-600">Sign in from any phone or tablet. You see payments as your bursar records them, so no money goes unreported.</p>
       </details>
 
-      <details class="lp-faq group bg-lattice-card rounded-2xl p-6 border border-lattice-border lp-reveal">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
-          <span>WHAT HAPPENS IF INTERNET NETWORK IS POOR AT OUR SCHOOL LOCATION?</span>
-          <span class="transition group-open:rotate-180 text-lg" aria-hidden="true">↓</span>
+      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
+          <span>What if the network is poor at our school?</span>
+          <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
-          SCHOOLCORD requires very little data and is optimized for 3G/4G Nigerian mobile networks. Entries can also be queued offline and automatically synced once connection is restored.
-        </p>
+        <p class="mt-3 text-ink-600">SCHOOLCORD uses very little data and works on 3G and 4G. It needs a connection to save an entry. Nothing is kept on the phone, so a lost phone does not lose or leak your records.</p>
       </details>
 
-      <details class="lp-faq group bg-lattice-card rounded-2xl p-6 border border-lattice-border lp-reveal">
-        <summary class="flex items-center justify-between gap-4 cursor-pointer font-bold text-lattice-text text-sm sm:text-base uppercase tracking-wide">
-          <span>CAN PARENTS PAY THROUGH WHATSAPP REMINDERS?</span>
-          <span class="transition group-open:rotate-180 text-lg" aria-hidden="true">↓</span>
+      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
+          <span>Can parents pay from the reminder?</span>
+          <span class="lp-faq-mark" aria-hidden="true">+</span>
         </summary>
-        <p class="mt-4 text-xs sm:text-sm text-lattice-muted leading-relaxed">
-          Yes! Reminders sent via WhatsApp include your verified school bank account details and payment breakdown, making it convenient for parents to transfer fees immediately from their mobile banking apps.
-        </p>
+        <p class="mt-3 text-ink-600">Reminders carry the child's balance and your school's bank details, so a parent can transfer straight from their banking app. You record the payment when it arrives.</p>
+      </details>
+
+      <details class="lp-faq lp-reveal rounded-[20px] bg-white p-5 shadow-card sm:p-6">
+        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
+          <span>How do I pay for a plan?</span>
+          <span class="lp-faq-mark" aria-hidden="true">+</span>
+        </summary>
+        <p class="mt-3 text-ink-600">From your school's settings, choose a plan and you get our bank details and a reference. Pay by transfer with that reference, tell us you have paid, and your plan switches on when the money arrives.</p>
       </details>
     </div>
   </section>
 
-  <!-- BOTTOM CTA BANNER -->
-  <section class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <div class="rounded-3xl p-8 sm:p-14 text-center text-white space-y-6 shadow-2xl relative overflow-hidden lp-cta-bg lp-reveal">
-
-      <div class="inline-block bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-widest text-blue-200">
-        TAKE CONTROL OF YOUR SCHOOL'S NUMBERS TODAY
-      </div>
-
-      <h2 class="text-3xl sm:text-5xl font-light max-w-3xl mx-auto leading-tight">
-        Ready to stop unpaid school fees and disorganized records?
-      </h2>
-
-      <p class="text-gray-300 max-w-xl mx-auto text-sm sm:text-base">
-        Join hundreds of Nigerian school proprietors who use SCHOOLCORD to maintain 100% financial clarity and faster fee recovery.
-      </p>
-
-      <div class="flex flex-wrap items-center justify-center gap-4 pt-4">
-        <a href="{% url 'core:signup' %}" class="bg-[#253E76] hover:bg-[#1d315e] text-white font-extrabold px-8 py-4 rounded-full text-xs uppercase tracking-wider transition shadow-lg">
-          CREATE MY SCHOOL ACCOUNT &rarr;
-        </a>
-        <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="bg-[#253E76] hover:bg-[#1d315e] border border-white/30 text-white font-bold px-8 py-4 rounded-full text-xs uppercase tracking-wider transition">
-          CHAT WITH US ON WHATSAPP
-        </a>
+  {# ===== Close ============================================================== #}
+  <section class="lp-frame lp-section">
+    <div class="lp-reveal rounded-[28px] bg-panel px-6 py-12 text-center text-white sm:px-12 sm:py-16">
+      <h2 class="mx-auto max-w-3xl text-3xl font-extrabold leading-tight sm:text-5xl">Stop chasing unpaid fees on paper.</h2>
+      <p class="mx-auto mt-4 max-w-xl text-lg text-panel-copy">Join Nigerian school proprietors using SCHOOLCORD for clear records and faster fee recovery.</p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime lp-btn-lg">Create my school account &rarr;</a>
+        <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-ghost lp-btn-lg">Chat with us on WhatsApp</a>
       </div>
     </div>
   </section>
@@ -754,113 +479,113 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
 
 
   <!-- DEMO DIALOG: RECORD PAYMENT (sample data only) -->
-  <div id="payment-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+  <div id="payment-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink-900/70 p-4"
        role="dialog" aria-modal="true" aria-labelledby="modal-student-name">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-lattice-text space-y-5 shadow-2xl relative">
-      <button type="button" data-demo-close class="absolute top-5 right-5 text-gray-400 hover:text-black text-xl font-bold" aria-label="Close">✕</button>
+    <div class="relative w-full max-w-md space-y-5 rounded-[24px] bg-white p-6 text-ink-900 shadow-panel">
+      <button type="button" data-demo-close class="absolute right-4 top-4 grid size-11 place-items-center rounded-xl text-xl font-bold text-ink-600 hover:bg-ink-100" aria-label="Close">&times;</button>
 
       <div>
-        <span class="text-[10px] font-mono font-bold bg-blue-100 text-[#253E76] px-2.5 py-1 rounded-full uppercase">RECORD PAYMENT</span>
-        <span class="ml-1 text-[10px] font-mono font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full uppercase">Demo</span>
-        <h3 id="modal-student-name" class="text-2xl font-bold text-lattice-dark mt-2">Emeka Adebayo</h3>
-        <p id="modal-student-info" class="text-xs text-lattice-muted">JSS 1 • Current Unpaid Debt: ₦40,000</p>
+        <span class="status-pill status-pending">Record a payment</span>
+        <span class="status-pill status-partial ml-1">Demo</span>
+        <h3 id="modal-student-name" class="mt-2 text-2xl font-extrabold">Emeka Adebayo</h3>
+        <p id="modal-student-info" class="text-sm text-ink-600">JSS 1 • Current Unpaid Debt: ₦40,000</p>
       </div>
 
       <div class="space-y-4">
         <div>
-          <label for="modal-pay-amount" class="block text-xs font-bold text-lattice-text uppercase mb-1">PAYMENT AMOUNT (₦):</label>
-          <input type="number" id="modal-pay-amount" inputmode="numeric" class="w-full border border-lattice-border rounded-xl p-3 text-sm font-bold focus:ring-2 focus:ring-[#253E76] focus:outline-none" placeholder="e.g. 20000">
+          <label for="modal-pay-amount" class="field-label">Amount (₦)</label>
+          <input type="number" id="modal-pay-amount" inputmode="numeric" class="field-input text-lg font-extrabold" placeholder="20000">
         </div>
 
         <div>
-          <label for="modal-pay-method" class="block text-xs font-bold text-lattice-text uppercase mb-1">PAYMENT METHOD:</label>
-          <select id="modal-pay-method" class="w-full border border-lattice-border rounded-xl p-3 text-sm font-semibold focus:outline-none">
-            <option value="Bank Transfer">Direct Bank Transfer</option>
-            <option value="Cash">Physical Cash Desk</option>
-            <option value="POS Card">School POS</option>
+          <label for="modal-pay-method" class="field-label">How was it paid</label>
+          <select id="modal-pay-method" class="field-input">
+            <option value="Bank Transfer">Bank transfer</option>
+            <option value="Cash">Cash</option>
+            <option value="POS Card">POS</option>
           </select>
         </div>
 
-        <p id="modal-pay-error" class="hidden text-xs font-semibold text-rose-600">Please enter a valid payment amount.</p>
+        <p id="modal-pay-error" class="hidden text-sm font-semibold text-overdue-strong" role="alert">Please enter a valid payment amount.</p>
 
-        <button type="button" id="demo-submit-payment" class="w-full bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider transition">
-          CONFIRM PAYMENT &amp; UPDATE LEDGER
+        <button type="button" id="demo-submit-payment" class="lp-btn lp-btn-lime w-full">
+          Record and update the balance
         </button>
-        <p class="text-center text-[11px] text-lattice-muted">Demo: updates the sample table on this page only.</p>
+        <p class="text-center text-sm text-ink-600">Demo: updates the sample table on this page only.</p>
       </div>
     </div>
   </div>
 
   <!-- DEMO DIALOG: PRINTABLE RECEIPT (sample data only) -->
-  <div id="receipt-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+  <div id="receipt-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink-900/70 p-4"
        role="dialog" aria-modal="true" aria-labelledby="receipt-heading">
-    <div class="bg-white rounded-3xl max-w-lg w-full p-6 text-lattice-text space-y-6 shadow-2xl relative">
-      <button type="button" data-demo-close class="absolute top-5 right-5 text-gray-400 hover:text-black text-xl font-bold" aria-label="Close">✕</button>
+    <div class="relative w-full max-w-lg space-y-6 rounded-[24px] bg-white p-6 text-ink-900 shadow-panel">
+      <button type="button" data-demo-close class="absolute right-4 top-4 grid size-11 place-items-center rounded-xl text-xl font-bold text-ink-600 hover:bg-ink-100" aria-label="Close">&times;</button>
 
-      <div id="printable-receipt" class="border-2 border-dashed border-lattice-border p-6 rounded-2xl space-y-4 bg-slate-50/50">
-        <p class="rounded-lg bg-amber-100 px-3 py-1.5 text-center text-[10px] font-bold uppercase tracking-widest text-amber-800">
+      <div id="printable-receipt" class="space-y-4 rounded-2xl border-2 border-dashed border-ink-300 bg-ink-50 p-6">
+        <p class="rounded-xl bg-partial-soft px-3 py-2 text-center text-sm font-bold text-partial-strong">
           Demo receipt &mdash; sample data, not a real payment
         </p>
-        <div class="flex items-center justify-between border-b border-gray-200 pb-4">
+        <div class="flex items-center justify-between border-b border-ink-200 pb-4"> {# taste-skill-ignore: a real table, receipt or footer rule #}
           <div class="flex items-center gap-2">
-            {% include "core/_lattice_mark.html" with svg_class="w-8 h-8 text-[#253E76]" %}
-            <span class="font-serif text-lg font-bold uppercase text-slate-900">SCHOOL<span class="text-[#253E76]">CORD</span></span>
+            {% include "core/_lattice_mark.html" with svg_class="w-8 h-8 text-panel" %}
+            <span class="text-lg font-extrabold">SCHOOLCORD</span>
           </div>
           <div class="text-right">
-            <span id="receipt-heading" class="text-[10px] font-mono text-gray-500 block">OFFICIAL DIGITAL RECEIPT</span>
-            <span id="receipt-no" class="text-xs font-mono font-bold text-slate-800">#SC-2026-0891</span>
+            <span id="receipt-heading" class="block text-xs text-ink-600">Receipt</span>
+            <span id="receipt-no" class="text-sm font-bold tabular-nums">#SC-2026-0891</span>
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-4 text-xs font-sans">
+        <div class="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span class="text-gray-400 block text-[10px] font-mono">STUDENT NAME:</span>
-            <span id="receipt-student" class="font-bold text-slate-900 text-sm">Emeka Adebayo</span>
+            <span class="block text-xs text-ink-600">Student</span>
+            <span id="receipt-student" class="font-bold">Emeka Adebayo</span>
           </div>
           <div>
-            <span class="text-gray-400 block text-[10px] font-mono">CLASS / TERM:</span>
-            <span id="receipt-class" class="font-bold text-slate-900">JSS 1 • Term 1 2026</span>
+            <span class="block text-xs text-ink-600">Class and term</span>
+            <span id="receipt-class" class="font-bold">JSS 1 • Term 1 2026</span>
           </div>
           <div>
-            <span class="text-gray-400 block text-[10px] font-mono">AMOUNT PAID:</span>
-            <span id="receipt-paid" class="font-extrabold text-[#253E76] text-base">₦45,000</span>
+            <span class="block text-xs text-ink-600">Amount paid</span>
+            <span id="receipt-paid" class="text-base font-extrabold tabular-nums">₦45,000</span>
           </div>
           <div>
-            <span class="text-gray-400 block text-[10px] font-mono">REMAINING DEBT:</span>
-            <span id="receipt-balance" class="font-bold text-rose-600">₦40,000</span>
+            <span class="block text-xs text-ink-600">Still owed</span>
+            <span id="receipt-balance" class="font-bold tabular-nums">₦40,000</span>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-gray-200 text-center space-y-1">
-          <span class="inline-block bg-blue-100 text-[#253E76] text-[10px] font-bold px-3 py-0.5 rounded-full uppercase">STATUS: VERIFIED &amp; LOGGED</span>
-          <p class="text-[10px] text-gray-400">Issued by SchoolCORD Automated Bursar Portal</p>
+        <div class="space-y-1 border-t border-ink-200 pt-3 text-center"> {# taste-skill-ignore: a real table, receipt or footer rule #}
+          <span class="status-pill status-paid">Confirmed and logged</span>
+          <p class="text-xs text-ink-600">Issued by SCHOOLCORD</p>
         </div>
       </div>
 
       <div class="flex gap-3">
-        <button type="button" id="demo-print" class="flex-1 bg-[#253E76] hover:bg-[#1d315e] text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition">
-          🖨️ PRINT / DOWNLOAD PDF
+        <button type="button" id="demo-print" class="lp-btn lp-btn-blue flex-1">
+          Print or save as PDF
         </button>
-        <button type="button" data-demo-close class="bg-lattice-pill hover:bg-lattice-border text-lattice-text font-bold px-5 py-3 rounded-xl text-xs uppercase">
-          CLOSE
+        <button type="button" data-demo-close class="lp-btn lp-btn-line">
+          Close
         </button>
       </div>
     </div>
   </div>
 
   <!-- DEMO DIALOG: THE WHATSAPP MESSAGE (shown, never sent) -->
-  <div id="whatsapp-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4"
+  <div id="whatsapp-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink-900/70 p-4"
        role="dialog" aria-modal="true" aria-labelledby="whatsapp-heading">
-    <div class="bg-white rounded-3xl max-w-md w-full p-6 text-lattice-text space-y-4 shadow-2xl relative">
-      <button type="button" data-demo-close class="absolute top-5 right-5 text-gray-400 hover:text-black text-xl font-bold" aria-label="Close">✕</button>
+    <div class="relative w-full max-w-md space-y-4 rounded-[24px] bg-white p-6 text-ink-900 shadow-panel">
+      <button type="button" data-demo-close class="absolute right-4 top-4 grid size-11 place-items-center rounded-xl text-xl font-bold text-ink-600 hover:bg-ink-100" aria-label="Close">&times;</button>
       <div>
-        <span class="text-[10px] font-mono font-bold bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full uppercase">Demo</span>
-        <h3 id="whatsapp-heading" class="text-lg font-bold text-lattice-dark mt-2">WhatsApp reminder preview</h3>
-        <p class="text-xs text-lattice-muted">In the real app this goes to the parent's phone. Here it is only shown.</p>
+        <span class="status-pill status-partial">Demo</span>
+        <h3 id="whatsapp-heading" class="mt-2 text-lg font-extrabold">WhatsApp reminder preview</h3>
+        <p class="text-sm text-ink-600">In the real app this goes to the parent's phone. Here it is only shown.</p>
       </div>
-      <p id="whatsapp-message" class="rounded-2xl bg-[#253E76] p-4 font-mono text-xs leading-relaxed text-white"></p>
-      <button type="button" data-demo-close class="w-full bg-lattice-pill hover:bg-lattice-border text-lattice-text font-bold py-3 rounded-xl text-xs uppercase">
-        CLOSE
+      <p id="whatsapp-message" class="rounded-2xl bg-paid-soft p-4 text-sm leading-relaxed text-ink-900"></p>
+      <button type="button" data-demo-close class="lp-btn lp-btn-line w-full">
+        Close
       </button>
     </div>
   </div>
@@ -876,6 +601,9 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
       var page = document.querySelector('.lp-lattice');
 
       function naira(n) { return '₦' + Math.round(n).toLocaleString(); }
+      function title(name) {
+        return name.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+      }
       function byId(id) { return document.getElementById(id); }
 
       // --- Mobile menu -------------------------------------------------------
@@ -945,9 +673,9 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
       }
 
       var TAGS = {
-        PAID: '<span class="bg-blue-500/20 text-blue-300 border border-blue-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">PAID</span>',
-        UNPAID: '<span class="bg-rose-500/20 text-rose-300 border border-rose-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">UNPAID</span>',
-        PARTIAL: '<span class="bg-amber-500/20 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-full text-[10px] font-bold">PARTIAL</span>'
+        PAID: '<span class="status-pill status-paid">Paid in full</span>',
+        UNPAID: '<span class="status-pill status-unpaid">Unpaid</span>',
+        PARTIAL: '<span class="status-pill status-partial">Part paid</span>'
       };
 
       function renderDemoTable() {
@@ -960,18 +688,17 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
         }).forEach(function (s) {
           var balance = s.total - s.paid;
           var tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-900/60 transition';
+          tr.className = 'hover:bg-ink-50';
           tr.innerHTML =
-            '<td class="p-3.5 font-bold text-white">' + s.name + '</td>' +
-            '<td class="p-3.5 text-gray-300 font-mono">' + s.class + '</td>' +
-            '<td class="p-3.5 text-gray-400 text-[11px]">' + s.parent + '<br><span class="text-gray-500 font-mono">' + s.phone + '</span></td>' +
-            '<td class="p-3.5 text-gray-300 font-mono">' + naira(s.total) + '</td>' +
-            '<td class="p-3.5 text-blue-300 font-mono font-semibold">' + naira(s.paid) + '</td>' +
-            '<td class="p-3.5 text-rose-400 font-mono font-semibold">' + naira(balance) + '</td>' +
-            '<td class="p-3.5">' + TAGS[statusOf(s)] + '</td>' +
-            '<td class="p-3.5 text-center"><div class="flex items-center justify-center gap-1.5">' +
-              '<button type="button" data-demo-pay="' + s.id + '" class="bg-[#253E76] hover:bg-[#1d315e] text-white px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition">RECORD PAY</button>' +
-              '<button type="button" data-demo-remind="' + s.id + '" class="bg-slate-800 hover:bg-slate-700 text-blue-300 px-2 py-1 rounded-lg text-[10px] font-bold transition">WHATSAPP</button>' +
+            '<td class="whitespace-nowrap px-4 py-3"><b class="block text-ink-900">' + title(s.name) + '</b><span class="text-xs text-ink-600">' + s.class + '</span></td>' +
+            '<td class="whitespace-nowrap px-4 py-3 text-ink-600">' + s.parent + '<span class="block text-xs tabular-nums">' + s.phone + '</span></td>' +
+            '<td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-ink-600">' + naira(s.total) + '</td>' +
+            '<td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-ink-600">' + naira(s.paid) + '</td>' +
+            '<td class="whitespace-nowrap px-4 py-3 text-right font-bold tabular-nums text-ink-900">' + naira(balance) + '</td>' +
+            '<td class="px-4 py-3">' + TAGS[statusOf(s)] + '</td>' +
+            '<td class="px-4 py-3"><div class="flex items-center justify-end gap-2">' +
+              '<button type="button" data-demo-pay="' + s.id + '" class="lp-btn lp-btn-lime lp-btn-sm">Record</button>' +
+              '<button type="button" data-demo-remind="' + s.id + '" class="lp-btn lp-btn-line lp-btn-sm">WhatsApp</button>' +
             '</div></td>';
           tbody.appendChild(tr);
         });
@@ -1016,7 +743,7 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
         selectedId = id;
         var s = findStudent(id);
         var balance = s.total - s.paid;
-        byId('modal-student-name').textContent = s.name;
+        byId('modal-student-name').textContent = title(s.name);
         byId('modal-student-info').textContent = s.class + ' • Current Unpaid Debt: ' + naira(balance);
         byId('modal-pay-amount').value = balance > 0 ? balance : '';
         byId('modal-pay-error').classList.add('hidden');
@@ -1037,7 +764,7 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
       }
 
       function openReceiptModal(s, amountPaid) {
-        byId('receipt-student').textContent = s.name;
+        byId('receipt-student').textContent = title(s.name);
         byId('receipt-class').textContent = s.class + ' • Term 1 2026';
         byId('receipt-paid').textContent = naira(amountPaid);
         byId('receipt-balance').textContent = naira(s.total - s.paid);
@@ -1051,9 +778,9 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
         var s = findStudent(id);
         var balance = s.total - s.paid;
         byId('whatsapp-message').textContent = balance <= 0
-          ? s.name + ' has fully settled their fees!'
+          ? title(s.name) + ' has fully settled their fees.'
           : 'Dear ' + s.parent + ', this is a gentle fee reminder from Fulfilled Academy regarding ' +
-            s.name + ' (' + s.class + '). Unpaid Term Balance: ' + naira(balance) +
+            title(s.name) + ' (' + s.class + '). Unpaid Term Balance: ' + naira(balance) +
             '. Kindly make payment to School Bank Account: 1012345678 (Zenith Bank). Thank you!';
         openModal('whatsapp-modal');
       }
@@ -1061,11 +788,11 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
       function filterStatus(status) {
         currentStatus = status;
         document.querySelectorAll('.demo-tab').forEach(function (btn) {
-          btn.className = 'demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-slate-900 text-gray-400 hover:text-white';
+          btn.className = 'demo-tab filter-chip';
           btn.setAttribute('aria-pressed', 'false');
         });
         var active = byId('tab-' + status);
-        active.className = 'demo-tab px-4 py-1.5 rounded-full text-xs font-bold bg-[#253E76] text-white';
+        active.className = 'demo-tab filter-chip filter-chip-lime';
         active.setAttribute('aria-pressed', 'true');
         renderDemoTable();
       }
@@ -1098,72 +825,55 @@ Title, meta description and JSON-LD come from apps/core/seo.py as before.
     })();
   </script>
 
-  <!-- FOOTER -->
-  <footer class="bg-lattice-dark text-white pt-16 pb-12 border-t border-slate-800">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="grid grid-cols-1 md:grid-cols-12 gap-10 pb-12 border-b border-slate-800">
-
-        <div class="md:col-span-5 space-y-4">
-          <div class="flex items-center gap-2">
-            <div class="w-9 h-9 bg-white rounded-lg flex items-center justify-center p-1.5">
-              {% include "core/_lattice_mark.html" with svg_class="w-full h-full text-[#253E76]" %}
-            </div>
-            <span class="font-serif text-2xl font-extrabold tracking-tight text-white uppercase">
-              SCHOOL<span class="text-[#253E76]">CORD</span>
-            </span>
-          </div>
-
-          <p class="text-xs text-gray-400 leading-relaxed max-w-sm">
-            School records, school-fee payments, and outstanding balances in one place. Built specifically for Nigerian private schools.
-          </p>
-
-          <div class="text-[11px] font-mono text-blue-300 flex items-center gap-2">
-            <span class="w-2 h-2 rounded-full bg-[#253E76] motion-safe:animate-ping" aria-hidden="true"></span>
-            <span>OPERATIONAL IN NIGERIA • ALL 36 STATES</span>
-          </div>
-        </div>
-
-        <div class="md:col-span-3 space-y-3">
-          <h2 class="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">NAVIGATION</h2>
-          <ul class="space-y-2 text-xs text-gray-300">
-            <li><a href="#features" class="hover:text-white transition">Product Features</a></li>
-            <li><a href="#how-it-works" class="hover:text-white transition">How It Works</a></li>
-            <li><a href="#live-demo" class="hover:text-white transition">Live Interactive Demo</a></li>
-            <li><a href="#pricing" class="hover:text-white transition">Pricing Plans</a></li>
-          </ul>
-        </div>
-
-        <div class="md:col-span-4 space-y-3">
-          <h2 class="text-xs font-mono font-bold text-gray-400 uppercase tracking-widest">CONTACT &amp; SUPPORT</h2>
-          <p class="text-xs text-gray-300">📍 Warri, Delta, Nigeria</p>
-          <p class="text-xs text-gray-300">✉️ <a href="mailto:{{ contact_email }}" class="hover:text-white transition">{{ contact_email }}</a></p>
-          <p class="text-xs text-gray-300">📞 <a href="tel:{{ support_phone_tel }}" class="hover:text-white transition">{{ support_phone }}</a></p>
-          {% comment %}The product's own accounts, from the one list in
-          apps/core/branding.py that the About page reads too.{% endcomment %}
-          <ul class="flex items-center gap-2.5 pt-2" aria-label="Social accounts">
-            {% for account in social_links %}
-              <li>
-                <a href="{{ account.url }}" class="footer-social"
-                   {% if account.icon != "mail" %}target="_blank" rel="noopener noreferrer"{% endif %}
-                   aria-label="{% if account.icon == 'mail' %}Email {{ product_name }} at {{ account.handle }}{% else %}{{ product_name }} on {{ account.label }}{% endif %}"
-                   title="{{ account.handle }}">
-                  {% include "partials/_social_icon.html" with icon=account.icon %}
-                </a>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-
+  <footer class="bg-ink-900 text-white">
+    <div class="lp-frame grid gap-10 py-14 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      <div class="space-y-4">
+        <a href="{% url 'core:landing' %}" class="flex items-center gap-2.5" aria-label="{{ product_name }} home">
+          <span class="grid size-10 place-items-center rounded-xl bg-white p-2">
+            {% include "core/_lattice_mark.html" with svg_class="w-full h-full text-panel" %}
+          </span>
+          <span class="text-xl font-extrabold">SCHOOLCORD</span>
+        </a>
+        <p class="max-w-sm text-panel-copy">School records, school-fee payments and outstanding balances in one place. Built for Nigerian private schools.</p>
+        <p class="text-sm text-panel-copy">Operational in Nigeria, all 36 states.</p>
       </div>
 
-      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 font-mono gap-4">
-        <p>&copy; {% now "Y" %} SCHOOLCORD. ALL RIGHTS RESERVED.</p>
-        <div class="flex gap-6">
-          <a href="{% url 'core:privacy' %}" class="hover:text-gray-300">PRIVACY POLICY</a>
-          {% comment %}The design's "Terms of Service" link is left out until a
-          terms page exists: a footer link to "#" is one that goes nowhere.{% endcomment %}
-        </div>
+      <div>
+        <h2 class="text-base font-bold">On this page</h2>
+        <ul class="mt-3 space-y-2 text-panel-copy">
+          <li><a href="#features" class="hover:text-white hover:underline">Product</a></li>
+          <li><a href="#how-it-works" class="hover:text-white hover:underline">How it works</a></li>
+          <li><a href="#live-demo" class="hover:text-white hover:underline">Interactive demo</a></li>
+          <li><a href="#pricing" class="hover:text-white hover:underline">Pricing</a></li>
+        </ul>
       </div>
+
+      <div>
+        <h2 class="text-base font-bold">Contact and support</h2>
+        <ul class="mt-3 space-y-2 text-panel-copy">
+          <li>Warri, Delta, Nigeria</li>
+          <li><a href="mailto:{{ contact_email }}" class="hover:text-white hover:underline">{{ contact_email }}</a></li>
+          <li><a href="tel:{{ support_phone_tel }}" class="hover:text-white hover:underline">{{ support_phone }}</a></li>
+        </ul>
+        {% comment %}The product's own accounts, from the one list in
+        apps/core/branding.py that the About page reads too.{% endcomment %}
+        <ul class="mt-4 flex items-center gap-2.5" aria-label="Social accounts">
+          {% for account in social_links %}
+            <li>
+              <a href="{{ account.url }}" class="footer-social"
+                 {% if account.icon != "mail" %}target="_blank" rel="noopener noreferrer"{% endif %}
+                 aria-label="{% if account.icon == 'mail' %}Email {{ product_name }} at {{ account.handle }}{% else %}{{ product_name }} on {{ account.label }}{% endif %}"
+                 title="{{ account.handle }}">
+                {% include "partials/_social_icon.html" with icon=account.icon %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="lp-frame flex flex-col items-center justify-between gap-3 border-t border-white/15 py-6 {# taste-skill-ignore: a real table, receipt or footer rule #} text-sm text-panel-copy sm:flex-row">
+      <p>&copy; {% now "Y" %} SCHOOLCORD. All rights reserved.</p>
+      <a href="{% url 'core:privacy' %}" class="hover:text-white hover:underline">Privacy policy</a>
     </div>
   </footer>
 

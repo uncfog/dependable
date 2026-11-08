@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% comment %}
+Choosing a plan. Prices come from apps/schools/plans.py, the same list the landing
+page shows. Paying means a bank transfer with a reference; the plan changes only
+when the platform owner confirms the money arrived (apps/schools/admin.py).
+{% endcomment %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    You are on the {{ school.get_plan_display }} plan &middot; paid once a term by bank transfer
+  </p>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+  {% if open_order %}
+    <div class="note-banner">
+      <span>
+        <strong>You have a transfer in progress</strong> for the {{ open_order.get_plan_display }} plan,
+        reference <span class="tabular-nums">{{ open_order.reference }}</span>.
+      </span>
+      <a href="{% url 'billing:order' open_order.reference %}" class="btn btn-primary btn-sm">View transfer</a>
+    </div>
+  {% endif %}
+
+  {% if not bank_ready %}
+    <div class="card card-pad">
+      <p class="text-sm text-ink-700">
+        Plans can't be paid for here yet. Contact
+        <a class="font-medium text-brand-800 underline" href="mailto:{{ support_email }}">{{ support_email }}</a>
+        and we'll set you up.
+      </p>
+    </div>
+  {% endif %}
+
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    {% for offer in offers %}
+      <section class="card card-pad flex flex-col {% if offer.plan == school.plan %}ring-2 ring-lime{% endif %}"
+               aria-labelledby="plan-{{ offer.plan }}">
+        <div class="flex items-center justify-between gap-2">
+          <h2 id="plan-{{ offer.plan }}" class="text-lg font-extrabold text-ink-900">{{ offer.name }}</h2>
+          {% if offer.plan == school.plan %}<span class="status-pill status-paid">Current</span>{% endif %}
+        </div>
+        <p class="mt-1 text-sm text-ink-600">{{ offer.students }}</p>
+        <p class="mt-4 text-3xl font-extrabold tabular-nums text-ink-900">{{ offer.price_display }}</p>
+        <p class="text-sm text-ink-600">
+          {% if offer.price_naira %}per term{% elif offer.price_naira == 0 %}no charge{% else %}priced for your schools{% endif %}
+        </p>
+
+        <div class="mt-auto pt-6">
+          {% if offer.price_naira is None %}
+            <a href="mailto:{{ support_email }}" class="btn btn-line btn-full">Contact us</a>
+          {% elif offer.orderable and offer.plan != school.plan and bank_ready %}
+            <form method="post" action="{% url 'billing:checkout' %}">
+              {% csrf_token %}
+              <input type="hidden" name="plan" value="{{ offer.plan }}">
+              <button type="submit" class="btn btn-lime btn-full">Pay by transfer</button>
+            </form>
+          {% endif %}
+        </div>
+      </section>
+    {% endfor %}
+  </div>
+
+  <p class="text-sm text-ink-600">
+    Your plan switches on when we confirm the transfer, usually the same working day.
+  </p>
+</div>
+{% endblock %}
