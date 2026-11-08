@@ -1,53 +1,165 @@
 {% extends "base.html" %}
 
+{% comment %}
+Recording money a parent paid for several children, laid out like Record a payment:
+the payment on the left, what happens next and the decision on the right. The
+money is shared between the children on the next page.
+{% endcomment %}
+
+{% block shell_class %}band-overlap no-bottom-nav{% endblock %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">One payment for several children</p>
+{% endblock %}
+
 {% block page_actions %}
-  <a href="{% url 'payments:shared_list' %}" class="btn btn-ghost text-sm">Cancel</a>
+  <a href="{% url 'payments:shared_list' %}" class="btn btn-ghost icon-only-phone text-sm">
+    <span class="max-sm:sr-only">Cancel</span>
+    <svg class="size-5 sm:hidden" fill="none" viewBox="0 0 24 24" stroke-width="2.2"
+         stroke="currentColor" stroke-linecap="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6 6 18" />
+    </svg>
+  </a>
 {% endblock %}
 
 {% block content %}
-<form method="post" enctype="multipart/form-data" class="mx-auto max-w-2xl space-y-5">
+<form method="post" enctype="multipart/form-data"
+      class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
   {% csrf_token %}
-  <section class="card overflow-hidden">
-    {% if form.non_field_errors %}
-      <div class="border-b border-overdue/30 bg-overdue-soft px-5 py-3 text-sm text-overdue-strong">
-        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
-      </div>
-    {% endif %}
-    <div class="grid gap-4 px-5 py-5 sm:grid-cols-2">
+
+  {% if form.non_field_errors %}
+    <div class="card border-overdue/30 bg-overdue-soft px-4 py-3 text-sm text-overdue-strong lg:col-span-2">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="card card-pad space-y-3.5">
+    <h2 class="card-heading">Payment details</h2>
+
+    <div class="grid gap-3.5 {% if form.branch %}sm:grid-cols-2{% endif %}">
       {% include "partials/_field.html" with field=form.family %}
       {% if form.branch %}{% include "partials/_field.html" with field=form.branch %}{% endif %}
-      {% include "partials/_field.html" with field=form.amount %}
-      {% include "partials/_field.html" with field=form.date_paid %}
-      {% include "partials/_field.html" with field=form.method %}
+    </div>
+
+    <div class="grid gap-3.5 sm:grid-cols-2">
+      <div>
+        <label for="{{ form.amount.id_for_label }}" class="field-label">
+          {{ form.amount.label }} <span class="text-overdue" aria-hidden="true">*</span>
+        </label>
+        <div class="money-field">{{ form.amount }}</div>
+        <p class="field-hint">The whole amount the parent paid</p>
+        {% for error in form.amount.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        {% include "partials/_field.html" with field=form.date_paid %}
+        {# The calendar's picker: hidden, and driven only by the calendar button beside the typed date. #}
+        <input type="date" class="date-native" data-date-native data-no-datepicker tabindex="-1" aria-hidden="true">
+      </div>
+    </div>
+
+    <div>
+    <fieldset class="seg-field">
+      <legend class="field-label">{{ form.method.label }}</legend>
+      <div class="seg">
+        {% for radio in form.method %}
+          <label class="seg-option">{{ radio.tag }}<span>{{ radio.choice_label }}</span></label>
+        {% endfor %}
+      </div>
+      {% for error in form.method.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+    </fieldset>
+    </div>
+
+    <div class="grid gap-3.5 sm:grid-cols-2">
       {% include "partials/_field.html" with field=form.reference %}
       {% include "partials/_field.html" with field=form.payer_name %}
-      {% include "partials/_field.html" with field=form.note %}
-      <div class="sm:col-span-2">
-        {% include "partials/_field.html" with field=form.receipt %}
+    </div>
+
+    {% include "partials/_field.html" with field=form.note %}
+
+    <div>
+      <p class="field-label">Receipt</p>
+      <div class="drop-zone">
+        <span data-drop-text>Drop the bank slip or POS receipt here, or choose a file. Image or PDF.</span>
+        {{ form.receipt }}
       </div>
+      {% for error in form.receipt.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
   </section>
 
-  <section class="card overflow-hidden">
-    <div class="px-5 py-4">
-      <label class="check-row px-0">
-        {{ form.confirm_now }}
-        <span class="text-sm font-medium text-ink-900">{{ form.confirm_now.label }}</span>
-      </label>
-      <p class="field-hint">{{ form.confirm_now.help_text }}</p>
-      <label class="check-row mt-3 px-0">
+  <section class="card card-pad lg:sticky lg:top-4">
+    <h2 class="card-heading">After this payment</h2>
+    <ol class="space-y-2.5 text-sm text-ink-900">
+      <li class="kv-row"><span>1. It is recorded for the family</span><span class="text-ink-600">now</span></li>
+      <li class="kv-row"><span>2. You share it between the children</span><span class="text-ink-600">next page</span></li>
+      <li class="kv-row kv-row-total"><span>Until then</span><span>shown as not allocated</span></li>
+    </ol>
+    <p class="mt-2 text-xs text-ink-500" data-confirm-note>
+      {% if form.confirm_now.value %}Counts toward each child's balance once it is shared.{% else %}Waits for a check before it counts toward any balance.{% endif %}
+    </p>
+
+    <label class="mt-4 flex items-start gap-2.5 text-sm text-ink-900">
+      {{ form.confirm_now }}
+      <span>Confirm now. I have checked the receipt against the family and the amount. Leave unticked to hold it for checking.</span>
+    </label>
+    {% for error in form.confirm_now.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
+
+    {% comment %}
+    The human check on an attached slip: the form refuses to confirm one without it
+    (ReceiveForm.receipt_checked). The script shows it only once a slip and a
+    confirmation are both in play; without script it stays visible.
+    {% endcomment %}
+    <div class="mt-3" data-receipt-check>
+      <label class="flex items-start gap-2.5 text-sm font-medium text-ink-900">
         {{ form.receipt_checked }}
-        <span class="text-sm font-medium text-ink-900">{{ form.receipt_checked.label }}</span>
+        <span>{{ form.receipt_checked.label }}</span>
       </label>
-      <p class="field-hint">Only needed when a slip is attached and you are confirming.</p>
-      {% for error in form.receipt_checked.errors %}
-        <p class="field-error">{{ error }}</p>
-      {% endfor %}
+      {% for error in form.receipt_checked.errors %}<p class="field-error">{{ error }}</p>{% endfor %}
     </div>
-    <div class="border-t border-ink-200 px-5 py-4">
-      <button type="submit" class="btn btn-primary w-full text-sm sm:w-auto">Record and share</button>
-      <p class="field-hint">You share it between the children on the next page. It stays visible as not allocated until you do.</p>
+
+    <div class="form-cta mt-4">
+      <button type="submit" class="btn btn-primary btn-full"
+              data-verb="Save for checking" data-verb-confirming="Record and confirm">{% if form.confirm_now.value %}Record and confirm{% else %}Save for checking{% endif %}</button>
     </div>
   </section>
 </form>
+{% endblock %}
+
+{% block extra_body %}
+{% include "payments/_typed_date.html" %}
+<script>
+  // What the button says, the note under the steps, and when the slip check shows,
+  // all follow the confirm box and the chosen file.
+  (function () {
+    var confirm = document.querySelector('input[name="confirm_now"]');
+    var checkRow = document.querySelector('[data-receipt-check]');
+    var file = document.querySelector('input[name="receipt"]');
+    var note = document.querySelector('[data-confirm-note]');
+    var button = document.querySelector('button[data-verb]');
+    var dropText = document.querySelector('[data-drop-text]');
+
+    function refresh() {
+      var confirming = !!(confirm && confirm.checked);
+      if (button) button.textContent = button.getAttribute(confirming ? 'data-verb-confirming' : 'data-verb');
+      if (note) {
+        note.textContent = confirming
+          ? "Counts toward each child's balance once it is shared."
+          : 'Waits for a check before it counts toward any balance.';
+      }
+      if (checkRow) {
+        var hasSlip = !!(file && file.files && file.files.length);
+        var errored = !!checkRow.querySelector('.field-error');
+        checkRow.hidden = !(errored || (confirming && hasSlip));
+      }
+    }
+
+    if (confirm) confirm.addEventListener('change', refresh);
+    if (file) {
+      file.addEventListener('change', function () {
+        if (dropText && file.files && file.files.length) dropText.textContent = file.files[0].name;
+        refresh();
+      });
+    }
+    refresh();
+  })();
+</script>
 {% endblock %}

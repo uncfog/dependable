@@ -829,6 +829,8 @@ QUICK_ACCESS = (
     ("Outstanding", "payments:outstanding", "red", "alert"),
     ("Students", "students:student_list", "purple", "person"),
     ("Payments", "payments:index", "green", "lines"),
+    ("Families", "families:list", "purple", "family"),
+    ("Family payments", "payments:shared_list", "green", "wallet"),
     ("Fee structures", "fees:structure_list", "amber", "naira"),
     ("Reports", "reports:index", "blue", "bars"),
 )

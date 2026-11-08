@@ -168,7 +168,7 @@ class FamilyPaymentTests(BrowserTestCase):
 
         self.go(page, f"/payments/family/record/?family={family.pk}")
         page.fill('input[name="amount"]', "70000")
-        page.click('button:has-text("Record and share")')
+        page.click('button:has-text("Save for checking")')
         page.wait_for_selector("[data-share-form]")
         txn = PaymentTransaction.all_objects.get(family=family)
 
