@@ -1,0 +1,16 @@
+.git
+.github
+.claude
+.env
+.env.*
+node_modules
+venv
+__pycache__
+*.py[cod]
+staticfiles
+media
+db.sqlite3
+default_*.sqlite3
+.idea
+.vscode
+.DS_Store
