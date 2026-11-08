@@ -15,6 +15,7 @@ call apps.schools.billing.confirm_order.
 {% endblock %}
 
 {% block page_actions %}
+  <a href="{% url 'core:platform_prices' %}" class="btn btn-primary text-sm">Edit prices</a>
   <a href="{% url 'core:landing' %}?preview=1#pricing" target="_blank" rel="noopener" class="btn btn-secondary text-sm">
     View the landing page
   </a>
@@ -71,7 +72,7 @@ call apps.schools.billing.confirm_order.
   <section aria-labelledby="plans-heading">
     <div class="mb-3 flex flex-wrap items-baseline justify-between gap-2">
       <h2 id="plans-heading" class="text-base font-extrabold text-ink-900">Plans and prices</h2>
-      <p class="text-sm text-ink-600">The same cards visitors see on the landing page, and the prices the checkout charges.</p>
+      <p class="text-sm text-ink-600">The same cards visitors see on the landing page, and the prices the checkout charges. <a href="{% url 'core:platform_prices' %}" class="font-medium text-brand-800 underline">Edit prices</a></p>
     </div>
     {% include "core/_pricing_cards.html" with show_signup=False %}
     {% for label, count in unlisted_plans %}

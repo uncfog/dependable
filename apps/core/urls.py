@@ -19,6 +19,7 @@ urlpatterns = [
     # One per role -- see navigation.ROLE_HOME, which decides who lands where.
     path("platform/", views.PlatformOverviewView.as_view(), name="platform_overview"),
     path("platform/billing/", plan_views.PlatformBillingView.as_view(), name="platform_billing"),
+    path("platform/billing/prices/", plan_views.PlatformPricesView.as_view(), name="platform_prices"),
     path(
         "platform/billing/orders/<int:pk>/confirm/",
         plan_views.PlatformConfirmOrderView.as_view(),

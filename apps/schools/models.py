@@ -257,6 +257,46 @@ class PlanOrder(TimeStampedModel):
         return f"{self.reference} ({self.school.name})"
 
 
+class PlanPrice(TimeStampedModel):
+    """What a plan costs and who it is for, as the platform owner set it.
+
+    One row per plan that is sold. The landing page, the checkout, the platform's
+    Plans & billing screen and a school owner's settings all read these through
+    ``apps.schools.plans.offers()``. A blank price means "quoted". An order keeps the
+    amount it was placed at, so changing a price never changes an order already open.
+    """
+
+    plan = models.CharField(max_length=20, choices=Plan.choices, unique=True)
+    price_naira = models.PositiveIntegerField(null=True, blank=True)
+    students_label = models.CharField(max_length=60)
+    max_students = models.PositiveIntegerField(null=True, blank=True)
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="+",
+    )
+
+    def __str__(self) -> str:
+        return f"{self.get_plan_display()}: {self.price_naira}"
+
+
+class PlanPriceChange(models.Model):
+    """One saved change to the price list: what changed, by whom, and when."""
+
+    plan = models.CharField(max_length=20, choices=Plan.choices)
+    summary = models.CharField(max_length=300)
+    changed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+        related_name="+",
+    )
+    changed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-changed_at", "-id"]
+
+    def __str__(self) -> str:
+        return f"{self.plan}: {self.summary}"
+
+
 class SchoolModuleQuerySet(TenantQuerySet):
     # A row belongs to one school and to no campus: a module is bought by the
     # school, not opened at a branch.

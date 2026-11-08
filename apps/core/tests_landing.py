@@ -176,10 +176,10 @@ class PricingMatchesTheCheckoutTests(LandingTestCase):
     """The page advertises exactly what apps/schools/plans.py charges."""
 
     def test_every_plan_and_price_is_the_checkouts(self):
-        from apps.schools.plans import OFFERS
+        from apps.schools.plans import offers
 
         pricing = self.html[self.html.index('id="pricing"'):self.html.index('id="faq"')]
-        for offer in OFFERS:
+        for offer in offers():
             with self.subTest(plan=offer.plan):
                 self.assertIn(offer.name, pricing)
                 self.assertIn(offer.price_display, pricing)

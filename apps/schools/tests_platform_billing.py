@@ -8,8 +8,10 @@ from django.urls import reverse
 from apps.accounts.models import User
 from apps.core.navigation import nav_for
 from apps.core.roles import Role
-from apps.schools.models import Branch, Plan, PlanOrder, School, SchoolStatus
-from apps.schools.plans import OFFERS
+from apps.schools.models import (
+    Branch, Plan, PlanOrder, PlanPrice, PlanPriceChange, School, SchoolStatus,
+)
+from apps.schools.plans import offers
 
 
 @override_settings(
@@ -40,7 +42,7 @@ class PlatformBillingTests(TestCase):
         self.client.force_login(self.platform)
         response = self.client.get(reverse("core:platform_billing"))
         self.assertEqual(response.status_code, 200)
-        for offer in OFFERS:
+        for offer in offers():
             self.assertContains(response, offer.name)
             self.assertContains(response, offer.price_display)
         self.assertContains(response, "PLN-T1")
@@ -94,3 +96,76 @@ class PlatformBillingTests(TestCase):
         self.assertContains(response, "1 school on Trial")
         self.assertNotContains(response, "Start free")
         self.assertContains(response, "₦45,000")
+
+
+
+@override_settings(
+    BILLING_BANK_NAME="Test Bank", BILLING_ACCOUNT_NAME="Test Ltd", BILLING_ACCOUNT_NUMBER="0123456789"
+)
+class EditablePriceTests(TestCase):
+    def setUp(self):
+        self.school = School.objects.create(name="Hilltop", slug="hilltop", plan=Plan.FREE,
+                                            status=SchoolStatus.ACTIVE)
+        Branch.objects.create(school=self.school, name="Main")
+        self.platform = User.objects.create_user(
+            username="platform2", password="x-pass-123!", role=Role.PLATFORM_OWNER
+        )
+        self.owner = User.objects.create_user(
+            username="owner2", password="x-pass-123!", role=Role.SCHOOL_OWNER, school=self.school
+        )
+
+    def post_prices(self, **changes):
+        data = {}
+        for offer in offers():
+            data[f"{offer.plan}-price_naira"] = "" if offer.price_naira is None else offer.price_naira
+            data[f"{offer.plan}-students_label"] = offer.students
+            data[f"{offer.plan}-max_students"] = "" if offer.max_students is None else offer.max_students
+        data.update(changes)
+        return self.client.post(reverse("core:platform_prices"), data)
+
+    def test_the_migration_seeded_todays_prices(self):
+        self.assertEqual([(o.plan, o.price_naira) for o in offers()], [
+            ("free", 0), ("starter", 45000), ("growth", 90000), ("professional", 180000),
+            ("enterprise", None),
+        ])
+
+    def test_a_new_price_reaches_the_landing_page_and_the_checkout_and_is_logged(self):
+        self.client.force_login(self.platform)
+        self.assertRedirects(self.post_prices(**{"starter-price_naira": "50000"}),
+                             reverse("core:platform_billing"))
+        change = PlanPriceChange.objects.get()
+        self.assertIn("₦45,000 to ₦50,000", change.summary)
+        self.assertEqual(change.changed_by, self.platform)
+
+        self.client.logout()
+        self.assertContains(self.client.get(reverse("core:landing")), "₦50,000")
+
+        self.client.force_login(self.owner)
+        self.client.post(reverse("billing:checkout"), {"plan": Plan.STARTER})
+        self.assertEqual(PlanOrder.objects.get(plan=Plan.STARTER).amount_naira, 50_000)
+
+    def test_an_open_order_keeps_the_price_it_was_placed_at(self):
+        self.client.force_login(self.owner)
+        self.client.post(reverse("billing:checkout"), {"plan": Plan.GROWTH})
+        self.client.force_login(self.platform)
+        self.post_prices(**{"growth-price_naira": "99000"})
+        self.assertEqual(PlanOrder.objects.get(plan=Plan.GROWTH).amount_naira, 90_000)
+
+    def test_a_blank_price_is_quoted_and_cannot_be_bought(self):
+        self.client.force_login(self.platform)
+        self.post_prices(**{"professional-price_naira": ""})
+        self.client.force_login(self.owner)
+        self.client.post(reverse("billing:checkout"), {"plan": Plan.PROFESSIONAL})
+        self.assertFalse(PlanOrder.objects.filter(plan=Plan.PROFESSIONAL).exists())
+
+    def test_the_free_plan_stays_free(self):
+        self.client.force_login(self.platform)
+        response = self.post_prices(**{"free-price_naira": "1000"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(PlanPrice.objects.get(plan=Plan.FREE).price_naira, 0)
+
+    def test_nobody_else_can_edit_prices(self):
+        self.client.force_login(self.owner)
+        self.post_prices(**{"starter-price_naira": "1"})
+        self.assertEqual(PlanPrice.objects.get(plan=Plan.STARTER).price_naira, 45_000)
+        self.assertFalse(PlanPriceChange.objects.exists())

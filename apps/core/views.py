@@ -116,9 +116,9 @@ class LandingView(TemplateView):
         context["structured_data"] = structured_data(self.request)
         context["hero_image"] = self.HERO_IMAGE
         # The prices the checkout charges, so the page and the bill cannot disagree.
-        from apps.schools.plans import OFFERS
+        from apps.schools.plans import offers
 
-        context["plan_offers"] = OFFERS
+        context["plan_offers"] = offers()
         context["public_preview"] = self.request.user.is_authenticated
         return context
 

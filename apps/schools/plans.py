@@ -12,7 +12,7 @@ platform owner, not bought from the billing screen.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from .models import Plan
 
@@ -39,7 +39,10 @@ class PlanOffer:
         return f"₦{self.price_naira:,}"
 
 
-OFFERS: tuple[PlanOffer, ...] = (
+#: What each plan is called, in order, and what it cost when prices first moved into the
+#: database. The live prices are the PlanPrice rows; these stand in only for a
+#: plan that has no row.
+DEFAULT_OFFERS: tuple[PlanOffer, ...] = (
     PlanOffer(Plan.FREE, "Free", 0, "Up to 100 students", 100, orderable=False),
     PlanOffer(Plan.STARTER, "Starter", 45_000, "Up to 200 students", 200, orderable=True),
     PlanOffer(Plan.GROWTH, "Growth", 90_000, "Up to 600 students", 600, orderable=True),
@@ -54,6 +57,41 @@ OFFERS: tuple[PlanOffer, ...] = (
 )
 
 
+def offers() -> tuple[PlanOffer, ...]:
+    """The plans as they are sold today: the names and order above, with the prices
+    and student limits the platform owner set (``PlanPrice``).
+
+    Read fresh each time; it is one small query, and a cached copy could show a price
+    after it changed.
+    """
+    from django.db import DatabaseError
+
+    from .models import PlanPrice
+
+    try:
+        stored = {row.plan: row for row in PlanPrice.objects.all()}
+    except DatabaseError:
+        # Before the table exists (a migration in flight): the defaults, not an error page.
+        return DEFAULT_OFFERS
+    result = []
+    for offer in DEFAULT_OFFERS:
+        row = stored.get(offer.plan)
+        if row is None:
+            result.append(offer)
+            continue
+        result.append(
+            replace(
+                offer,
+                price_naira=row.price_naira,
+                students=row.students_label,
+                max_students=row.max_students,
+                # Only a positive price can be paid for at the checkout.
+                orderable=bool(row.price_naira),
+            )
+        )
+    return tuple(result)
+
+
 def offer_for(plan: str) -> PlanOffer | None:
     """The offer for a plan value, or ``None`` for anything not on the page."""
-    return next((offer for offer in OFFERS if offer.plan == plan), None)
+    return next((offer for offer in offers() if offer.plan == plan), None)

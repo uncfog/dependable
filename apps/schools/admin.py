@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from apps.core.admin import TenantScopedAdminMixin
 
 from . import billing, teardown
-from .models import Branch, PlanOrder, School, SchoolModule, SchoolStatus
+from .models import Branch, PlanOrder, PlanPrice, PlanPriceChange, School, SchoolModule, SchoolStatus
 
 _STATUS_COLOURS = {
     SchoolStatus.ACTIVE: "#0f7a52",
@@ -217,3 +217,36 @@ class PlanOrderAdmin(admin.ModelAdmin):
         # The same function the Plans & billing screen uses.
         switched = sum(1 for order in queryset if billing.confirm_order(order))
         self.message_user(request, f"{switched} school(s) switched to the plan they paid for.")
+
+
+
+@admin.register(PlanPrice)
+class PlanPriceAdmin(admin.ModelAdmin):
+    """Read-only here: prices are changed on Plans & billing, which logs every change."""
+
+    list_display = ("plan", "price_naira", "students_label", "max_students", "updated_by", "updated_at")
+    readonly_fields = list_display
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PlanPriceChange)
+class PlanPriceChangeAdmin(admin.ModelAdmin):
+    list_display = ("plan", "summary", "changed_by", "changed_at")
+    readonly_fields = list_display
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
