@@ -73,9 +73,21 @@ def payload(notification) -> str:
     })
 
 
+def _in_worker(function, *args):
+    """Run on a pool thread, then let go of that thread's database connection.
+
+    The cleanup lives here rather than in deliver(), so running deliver() on a
+    request's or a test's own connection never closes that connection mid-transaction.
+    """
+    try:
+        return function(*args)
+    finally:
+        close_old_connections()
+
+
 def _run(function, *args):
     """Hand work to the background pool. Tests replace this to run it in place."""
-    _POOL.submit(function, *args)
+    _POOL.submit(_in_worker, function, *args)
 
 
 def deliver(notification_id: int) -> int:
@@ -85,40 +97,37 @@ def deliver(notification_id: int) -> int:
     from .models import Notification, PushSubscription
 
     sent = 0
-    try:
-        notification = Notification.objects.filter(pk=notification_id).first()
-        if notification is None or not configured():
-            return 0
-        data = payload(notification)
-        for subscription in PushSubscription.objects.filter(user_id=notification.recipient_id):
-            try:
-                webpush(
-                    subscription_info={
-                        "endpoint": subscription.endpoint,
-                        "keys": {"p256dh": subscription.p256dh, "auth": subscription.auth},
-                    },
-                    data=data,
-                    vapid_private_key=settings.WEBPUSH_VAPID_PRIVATE_KEY,
-                    vapid_claims={"sub": settings.WEBPUSH_VAPID_SUBJECT},
-                    ttl=TTL_SECONDS,
-                    timeout=TIMEOUT_SECONDS,
-                )
-            except WebPushException as error:
-                status = getattr(getattr(error, "response", None), "status_code", None)
-                if status in (404, 410):
-                    subscription.delete()  # the browser unsubscribed or was reset
-                else:
-                    log.warning("webpush: %s to subscription %s failed: %s",
-                                notification_id, subscription.pk, status or error)
-                continue
-            except Exception:  # noqa: BLE001 -- one bad device must not stop the others
-                log.exception("webpush: %s to subscription %s failed",
-                              notification_id, subscription.pk)
-                continue
-            PushSubscription.objects.filter(pk=subscription.pk).update(last_sent_at=timezone.now())
-            sent += 1
-    finally:
-        close_old_connections()
+    notification = Notification.objects.filter(pk=notification_id).first()
+    if notification is None or not configured():
+        return 0
+    data = payload(notification)
+    for subscription in PushSubscription.objects.filter(user_id=notification.recipient_id):
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": subscription.endpoint,
+                    "keys": {"p256dh": subscription.p256dh, "auth": subscription.auth},
+                },
+                data=data,
+                vapid_private_key=settings.WEBPUSH_VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": settings.WEBPUSH_VAPID_SUBJECT},
+                ttl=TTL_SECONDS,
+                timeout=TIMEOUT_SECONDS,
+            )
+        except WebPushException as error:
+            status = getattr(getattr(error, "response", None), "status_code", None)
+            if status in (404, 410):
+                subscription.delete()  # the browser unsubscribed or was reset
+            else:
+                log.warning("webpush: %s to subscription %s failed: %s",
+                            notification_id, subscription.pk, status or error)
+            continue
+        except Exception:  # noqa: BLE001 -- one bad device must not stop the others
+            log.exception("webpush: %s to subscription %s failed",
+                          notification_id, subscription.pk)
+            continue
+        PushSubscription.objects.filter(pk=subscription.pk).update(last_sent_at=timezone.now())
+        sent += 1
     return sent
 
 
