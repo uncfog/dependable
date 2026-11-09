@@ -1,4 +1,4 @@
-"""The public landing page, rebuilt from the SCHOOLCORD_Landing_Page.html design.
+"""The public landing page, built from the owner's landing prototype.
 
 What matters functionally: every way in reaches a real route, the page is
 light-only, and the demo is a demo -- labelled, and unable to reach the server.
@@ -33,7 +33,7 @@ class LandingTestCase(TestCase):
             self.html.index('id="live-demo"'):self.html.index('id="pricing"')
         ]
         dialogs_and_script = self.html[
-            self.html.index("<!-- DEMO DIALOG: RECORD PAYMENT"):self.html.index("<footer")
+            self.html.index("<!-- DEMO DIALOG: RECORD PAYMENT"):self.html.index('<script type="module">')
         ]
         return section + dialogs_and_script
 
@@ -48,7 +48,7 @@ class CallToActionTests(LandingTestCase):
 
     def test_every_set_up_and_plan_button_goes_to_signup(self):
         signup = reverse("core:signup")
-        for label in ("Set up my school", "Recover your unpaid fees",
+        for label in ("Create a free school account",
                       "Start free", "Choose Starter", "Choose Growth",
                       "Choose Professional", "Create my school account"):
             with self.subTest(label=label):
@@ -61,7 +61,10 @@ class CallToActionTests(LandingTestCase):
     def test_whatsapp_links_read_the_branding_config(self):
         self.assertEqual(
             self.html.count(f'href="{SUPPORT_WHATSAPP_URL}" target="_blank" rel="noopener"'),
-            2,  # Enterprise's "Talk to us" and "Chat with us on WhatsApp"
+            # The hero's "Ask us on WhatsApp", Enterprise's "Talk to us" and the
+            # closing "Chat with us on WhatsApp". The corner helper is the fourth,
+            # with noreferrer as well.
+            3,
         )
 
     def test_whatsapp_and_footer_use_the_real_support_line(self):
@@ -118,60 +121,65 @@ class DesignCleanupTests(LandingTestCase):
         self.assertIn("sm:text-base", quote)
         self.assertNotIn("text-[11px]", quote)
 
-    def test_the_testimonial_card_is_the_block_and_holds_the_badge(self):
+    def test_the_testimonial_holds_the_name_and_the_badge(self):
         figure = self.html[self.html.index("<figure"):self.html.index("</figure>")]
         self.assertIn("Mrs. G. Oveh", figure)
         self.assertIn("98.4% Fee Reconciled", figure)
-        self.assertIn("bg-white", re.search(r'<figure class="([^"]*)"', figure).group(1))
-        # The navy photo panel it used to float on is gone.
-        self.assertNotIn("bg-slate-900", self.html[:self.html.index("<figure")][-600:])
+        self.assertIn("<figcaption", figure)
 
     def test_the_structured_data_is_still_there(self):
         self.assertIn('<script type="application/ld+json">', self.html)
 
 
-class MotionTests(LandingTestCase):
-    """What moves is the product doing its job, and the page ships finished.
+class TruthfulCopyTests(LandingTestCase):
+    """The prototype this page came from promised features SCHOOLCORD does not
+    have. None of those promises reaches the live page."""
 
-    The receipt prints, the stamp lands and the message is delivered; each term
-    step's paperwork changes as it does in the app. There is no fade-up on
-    every section, and the "before" states exist only where motion is allowed.
-    """
+    def test_no_bank_account_per_student_or_automatic_matching(self):
+        lowered = self.html.lower()
+        for claim in ("wema", "account number", "matched today", "matches the money",
+                      "reconciled automatically", "reconcile themselves",
+                      "matched and receipted on its own"):
+            with self.subTest(claim=claim):
+                self.assertNotIn(claim, lowered)
 
-    def css(self) -> str:
-        return Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
+    def test_no_holiday_billing_promise(self):
+        lowered = self.html.lower()
+        self.assertNotIn("long vacation", lowered)
+        self.assertNotIn("not the holiday", lowered)
 
-    def test_no_section_fades_up_for_its_own_sake(self):
-        self.assertNotIn("lp-reveal", self.html)
-        self.assertNotIn("lp-reveal", self.css())
+    def test_it_says_what_the_bursar_does(self):
+        self.assertIn("checks it against the bank", self.html)
+        self.assertIn("Payments checked today", self.html)
 
-    def test_the_receipt_and_each_term_step_play_their_own_change(self):
-        self.assertIn('class="lp-hero ', self.html)
-        self.assertEqual(self.html.count('class="lp-term-step"'), 5)
-        # Each step's finished state is written in the page: the payment is
-        # checked, the bar stands at 53%, the message was delivered.
-        self.assertIn('<span class="lp-now">All checked</span>', self.html)
-        self.assertIn("lp-fill block h-full w-[53%]", self.html)
-        self.assertIn("10:51 &middot; delivered", self.html)
 
-    def test_before_states_only_exist_where_motion_is_allowed(self):
-        css = self.css()
-        start = css.index("/* --- Landing motion")
-        block = css[start:css.index(".lp-drawn .tile", start)]
-        gated = block[block.index("@media (prefers-reduced-motion: no-preference) {"):]
-        ungated = block[:block.index("@media (prefers-reduced-motion: no-preference) {")]
-        self.assertNotIn(":not(.is-live)", ungated)
-        self.assertIn(".lp-motion .lp-term-step:not(.is-live)", gated)
-        # Armed by the script only when it can play them.
-        self.assertIn("root.classList.add('lp-motion')", self.html)
-        self.assertIn("prefers-reduced-motion: reduce", self.html)
+class PrototypeLookTests(LandingTestCase):
+    """The prototype's three families, served by us, and effects that only add."""
 
-    def test_nothing_bounces_or_counts_up(self):
-        block = self.css()[self.css().index("/* --- Landing motion"):]
-        block = block[:block.index(".lp-drawn .tile")]
-        self.assertNotIn("--ease-spring", block)
-        self.assertNotIn("cubic-bezier", block)
-        self.assertNotIn("countUp", self.html)
+    def test_its_fonts_are_ours(self):
+        source = Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
+        for family, stem in (("Bricolage Grotesque", "bricolage-grotesque-latin-opsz"),
+                             ("Figtree", "figtree-latin-wght"),
+                             ("JetBrains Mono", "jetbrains-mono-latin-wght")):
+            with self.subTest(family=family):
+                self.assertIn(f'font-family: "{family}"', source)
+                self.assertTrue(Path(settings.BASE_DIR, "static", "fonts", f"{stem}-normal.woff2").exists())
+        self.assertNotIn("fonts.googleapis.com", self.html)
+
+    def test_the_effects_are_ours_and_optional(self):
+        for name in ("shader-gradient", "typewriter", "iso-lattice", "live-orb", "stretchy-footer"):
+            with self.subTest(effect=name):
+                self.assertIn(f"/static/js/vendor/23rd/{name}-vanilla.js", self.html)
+                self.assertTrue(Path(settings.BASE_DIR, "static", "js", "vendor", "23rd",
+                                     f"{name}-vanilla.js").exists())
+        # The receipt is in the page as text, before and without the typewriter.
+        self.assertIn('<pre class="sc-receipt-still"', self.html)
+        self.assertIn("Balance          NGN 35,000", self.html)
+
+    def test_fixed_parts_sit_outside_the_page_the_footer_stretch_lifts(self):
+        page_end = self.html.index("</div>{# .sc-page") if "{# .sc-page" in self.html else             self.html.index("</footer>")
+        self.assertGreater(self.html.index('class="sc-helper"'), page_end)
+        self.assertGreater(self.html.index('id="payment-modal"'), page_end)
 
 
 class DemoIsADemoTests(LandingTestCase):

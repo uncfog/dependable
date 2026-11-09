@@ -1,38 +1,31 @@
 {% extends "base.html" %}
+{% load static %}
 
 {% comment %}
-The public home page, in the redesign's style (docs/design-references/schoolcord-
-redesign.html): blue band, lime for the one action, white rounded cards, tinted
-tiles and pills, Public Sans. Light-only: `html_attrs` pins data-theme="light" and
-`theme_init` drops the script that would follow a stored choice into dark mode.
+The public home page, from the owner's landing prototype (claude.ai artifact
+"SCHOOLCORD Landing Prototype"): deep green, Bricolage Grotesque for display,
+Figtree for text, JetBrains Mono for figures and labels, all three served from
+static/fonts. The page is dark whatever the visitor's setting; its tokens live on
+`.sc` in assets/app.css ("Landing page, the prototype's look"), so no signed-in
+screen is touched. `html_attrs` still pins data-theme="light", because the demo
+inside it is built from the app's own light components.
 
-Every way in goes to a real route: Log in to `login`, every set-up button to
-`core:signup`. The WhatsApp links read `support_whatsapp_url` from
-apps/core/branding.py, and the footer prints `support_phone`.
+Truthful by construction. The prototype promised a bank account number per
+student and automatic matching; SCHOOLCORD does neither, so the copy here says
+what it does: the bursar records each payment, checks it against the bank, and
+the receipt and balance follow. Every name, figure and school on the page is
+invented. Prices come from apps/schools/plans.py (`plan_offers`), the list the
+checkout charges from. WhatsApp links read `support_whatsapp_url`.
 
-The prices are not typed here. They come from apps/schools/plans.py, the same list
-the billing screen charges from, so the page and the checkout cannot disagree.
+The moving parts are five components from the 23rd registry (23rd.dev), compiled
+to plain JavaScript in static/js/vendor/23rd and started by static/js/landing.js:
+the hero's colour wash, the receipt typewriter, the isometric figure, the
+WhatsApp orb and the stretch at the foot of the page. Each holds still under
+prefers-reduced-motion and the page reads in full without them.
 
-The "Try it" section is a client-side demo with made-up records. It is labelled as
-such, it contains no form, and its script never calls the server: recording a
-payment only edits an array in the page, and "WhatsApp" shows the message it would
-send instead of opening WhatsApp to a stranger's number.
-
-The page follows one school term, in the order a bursar does the work: fees set,
-transfers arriving, each one checked and receipted, reminders, the owner's end of
-term. The hero is a sample receipt drawn in HTML, not a dashboard: it is the thing
-a parent actually holds. Every name, figure and reference on it is invented.
-Under each step, where the owner's copy had one, is how the same step goes on
-paper. Title, meta description and JSON-LD come from apps/core/seo.py.
-
-Motion shows the product doing its job, and nothing else moves. The receipt
-prints, the bursar's stamp lands and the WhatsApp message goes from sent to
-delivered. Down the term, each step's paperwork changes the way it does in
-the app as the step scrolls into view: the transfer arrives, Amara's payment
-is checked, the reminder goes out, the term's bar fills. The page ships in
-its finished state; motion is armed only when the script runs and the
-visitor has not asked for reduced motion. Rules: assets/app.css, "Landing
-motion".
+The "Try it" section is the client-side demo from the previous page, unchanged:
+made-up records in a JavaScript array, no form, and nothing sent anywhere.
+Title, meta description and JSON-LD come from apps/core/seo.py.
 {% endcomment %}
 
 {% block html_attrs %} data-theme="light" data-theme-lock{% endblock %}
@@ -44,257 +37,192 @@ motion".
 {% endblock %}
 
 {% block anonymous_content %}
-<div class="lp-lattice lp-drawn min-h-full">
+<div class="sc lp-lattice min-h-full">
+<div class="sc-page" data-stretchy-page>
 
-  <a href="#live-demo" class="block bg-ink-900 px-4 py-2.5 text-center text-sm font-semibold text-white hover:underline">
-    See it working: try the demo with sample students
-  </a>
-
-  {# ===== Band: navigation and the opening claim ============================ #}
-  <header class="lp-band relative z-40">
-      <div class="lp-frame flex h-20 items-center justify-between gap-4">
-        <a href="{% url 'core:landing' %}" class="flex items-center gap-2.5" aria-label="{{ product_name }} home">
-          <span class="grid size-10 place-items-center rounded-xl bg-white p-2">
-            {% include "core/_lattice_mark.html" with svg_class="w-full h-full text-panel" %}
-          </span>
-          <span class="text-xl font-extrabold tracking-tight text-white">SCHOOLCORD</span>
-        </a>
-
-        <nav class="hidden items-center gap-7 text-sm font-semibold text-white lg:flex" aria-label="Page sections">
-          <a href="#term" class="hover:underline">How a term runs</a>
-          <a href="#calculator" class="hover:underline">Fee recovery</a>
-          <a href="#live-demo" class="hover:underline">Demo</a>
-          <a href="#pricing" class="hover:underline">Pricing</a>
-          <a href="{% url 'core:about' %}" class="hover:underline">About</a>
-        </nav>
-
-        <div class="flex items-center gap-2.5">
-          <a href="{% url 'login' %}" class="lp-btn lp-btn-ghost">Log in</a>
-          <button type="button" id="lp-menu-button" class="lp-btn lp-btn-ghost lg:hidden"
-                  aria-controls="mobile-menu" aria-expanded="false" aria-label="Menu">
-            <svg class="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-          </button>
-        </div>
+  {# ===== Navigation, laid over the hero's wash ============================ #}
+  <header class="sc-top">
+    <nav class="sc-wrap sc-nav" aria-label="Main">
+      <a class="sc-brand" href="{% url 'core:landing' %}" aria-label="{{ product_name }} home">
+        <span class="sc-brand-mark">{% include "core/_lattice_mark.html" with svg_class="w-full h-full" %}</span>
+        SCHOOLCORD
+      </a>
+      <div class="sc-nav-links">
+        <a class="sc-hide-sm" href="#receipts">Receipts</a>
+        <a class="sc-hide-sm" href="#how">How it works</a>
+        <a class="sc-hide-sm" href="#live-demo">Demo</a>
+        <a class="sc-hide-xs" href="#pricing">Pricing</a>
+        <a href="{% url 'login' %}">Log in</a>
+        <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-primary sc-btn-sm">Start free</a>
       </div>
-
-      <div id="mobile-menu" class="hidden lg:hidden">
-        <div class="lp-frame pb-5">
-          <div class="space-y-1 rounded-2xl bg-white p-3 text-base font-semibold text-ink-900 shadow-panel">
-            <a href="#term" class="block rounded-xl px-3 py-3 hover:bg-ink-100">How a term runs</a>
-            <a href="#calculator" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Fee recovery</a>
-            <a href="#live-demo" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Demo</a>
-            <a href="#pricing" class="block rounded-xl px-3 py-3 hover:bg-ink-100">Pricing</a>
-            <a href="{% url 'core:about' %}" class="block rounded-xl px-3 py-3 hover:bg-ink-100">About</a>
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime mt-2 w-full">Set up my school</a>
-          </div>
-        </div>
-      </div>
+    </nav>
   </header>
 
   <main id="main">
-  <div class="lp-band">
-    <section class="lp-frame grid items-center gap-12 pb-28 pt-6 sm:pt-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:gap-16 lg:pb-36">
-      <div>
-        <h1 class="lp-display text-white">{{ product_tagline }}</h1>
-        <p class="mt-6 max-w-xl text-lg leading-relaxed text-panel-copy sm:text-xl">
-          {{ product_subhead }} Your bursar records each payment, checks it against the bank
-          and sends the parent a receipt on WhatsApp. Built for Nigerian private schools.
-        </p>
-        <div class="mt-8 flex flex-wrap items-center gap-3">
-          <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime lp-btn-lg">Set up my school</a>
-          <a href="#live-demo" class="lp-btn lp-btn-ghost lp-btn-lg">Try the demo</a>
+  {# ===== Hero: the claim, and a morning's payments ========================= #}
+  <section class="sc-hero" aria-label="SCHOOLCORD">
+    <div class="sc-wash" data-sc-wash aria-hidden="true"><canvas></canvas></div>
+    <div class="sc-veil" aria-hidden="true"></div>
+    <div class="sc-hero-inner">
+      <div class="sc-wrap sc-hero-grid">
+        <div>
+          <p class="sc-eyebrow">For proprietors, principals and bursars</p>
+          <h1 class="sc-display">Run Your School. Not Your <em>Paperwork</em>.</h1>
+          <p class="sc-hero-sub">
+            {{ product_subhead }} Your bursar records each payment, checks it against the bank,
+            and the parent gets a receipt showing what is still owed.
+          </p>
+          <div class="sc-ctas">
+            <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-primary">Create a free school account</a>
+            <a class="sc-btn sc-btn-ghost" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener">
+              {% include "core/_whatsapp_glyph.html" %} Ask us on WhatsApp
+            </a>
+          </div>
+          {% for offer in plan_offers %}{% if offer.price_naira == 0 %}
+            <p class="sc-hero-note">Free for schools with {{ offer.students|lower }}. No card needed.</p>
+          {% endif %}{% endfor %}
         </div>
-      </div>
 
-      {# The thing a parent holds: a receipt, checked and sent. Sample data only. #}
-      <div class="lp-hero relative mx-auto w-full max-w-[25rem] pb-10 lg:mr-0"
-           role="img"
-           aria-label="A sample fee receipt: Amara Nwachukwu, JSS 1, paid 58,500 naira by bank transfer, checked against the bank and sent to her mother on WhatsApp. 12,000 naira left to pay.">
-        <div class="lp-receipt" aria-hidden="true">
-          <div class="flex items-start justify-between gap-4 border-b border-dashed border-ink-200 pb-4">
+        {# A morning at the bursary. Invented names and figures; the script adds a row now and then. #}
+        <div class="sc-ledger" aria-label="Example: payments the bursar checked this morning">
+          <div class="sc-ledger-head">
             <div>
-              <p class="text-xs font-semibold text-ink-600">Sample school</p>
-              <p class="text-lg font-extrabold">Fee receipt</p>
+              <p class="sc-eyebrow">First term &middot; Bursary</p>
+              <p class="sc-ledger-title">Payments checked today</p>
             </div>
-            <p class="text-right text-xs leading-relaxed text-ink-600 tabular-nums">RCP-000214<br>6 Nov 2026</p>
+            <span class="sc-eyebrow">Example</span>
           </div>
-          <dl class="mt-4 space-y-1.5 text-sm">
-            <div class="flex justify-between gap-4"><dt class="text-ink-600">Student</dt><dd class="font-bold">Amara Nwachukwu &middot; JSS 1</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-ink-600">Term</dt><dd class="font-semibold">First Term 2026/27</dd></div>
-            <div class="flex justify-between gap-4"><dt class="text-ink-600">Paid by</dt><dd class="font-semibold">Bank transfer</dd></div>
-          </dl>
-          <div class="mt-4 space-y-1.5 border-t border-ink-100 pt-4 text-sm tabular-nums"> {# taste-skill-ignore: a real table, receipt or footer rule #}
-            <p class="lp-print flex justify-between gap-4"><span>Tuition</span><span>&#8358;45,000</span></p>
-            <p class="lp-print flex justify-between gap-4"><span>Feeding</span><span>&#8358;13,500</span></p>
-            <p class="lp-print flex justify-between gap-4 pt-1.5 text-base font-extrabold"><span>Paid today</span><span>&#8358;58,500</span></p>
-            <p class="lp-print flex justify-between gap-4 text-ink-600"><span>Left to pay (transport)</span><span>&#8358;12,000</span></p>
+          <div data-sc-ledger-rows>
+            <div class="sc-ledger-row">
+              <p class="sc-who">Chidinma Okoro</p>
+              <p class="sc-amt sc-mono">&#8358;50,000</p>
+              <p class="sc-meta sc-mono">JSS 2B &middot; Bank transfer &middot; 09:42</p>
+              <p class="sc-amt"><span class="sc-pill sc-pill-part">Bal &#8358;35,000</span></p>
+            </div>
+            <div class="sc-ledger-row">
+              <p class="sc-who">Tega Omonigho</p>
+              <p class="sc-amt sc-mono">&#8358;95,000</p>
+              <p class="sc-meta sc-mono">SS 1A &middot; Bank transfer &middot; 09:37</p>
+              <p class="sc-amt"><span class="sc-pill sc-pill-paid">Paid in full</span></p>
+            </div>
+            <div class="sc-ledger-row">
+              <p class="sc-who">Ifeoma Eze</p>
+              <p class="sc-amt sc-mono">&#8358;62,000</p>
+              <p class="sc-meta sc-mono">Primary 4 &middot; Cash at the office &middot; 09:21</p>
+              <p class="sc-amt"><span class="sc-pill sc-pill-paid">Paid in full</span></p>
+            </div>
+            <div class="sc-ledger-row">
+              <p class="sc-who">Oghenekaro Edewor</p>
+              <p class="sc-amt sc-mono">&#8358;40,000</p>
+              <p class="sc-meta sc-mono">JSS 3A &middot; Bank transfer &middot; 09:05</p>
+              <p class="sc-amt"><span class="sc-pill sc-pill-part">Bal &#8358;45,000</span></p>
+            </div>
           </div>
-          <p class="lp-stamp">Checked against<br>the bank</p>
+          <div class="sc-ledger-foot">
+            <span>Checked against the bank today</span>
+            <span class="sc-mono sc-strong" data-sc-ledger-total>&#8358;247,000</span>
+          </div>
         </div>
-        <p class="lp-bubble" aria-hidden="true">
-          Receipt sent to Mrs Nwachukwu on WhatsApp
-          <span class="lp-swap mt-1 text-xs text-ink-600"><span class="lp-was">10:51 &middot; sent</span><span class="lp-now">10:51 &middot; delivered</span></span>
-        </p>
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
 
-  {# ===== What a proprietor says, overlapping the band ====================== #}
-  <section class="lp-frame relative -mt-16 lg:-mt-20" aria-label="What a school director says">
-    <figure class="grid gap-6 rounded-[24px] bg-white p-6 shadow-card sm:p-9 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
-      <div>
-        <blockquote class="text-sm font-semibold leading-relaxed text-ink-900 sm:text-base lg:text-xl lg:leading-relaxed">
-          &ldquo;SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records.&rdquo;
-        </blockquote>
-        <figcaption class="mt-4">
-          <p class="text-sm font-bold text-ink-900">Mrs. G. Oveh</p>
-          <p class="text-sm text-ink-600">School Director, Delta State</p>
-        </figcaption>
-      </div>
-      <p class="justify-self-start rounded-2xl bg-panel px-5 py-3 text-white lg:justify-self-end">
-        <span class="block text-xs text-panel-copy">This term</span>
-        <span class="text-lg font-extrabold">98.4% Fee Reconciled</span>
-      </p>
+  {# ===== What a proprietor says =========================================== #}
+  <section class="sc-quote-wrap" aria-label="What a school director says">
+    <figure class="sc-wrap sc-quote">
+      <blockquote class="sc-quote-text text-sm sm:text-base lg:text-xl">
+        &ldquo;SCHOOLCORD helped us assemble and organize all of our scattered records in different paper registers into one platform. Now we can easily access our records.&rdquo;
+      </blockquote>
+      <figcaption class="sc-quote-by">
+        <span class="sc-strong">Mrs. G. Oveh</span>
+        <span class="sc-quote-role">School Director, Delta State</span>
+      </figcaption>
+      <p class="sc-quote-stat"><span class="sc-eyebrow">This term</span><span class="sc-quote-figure">98.4% Fee Reconciled</span></p>
     </figure>
   </section>
 
-  {# ===== One term, in the order the bursar works it ======================= #}
-  <section id="term" class="lp-frame lp-section">
-    <div class="max-w-3xl">
-      <h2 class="lp-heading">One school term, without the paperwork.</h2>
-      <p class="lp-lede">What SCHOOLCORD does, in the order your bursar does it. Under each step, how it goes on paper.</p>
-    </div>
+  {# ===== What parents receive ============================================== #}
+  <section class="sc-section" id="receipts">
+    <div class="sc-wrap sc-split">
+      <div class="sc-stage sc-stage-tw" data-sc-typewriter
+           data-text="GREENFIELD ACADEMY, WARRI
+Fee payment received
 
-    <ol class="lp-term mt-12">
-      <li class="lp-term-step">
-        <p class="lp-term-when">Before resumption</p>
-        <div>
-          <h3 class="lp-term-title">Set each class's fees</h3>
-          <p class="lp-term-copy">Tuition, transport, feeding and uniform for each class, with a discount for one child where you need it. Bring your students in from one Excel workbook and group brothers and sisters into families, so one parent payment can cover all of them.</p>
-        </div>
-        <div class="lp-art" aria-hidden="true">
-          <p class="font-extrabold">JSS 1 &middot; First Term</p>
-          <div class="mt-2 space-y-1 tabular-nums text-ink-700">
-            <p class="lp-print flex justify-between"><span>Tuition</span><span>&#8358;45,000</span></p>
-            <p class="lp-print flex justify-between"><span>Feeding</span><span>&#8358;13,500</span></p>
-            <p class="lp-print flex justify-between"><span>Transport</span><span>&#8358;12,000</span></p>
-            <p class="lp-print flex justify-between border-t border-ink-100 pt-1 font-bold text-ink-900"><span>Per child</span><span>&#8358;70,500</span></p> {# taste-skill-ignore: a real table, receipt or footer rule #}
-          </div>
-        </div>
-      </li>
+Chidinma Okoro, JSS 2B
+First term fees  NGN 85,000
+Paid today       NGN 50,000
+Balance          NGN 35,000
 
-      <li class="lp-term-step">
-        <p class="lp-term-when">Week one</p>
-        <div>
-          <h3 class="lp-term-title">Transfers start arriving</h3>
-          <p class="lp-term-copy">The bursar records each one from the bank alert, and the cash paid at the office too. You see each one the moment it is recorded.</p>
-          <p class="lp-term-paper"><span>On paper:</span> cash paid to a bursar, or a transfer, and nobody tells the proprietor.</p>
-        </div>
-        <div class="lp-art lp-arrive" aria-hidden="true">
-          <p class="text-xs font-semibold text-ink-600">Bank alert &middot; 6 Nov, 10:42</p>
-          <p class="mt-1 font-extrabold tabular-nums">Credit &#8358;58,500.00</p>
-          <p class="text-ink-700">From NWACHUKWU C. &middot; AMARA JSS1 FEES</p>
-          <p class="lp-print lp-late mt-3 border-t border-ink-100 pt-2 text-xs font-semibold text-ink-600">Recorded by the bursar &middot; waiting to be checked</p> {# taste-skill-ignore: a real table, receipt or footer rule #}
-        </div>
-      </li>
+Thank you. The Bursary">
+        {# Shown until the typewriter starts, and instead of it without JavaScript. #}
+        <pre class="sc-receipt-still" aria-label="A sample receipt">GREENFIELD ACADEMY, WARRI
+Fee payment received
 
-      <li class="lp-term-step">
-        <p class="lp-term-when">The same day</p>
-        <div>
-          <h3 class="lp-term-title">Checked, then receipted</h3>
-          <p class="lp-term-copy">A payment counts toward a balance only once it is checked against the bank. Then the receipt goes to the parent, with what is still owed printed on it.</p>
-          <p class="lp-term-paper"><span>On paper:</span> &ldquo;I paid last month,&rdquo; in the exam hall, with no quick way to check.</p>
-        </div>
-        <div class="lp-art" aria-hidden="true">
-          <p class="lp-swap text-sm font-extrabold"><span class="lp-was">Waiting for you</span><span class="lp-now">All checked</span></p>
-          <div class="mt-2 flex items-center justify-between gap-3">
-            <span><b class="block">Amara Nwachukwu</b><span class="text-xs text-ink-600">&#8358;58,500 &middot; paid 6 Nov</span></span>
-            <span class="lp-swap justify-items-end"><span class="lp-was lp-press rounded-[10px] bg-lime px-3 py-1 text-xs font-bold text-on-lime">Check</span><span class="lp-now status-pill status-paid">Checked</span></span>
-          </div>
-          <div class="mt-2 flex items-center justify-between gap-3 border-t border-ink-100 pt-2"> {# taste-skill-ignore: a real table, receipt or footer rule #}
-            <span><b class="block">Khadija Usman</b><span class="text-xs text-ink-600">&#8358;56,000 &middot; paid 5 Nov</span></span>
-            <span class="status-pill status-paid">Checked</span>
-          </div>
-        </div>
-      </li>
+Chidinma Okoro, JSS 2B
+First term fees  NGN 85,000
+Paid today       NGN 50,000
+Balance          NGN 35,000
 
-      <li class="lp-term-step">
-        <p class="lp-term-when">Mid-term</p>
-        <div>
-          <h3 class="lp-term-title">Reminders for what is still owed</h3>
-          <p class="lp-term-copy">Outstanding balances, oldest debt first. Send each parent a polite, itemised reminder in your school's name, with your bank details so they can pay from their banking app.</p>
-          <p class="lp-term-paper"><span>On paper:</span> letters home that never leave the school bag.</p>
-        </div>
-        <p class="lp-art lp-bubble-flat lp-arrive lp-from-tail" aria-hidden="true">&ldquo;Dear Chief Adebayo, kindly note Emeka's JSS1 term balance is &#8358;40,000&hellip;&rdquo;</p>
-      </li>
-
-      <li class="lp-term-step">
-        <p class="lp-term-when">End of term</p>
-        <div>
-          <h3 class="lp-term-title">You see the whole term</h3>
-          <p class="lp-term-copy">What was expected, what came in and what is still owed, by class and campus, with every change in the audit trail. The bursar records payments; your controls stay locked.</p>
-          <p class="lp-term-paper"><span>On paper:</span> weekends spent balancing ledger notebooks.</p>
-        </div>
-        <div class="lp-art" aria-hidden="true">
-          <p class="text-xs font-semibold text-ink-600">Collected this term</p>
-          <p class="text-2xl font-extrabold tabular-nums">&#8358;2,770,500</p>
-          <p class="text-xs text-ink-600">of &#8358;5,202,000 expected &middot; 53%</p>
-          <span class="mt-3 block h-2.5 overflow-hidden rounded-full bg-ink-100"><i class="lp-fill block h-full w-[53%] rounded-full bg-panel"></i></span>
-        </div>
-      </li>
-    </ol>
-  </section>
-
-  {# ===== Fee recovery calculator ============================================ #}
-  <section id="calculator" class="lp-frame lp-section">
-    <div class="max-w-3xl">
-      <h2 class="lp-heading">How much could your school recover?</h2>
-      <p class="lp-lede">Move the sliders to estimate the unpaid fees SCHOOLCORD can help you collect this term.</p>
-    </div>
-
-    <div class="mt-10 grid items-stretch gap-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-      <div class="space-y-7 rounded-[24px] bg-white p-6 shadow-card sm:p-8">
-        <div>
-          <div class="mb-3 flex items-center justify-between gap-3">
-            <label for="calc-students" class="text-sm font-bold text-ink-900">Students enrolled</label>
-            <span id="calc-students-val" class="lp-value">250 Students</span>
-          </div>
-          <input type="range" id="calc-students" min="50" max="1500" step="10" value="250" class="lp-range">
-          <div class="mt-1.5 flex justify-between text-xs text-ink-600"><span>50</span><span>750</span><span>1,500+</span></div>
-        </div>
-
-        <div>
-          <div class="mb-3 flex items-center justify-between gap-3">
-            <label for="calc-fee" class="text-sm font-bold text-ink-900">Average fee per student, per term</label>
-            <span id="calc-fee-val" class="lp-value">&#8358;85,000</span>
-          </div>
-          <input type="range" id="calc-fee" min="20000" max="500000" step="5000" value="85000" class="lp-range">
-          <div class="mt-1.5 flex justify-between text-xs text-ink-600"><span>&#8358;20,000</span><span>&#8358;250,000</span><span>&#8358;500,000</span></div>
-        </div>
-
-        <p class="note-banner">
-          <span><strong>Proprietor insight:</strong> uncollected fees in Nigerian private schools typically run at 18% to 25% a term without reminders.</span>
-        </p>
+Thank you. The Bursary</pre>
       </div>
-
-      <div class="flex flex-col rounded-[24px] bg-panel p-6 text-white shadow-card sm:p-8" aria-live="polite">
-        <p class="text-sm text-panel-copy">Expected this term</p>
-        <p id="calc-total" class="text-3xl font-extrabold tabular-nums">&#8358;21,250,000</p>
-
-        <p class="mt-5 text-sm text-panel-copy">Typically unpaid without SCHOOLCORD (about 22%)</p>
-        <p id="calc-debt" class="text-2xl font-bold tabular-nums">&#8358;4,675,000</p>
-
-        <div class="mt-5 rounded-2xl bg-white/12 p-4">
-          <p class="text-sm text-panel-copy">Estimated recovered with SCHOOLCORD</p>
-          <p id="calc-recovered" class="text-3xl font-extrabold tabular-nums text-lime">&#8358;4,207,500</p>
-          <p class="mt-1 text-sm text-panel-copy">At a 90% recovery rate</p>
-        </div>
-
-        <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime mt-6 w-full lg:mt-auto">Recover your unpaid fees</a>
+      <div>
+        <p class="sc-eyebrow">What parents receive</p>
+        <h2 class="sc-display">A proper receipt, the minute the payment is checked.</h2>
+        <p class="sc-lede">Parents stop sending screenshots to the bursar's WhatsApp. Once the bursar has checked a payment against the bank, the receipt goes to the parent with the amount, the balance and the term it covers.</p>
+        <ul class="sc-facts">
+          <li><span class="sc-tick" aria-hidden="true">&#10003;</span><span>Part payments are tracked, so a &#8358;50,000 deposit on an &#8358;85,000 fee shows the &#8358;35,000 still owed.</span></li>
+          <li><span class="sc-tick" aria-hidden="true">&#10003;</span><span>Receipts go to parents on WhatsApp with your school's name on them, and print on plain paper.</span></li>
+          <li><span class="sc-tick" aria-hidden="true">&#10003;</span><span>Click the typewriter and type to try it yourself.</span></li>
+        </ul>
       </div>
     </div>
   </section>
 
+  {# ===== Setting up ======================================================== #}
+  <section class="sc-section" id="how">
+    <div class="sc-wrap sc-split sc-flip">
+      <div class="sc-stage sc-stage-iso">
+        <canvas data-sc-iso aria-hidden="true"></canvas>
+        <span class="sc-eyebrow sc-stage-cap">Collections, building up through the term</span>
+      </div>
+      <div>
+        <p class="sc-eyebrow">Running the same day</p>
+        <h2 class="sc-display">We do the setup. You take over with one click.</h2>
+        <div class="sc-steps">
+          <div class="sc-step">
+            <span class="sc-step-n">01</span>
+            <div>
+              <h3>We bring your students in</h3>
+              <p>Send us your class lists in one Excel workbook. We create the school account and load every student, class and fee item.</p>
+            </div>
+          </div>
+          <div class="sc-step">
+            <span class="sc-step-n">02</span>
+            <div>
+              <h3>You accept the handover</h3>
+              <p>You get one email. Accept it and the account, with every record in it, belongs to your school.</p>
+            </div>
+          </div>
+          <div class="sc-step">
+            <span class="sc-step-n">03</span>
+            <div>
+              <h3>Payments come in, balances follow</h3>
+              <p>Parents pay the way they do now. Your bursar records each payment and checks it against the bank, and the balance and the receipt follow.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ===== Try it ============================================================ #}
+  <section class="sc-section sc-section-demo" aria-labelledby="sc-demo-title">
+    <div class="sc-wrap">
+      <p class="sc-eyebrow">Try it</p>
+      <h2 class="sc-display" id="sc-demo-title">Record a payment yourself.</h2>
+      <p class="sc-lede">Sample students and made-up figures. Nothing you do here is saved or sent.</p>
+    </div>
+    <div class="sc-demo lp-drawn">
   {% comment %}
   ===== The demo =============================================================
   Illustrative only. Sample records in a JavaScript array; nothing here is a form,
@@ -365,80 +293,163 @@ motion".
     </div>
   </section>
 
-  {# ===== Pricing: from apps/schools/plans.py, the list the checkout charges from #}
-  <section id="pricing" class="lp-frame lp-section">
-    <div class="max-w-3xl">
-      <h2 class="lp-heading">Simple pricing, paid once a term.</h2>
-      <p class="lp-lede">Choose by the number of students. Pay by bank transfer from your school's settings; no card needed and no hidden charges.</p>
     </div>
+  </section>
 
-    {% include "core/_pricing_cards.html" with show_signup=True %}
+  {# ===== Pricing: from apps/schools/plans.py, the list the checkout charges from #}
+  <section class="sc-section" id="pricing">
+    <div class="sc-wrap">
+      <p class="sc-eyebrow">Pricing per term</p>
+      <h2 class="sc-display">Pay once a term, for the students you have.</h2>
+      <p class="sc-lede">Priced by the number of students on roll. Start free and move up as your school grows. Pay by bank transfer from your school's settings; no card needed and no hidden charges.</p>
+      <div class="sc-price-scroll">
+        <table class="sc-price-table" data-no-cards>
+          <thead>
+            <tr><th scope="col">Plan</th><th scope="col">Students</th><th scope="col">Per term</th><th scope="col"><span class="sr-only">Choose</span></th></tr>
+          </thead>
+          <tbody>
+            {% for offer in plan_offers %}
+              <tr{% if offer.plan == "growth" %} class="sc-feature"{% endif %}>
+                <th scope="row" class="sc-plan">{{ offer.name }}</th>
+                <td class="sc-num">{{ offer.students }}</td>
+                <td class="sc-num sc-strong">{{ offer.price_display }}</td>
+                <td class="sc-choose">
+                  {% if offer.price_naira is None %}
+                    <a class="sc-btn sc-btn-sm sc-btn-ghost" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener">Talk to us</a>
+                  {% elif offer.price_naira == 0 %}
+                    <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-sm sc-btn-ghost">Start free</a>
+                  {% else %}
+                    <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-sm {% if offer.plan == 'growth' %}sc-btn-primary{% else %}sc-btn-ghost{% endif %}">Choose {{ offer.name }}</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
 
-    <div class="mt-4 rounded-[24px] bg-white p-6 shadow-card sm:p-8">
-      <h3 class="text-lg font-extrabold text-ink-900">Every plan includes</h3>
-      <ul class="mt-4 grid gap-x-8 gap-y-3 text-ink-900 sm:grid-cols-2 lg:grid-cols-3">
-        <li class="lp-check">Student records, classes and term fees</li>
-        <li class="lp-check">Payments with receipts and an audit trail</li>
-        <li class="lp-check">Outstanding balances, oldest debt first</li>
-        <li class="lp-check">Fee reminders to parents</li>
-        <li class="lp-check">Owner, principal and bursar roles</li>
-        <li class="lp-check">Works on any phone; add it to your home screen</li>
+      <h3 class="sc-includes-title">Every plan includes</h3>
+      <ul class="sc-includes">
+        <li>Student records, classes and term fees</li>
+        <li>Payments with receipts and an audit trail</li>
+        <li>Outstanding balances, oldest debt first</li>
+        <li>Fee reminders to parents</li>
+        <li>Owner, principal and bursar roles</li>
+        <li>Works on any phone; add it to your home screen</li>
       </ul>
     </div>
   </section>
 
-  {# ===== Questions, then the way in ======================================= #}
-  <section id="faq" class="lp-frame lp-section">
-    <div class="grid gap-10 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+  {# ===== Questions ========================================================= #}
+  <section class="sc-section" id="faq">
+    <div class="sc-wrap sc-faq-grid">
       <div>
-        <h2 class="lp-heading">Answers for school proprietors.</h2>
-        <p class="lp-lede">Most schools are running the same day. If something here is not answered, ask us on WhatsApp.</p>
-        <div class="mt-8 flex flex-wrap items-center gap-3">
-          <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-blue lp-btn-lg">Create my school account</a>
-          <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-line lp-btn-lg">Chat with us on WhatsApp</a>
-        </div>
+        <p class="sc-eyebrow">Questions</p>
+        <h2 class="sc-display">Answers for school proprietors.</h2>
+        <p class="sc-lede">If something here is not answered, ask us on WhatsApp.</p>
       </div>
-      <div class="divide-y divide-ink-200 border-y border-ink-200"> {# taste-skill-ignore: a real table, receipt or footer rule #}
-      <details class="lp-faq py-4">
-        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
-          <span>Can I use SCHOOLCORD if my bursar is not good with computers?</span>
-          <span class="lp-faq-mark" aria-hidden="true">+</span>
-        </summary>
-        <p class="mt-2 max-w-2xl text-ink-600">Yes. The screens use plain buttons and short forms. If your bursar can send a WhatsApp message, they can record a payment and issue a receipt after a few minutes of showing.</p>
-      </details>
-      <details class="lp-faq py-4">
-        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
-          <span>How does it help me when I am not at school?</span>
-          <span class="lp-faq-mark" aria-hidden="true">+</span>
-        </summary>
-        <p class="mt-2 max-w-2xl text-ink-600">Sign in from any phone or tablet. You see payments as your bursar records them, so no money goes unreported.</p>
-      </details>
-      <details class="lp-faq py-4">
-        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
-          <span>What if the network is poor at our school?</span>
-          <span class="lp-faq-mark" aria-hidden="true">+</span>
-        </summary>
-        <p class="mt-2 max-w-2xl text-ink-600">SCHOOLCORD uses very little data and works on 3G and 4G. It needs a connection to save an entry. Nothing is kept on the phone, so a lost phone does not lose or leak your records.</p>
-      </details>
-      <details class="lp-faq py-4">
-        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
-          <span>Can parents pay from the reminder?</span>
-          <span class="lp-faq-mark" aria-hidden="true">+</span>
-        </summary>
-        <p class="mt-2 max-w-2xl text-ink-600">Reminders carry the child's balance and your school's bank details, so a parent can transfer straight from their banking app. You record the payment when it arrives.</p>
-      </details>
-      <details class="lp-faq py-4">
-        <summary class="flex cursor-pointer items-center justify-between gap-4 text-base font-bold text-ink-900">
-          <span>How do I pay for a plan?</span>
-          <span class="lp-faq-mark" aria-hidden="true">+</span>
-        </summary>
-        <p class="mt-2 max-w-2xl text-ink-600">From your school's settings, choose a plan and you get our bank details and a reference. Pay by transfer with that reference, tell us you have paid, and your plan switches on when the money arrives.</p>
-      </details>
+      <div class="sc-faq">
+        <details>
+          <summary><span>Can I use SCHOOLCORD if my bursar is not good with computers?</span><span class="sc-faq-mark" aria-hidden="true">+</span></summary>
+          <p>Yes. The screens use plain buttons and short forms. If your bursar can send a WhatsApp message, they can record a payment and issue a receipt after a few minutes of showing.</p>
+        </details>
+        <details>
+          <summary><span>How does it help me when I am not at school?</span><span class="sc-faq-mark" aria-hidden="true">+</span></summary>
+          <p>Sign in from any phone or tablet. You see payments as your bursar records them, so no money goes unreported.</p>
+        </details>
+        <details>
+          <summary><span>What if the network is poor at our school?</span><span class="sc-faq-mark" aria-hidden="true">+</span></summary>
+          <p>SCHOOLCORD uses very little data and works on 3G and 4G. It needs a connection to save an entry. Nothing is kept on the phone, so a lost phone does not lose or leak your records.</p>
+        </details>
+        <details>
+          <summary><span>Can parents pay from the reminder?</span><span class="sc-faq-mark" aria-hidden="true">+</span></summary>
+          <p>Reminders carry the child's balance and your school's bank details, so a parent can transfer straight from their banking app. Your bursar records the payment when it arrives.</p>
+        </details>
+        <details>
+          <summary><span>How do I pay for a plan?</span><span class="sc-faq-mark" aria-hidden="true">+</span></summary>
+          <p>From your school's settings, choose a plan and you get our bank details and a reference. Pay by transfer with that reference, tell us you have paid, and your plan switches on when the money arrives.</p>
+        </details>
       </div>
     </div>
   </section>
 
+  {# ===== The way in ======================================================== #}
+  <section class="sc-section sc-closing" id="start">
+    <div class="sc-wrap">
+      <p class="sc-eyebrow">Get started</p>
+      <h2 class="sc-display sc-closing-title">Open your school's free account before next term's fees fall due.</h2>
+      <div class="sc-ctas">
+        <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-primary">Create my school account</a>
+        <a class="sc-btn sc-btn-ghost" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener">
+          {% include "core/_whatsapp_glyph.html" %} Chat with us on WhatsApp
+        </a>
+      </div>
+    </div>
+  </section>
   </main>
+
+  {# ===== Footer ============================================================ #}
+  <footer class="sc-footer">
+    <div class="sc-wrap sc-footer-grid">
+      <div>
+        <a class="sc-brand" href="{% url 'core:landing' %}" aria-label="{{ product_name }} home">
+          <span class="sc-brand-mark">{% include "core/_lattice_mark.html" with svg_class="w-full h-full" %}</span>
+          SCHOOLCORD
+        </a>
+        <p class="sc-footer-copy">School records, school-fee payments and outstanding balances in one place. Built for Nigerian private schools, from Warri.</p>
+      </div>
+      <div>
+        <h2 class="sc-footer-head">On this page</h2>
+        <ul class="sc-footer-list">
+          <li><a href="#receipts">Receipts</a></li>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#live-demo">Interactive demo</a></li>
+          <li><a href="#pricing">Pricing</a></li>
+          <li><a href="{% url 'core:about' %}">About</a></li>
+        </ul>
+      </div>
+      <div>
+        <h2 class="sc-footer-head">Contact and support</h2>
+        <ul class="sc-footer-list">
+          <li>Warri, Delta State, Nigeria</li>
+          <li><a href="mailto:{{ contact_email }}">{{ contact_email }}</a></li>
+          <li><a href="tel:{{ support_phone_tel }}">{{ support_phone }}</a></li>
+        </ul>
+        {% comment %}The product's own accounts, from the one list in
+        apps/core/branding.py that the About page reads too.{% endcomment %}
+        <ul class="sc-social" aria-label="Social accounts">
+          {% for account in social_links %}
+            <li>
+              <a href="{{ account.url }}" class="footer-social"
+                 {% if account.icon != "mail" %}target="_blank" rel="noopener noreferrer"{% endif %}
+                 aria-label="{% if account.icon == 'mail' %}Email {{ product_name }} at {{ account.handle }}{% else %}{{ product_name }} on {{ account.label }}{% endif %}"
+                 title="{{ account.handle }}">
+                {% include "partials/_social_icon.html" with icon=account.icon %}
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="sc-wrap sc-footer-meta">
+      <span>&copy; {% now "Y" %} SCHOOLCORD. All rights reserved.</span>
+      <a href="{% url 'core:privacy' %}">Privacy policy</a>
+      <span class="sc-scroll-hint" aria-hidden="true">Scroll past the end &darr;</span>
+    </div>
+  </footer>
+</div>{# .sc-page: the part the footer stretch lifts; nothing fixed may sit inside it #}
+
+  {# The stretch below the page when it is pulled past its end. Decoration only. #}
+  <div class="sc-stretch" aria-hidden="true"><div class="sc-stretch-aurora"><canvas data-sc-stretch></canvas></div></div>
+
+  {# ===== The WhatsApp helper, always in reach ============================== #}
+  <div class="sc-helper">
+    <p class="sc-helper-bubble"><strong>Questions about SCHOOLCORD?</strong>Chat with the team on WhatsApp.</p>
+    <a class="sc-helper-btn" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener noreferrer" aria-label="Chat with SCHOOLCORD on WhatsApp">
+      <span class="sc-orb" aria-hidden="true"><canvas data-sc-orb></canvas></span>
+      <span class="sc-helper-badge" aria-hidden="true">{% include "core/_whatsapp_glyph.html" %}</span>
+    </a>
+  </div>
 
 
   <!-- DEMO DIALOG: RECORD PAYMENT (sample data only) -->
@@ -555,83 +566,16 @@ motion".
 
 
   <script>
-    // The landing page's behaviour: the mobile menu, the calculator, the
-    // term steps' motion and the client-side demo. Nothing below makes a request --
-    // no fetch, no XHR, no form -- and the demo's data lives in this array.
+    // The demo's behaviour. Nothing below makes a request -- no fetch, no XHR,
+    // no form -- and the demo's data lives in this array.
     (function () {
-      var root = document.documentElement;
       var page = document.querySelector('.lp-lattice');
 
       function naira(n) { return '₦' + Math.round(n).toLocaleString(); }
       function title(name) {
-        return name.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+        return name.toLowerCase().replace(/\w/g, function (c) { return c.toUpperCase(); });
       }
       function byId(id) { return document.getElementById(id); }
-
-      // --- Mobile menu -------------------------------------------------------
-      var menuButton = byId('lp-menu-button');
-      var menu = byId('mobile-menu');
-      menuButton.addEventListener('click', function () {
-        var open = menu.classList.toggle('hidden') === false;
-        menuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-      menu.addEventListener('click', function (e) {
-        if (e.target.closest('a')) {
-          menu.classList.add('hidden');
-          menuButton.setAttribute('aria-expanded', 'false');
-        }
-      });
-
-      // --- Calculator ----------------------------------------------------------
-      var calcStudents = byId('calc-students');
-      var calcFee = byId('calc-fee');
-      function updateCalculator() {
-        var students = parseInt(calcStudents.value, 10);
-        var fee = parseInt(calcFee.value, 10);
-        byId('calc-students-val').textContent = students.toLocaleString() + ' Students';
-        byId('calc-fee-val').textContent = naira(fee);
-        var total = students * fee;
-        var debt = total * 0.22;
-        var recovered = debt * 0.90;
-        byId('calc-total').textContent = naira(total);
-        byId('calc-debt').textContent = naira(debt);
-        byId('calc-recovered').textContent = naira(recovered);
-      }
-      calcStudents.addEventListener('input', updateCalculator);
-      calcFee.addEventListener('input', updateCalculator);
-
-      // --- The receipt and the term, step by step ----------------------
-      // The hero's receipt and each term step play their change once, when
-      // they are on screen (on a phone the receipt starts below the fold).
-      // Armed only here (`lp-motion`), so without the script, without
-      // IntersectionObserver or with reduced motion the page is simply in its
-      // finished state. Printing shows it finished too.
-      var steps = Array.prototype.slice.call(document.querySelectorAll('.lp-hero, .lp-term-step'));
-      function goLive(el) { el.classList.add('is-live'); }
-      var still = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (steps.length && !still && 'IntersectionObserver' in window) {
-        root.classList.add('lp-motion');
-        var observer = new IntersectionObserver(function (entries) {
-          entries.forEach(function (entry) {
-            if (!entry.isIntersecting) return;
-            goLive(entry.target);
-            observer.unobserve(entry.target);
-          });
-        }, { rootMargin: '0px 0px -15% 0px', threshold: 0.25 });
-        steps.forEach(function (el) { observer.observe(el); });
-        window.addEventListener('beforeprint', function () { steps.forEach(goLive); });
-        // An observer that misses an element would leave its paperwork
-        // hidden. Every few seconds, anything on screen and not yet live goes
-        // live anyway; off-screen steps keep their moment.
-        var net = window.setInterval(function () {
-          var waiting = steps.filter(function (el) { return !el.classList.contains('is-live'); });
-          if (!waiting.length) { window.clearInterval(net); return; }
-          waiting.forEach(function (el) {
-            var box = el.getBoundingClientRect();
-            if (box.top < window.innerHeight && box.bottom > 0) { goLive(el); observer.unobserve(el); }
-          });
-        }, 2500);
-      }
 
       // --- Demo (sample data only) ---------------------------------------------
       var studentData = [
@@ -799,62 +743,23 @@ motion".
         if (e.key === 'Escape' && anyModalOpen()) closeModals();
       });
 
-      updateCalculator();
       filterStatus('ALL');
     })();
   </script>
 
-  <footer class="bg-ink-900 text-white">
-    <div class="lp-frame grid gap-10 py-14 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      <div class="space-y-4">
-        <a href="{% url 'core:landing' %}" class="flex items-center gap-2.5" aria-label="{{ product_name }} home">
-          <span class="grid size-10 place-items-center rounded-xl bg-white p-2">
-            {% include "core/_lattice_mark.html" with svg_class="w-full h-full text-panel" %}
-          </span>
-          <span class="text-xl font-extrabold">SCHOOLCORD</span>
-        </a>
-        <p class="max-w-sm text-panel-copy">School records, school-fee payments and outstanding balances in one place. Built for Nigerian private schools.</p>
-        <p class="text-sm text-panel-copy">Operational in Nigeria, all 36 states.</p>
-      </div>
-
-      <div>
-        <h2 class="text-base font-bold">On this page</h2>
-        <ul class="mt-3 space-y-2 text-panel-copy">
-          <li><a href="#term" class="hover:text-white hover:underline">How a term runs</a></li>
-          <li><a href="#calculator" class="hover:text-white hover:underline">Fee recovery</a></li>
-          <li><a href="#live-demo" class="hover:text-white hover:underline">Interactive demo</a></li>
-          <li><a href="#pricing" class="hover:text-white hover:underline">Pricing</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <h2 class="text-base font-bold">Contact and support</h2>
-        <ul class="mt-3 space-y-2 text-panel-copy">
-          <li>Warri, Delta, Nigeria</li>
-          <li><a href="mailto:{{ contact_email }}" class="hover:text-white hover:underline">{{ contact_email }}</a></li>
-          <li><a href="tel:{{ support_phone_tel }}" class="hover:text-white hover:underline">{{ support_phone }}</a></li>
-        </ul>
-        {% comment %}The product's own accounts, from the one list in
-        apps/core/branding.py that the About page reads too.{% endcomment %}
-        <ul class="mt-4 flex items-center gap-2.5" aria-label="Social accounts">
-          {% for account in social_links %}
-            <li>
-              <a href="{{ account.url }}" class="footer-social"
-                 {% if account.icon != "mail" %}target="_blank" rel="noopener noreferrer"{% endif %}
-                 aria-label="{% if account.icon == 'mail' %}Email {{ product_name }} at {{ account.handle }}{% else %}{{ product_name }} on {{ account.label }}{% endif %}"
-                 title="{{ account.handle }}">
-                {% include "partials/_social_icon.html" with icon=account.icon %}
-              </a>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
-    <div class="lp-frame flex flex-col items-center justify-between gap-3 border-t border-white/15 py-6 {# taste-skill-ignore: a real table, receipt or footer rule #} text-sm text-panel-copy sm:flex-row">
-      <p>&copy; {% now "Y" %} SCHOOLCORD. All rights reserved.</p>
-      <a href="{% url 'core:privacy' %}" class="hover:text-white hover:underline">Privacy policy</a>
-    </div>
-  </footer>
+  {# The moving parts. A module, so a browser too old for them simply skips it. #}
+  <script type="module">
+    import { start } from "{% static 'js/landing.js' %}";
+    const load = (url) => import(url).catch(() => null);
+    const [shaderGradient, typewriter, isoLattice, liveOrb, stretchyFooter] = await Promise.all([
+      load("{% static 'js/vendor/23rd/shader-gradient-vanilla.js' %}"),
+      load("{% static 'js/vendor/23rd/typewriter-vanilla.js' %}"),
+      load("{% static 'js/vendor/23rd/iso-lattice-vanilla.js' %}"),
+      load("{% static 'js/vendor/23rd/live-orb-vanilla.js' %}"),
+      load("{% static 'js/vendor/23rd/stretchy-footer-vanilla.js' %}"),
+    ]);
+    start({ shaderGradient, typewriter, isoLattice, liveOrb, stretchyFooter });
+  </script>
 
 </div>
 {% endblock %}

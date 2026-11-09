@@ -55,6 +55,25 @@
 @font-face { font-family: "Playfair Display"; font-style: italic; font-weight: 400 900; font-display: swap;
   src: url("../fonts/playfair-display-latin-wght-italic.woff2") format("woff2");
   unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+/* The landing page's three families, from the owner's prototype. */
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/bricolage-grotesque-latin-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Bricolage Grotesque"; font-style: normal; font-weight: 200 800; font-display: swap;
+  src: url("../fonts/bricolage-grotesque-latin-ext-opsz-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap;
+  src: url("../fonts/figtree-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "Figtree"; font-style: normal; font-weight: 300 900; font-display: swap;
+  src: url("../fonts/figtree-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family: "JetBrains Mono"; font-style: normal; font-weight: 100 800; font-display: swap;
+  src: url("../fonts/jetbrains-mono-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF; }
 
 /* ==========================================================================
    SCHOOLCORD design tokens
@@ -3846,73 +3865,6 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
   line-height: 1.5;
 }
 
-/* --- Landing motion ----------------------------------------------------------
-   One rule for the whole page: what moves is the product doing its job. The
-   receipt prints, the stamp lands, the message is delivered; down the term,
-   each step's paperwork changes as it does in the app, each once, on screen. Nothing fades up for
-   the sake of it, nothing bounces (`--ease-out` only) and no figure counts up.
-
-   Every element is written in its finished state. The "before" states live
-   only inside `prefers-reduced-motion: no-preference` and under `.lp-motion`,
-   which the page's script adds once it can play them. */
-.lp-swap { display: inline-grid; }
-.lp-swap > * { grid-area: 1 / 1; }
-.lp-swap > .lp-was { opacity: 0; }
-
-@keyframes lp-feed { from { opacity: 0; transform: translateY(14px) rotate(-1.5deg); } }
-@keyframes lp-line { from { opacity: 0; transform: translateY(4px); } }
-@keyframes lp-stamp { from { opacity: 0; transform: rotate(-9deg) scale(1.35); } }
-@keyframes lp-rise { from { opacity: 0; transform: translateY(10px); } }
-@keyframes lp-show { from { opacity: 0; } }
-@keyframes lp-hide { from { opacity: 1; } to { opacity: 0; } }
-
-@media (prefers-reduced-motion: no-preference) {
-  /* The hero, once, when the receipt is on screen: about two seconds. */
-  .lp-motion .lp-hero:not(.is-live) .lp-receipt,
-  .lp-motion .lp-hero:not(.is-live) .lp-bubble { opacity: 0; }
-  .lp-motion .lp-hero.is-live .lp-receipt { animation: lp-feed var(--duration-settle) var(--ease-out) 150ms both; }
-  .lp-motion .lp-hero.is-live .lp-print { animation: lp-line var(--duration-quick) var(--ease-out) both; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(1) { animation-delay: 550ms; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(2) { animation-delay: 650ms; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(3) { animation-delay: 750ms; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(4) { animation-delay: 850ms; }
-  .lp-motion .lp-hero.is-live .lp-stamp { animation: lp-stamp var(--duration-quick) var(--ease-out) 1150ms both; }
-  .lp-motion .lp-hero.is-live .lp-bubble { animation: lp-rise var(--duration-settle) var(--ease-out) 1500ms both; }
-  .lp-motion .lp-hero.is-live .lp-swap > .lp-was { animation: lp-hide var(--duration-quick) var(--ease-out) 2300ms both; }
-  .lp-motion .lp-hero.is-live .lp-swap > .lp-now { animation: lp-show var(--duration-quick) var(--ease-out) 2300ms both; }
-
-  /* The term rail: a step's dot fills when its step goes live. */
-  .lp-motion .lp-term-step::before { transition: background-color var(--duration-settle) var(--ease-out); }
-  .lp-motion .lp-term-step:not(.is-live)::before { background-color: #f4f6fb; box-shadow: 0 0 0 4px #f4f6fb, inset 0 0 0 2px #4a5fc0; }
-
-  /* Before a step is live: its paperwork is not there yet, or not done yet. */
-  .lp-motion .lp-term-step:not(.is-live) .lp-print,
-  .lp-motion .lp-term-step:not(.is-live) .lp-arrive { opacity: 0; }
-  .lp-motion .lp-term-step:not(.is-live) .lp-swap > .lp-was { opacity: 1; }
-  .lp-motion .lp-term-step:not(.is-live) .lp-swap > .lp-now { opacity: 0; }
-  .lp-motion .lp-term-step:not(.is-live) .lp-fill { transform: scaleX(0); }
-
-  /* When it goes live. */
-  .lp-motion .is-live .lp-print { animation: lp-line var(--duration-quick) var(--ease-out) both; }
-  .lp-motion .is-live .lp-print:nth-child(1) { animation-delay: 150ms; }
-  .lp-motion .is-live .lp-print:nth-child(2) { animation-delay: 300ms; }
-  .lp-motion .is-live .lp-print:nth-child(3) { animation-delay: 450ms; }
-  .lp-motion .is-live .lp-print:nth-child(4) { animation-delay: 650ms; }
-  .lp-motion .is-live .lp-arrive { animation: lp-rise var(--duration-settle) var(--ease-out) 100ms both; }
-  .lp-motion .is-live .lp-arrive.lp-from-tail { animation-name: lp-pop; }
-  .lp-motion .is-live .lp-print.lp-late { animation-delay: 900ms; }
-  .lp-motion .is-live .lp-swap > .lp-was { animation: lp-hide var(--duration-quick) var(--ease-out) 900ms both; }
-  .lp-motion .is-live .lp-swap > .lp-now { animation: lp-show var(--duration-quick) var(--ease-out) 900ms both; }
-  /* The Check button is pressed, then gives way to the Checked pill. */
-  .lp-motion .is-live .lp-swap > .lp-was.lp-press {
-    animation: lp-press var(--duration-quick) var(--ease-out) 600ms both,
-               lp-hide var(--duration-quick) var(--ease-out) 900ms both;
-  }
-  .lp-motion .lp-fill { transform-origin: 0 50%; transition: transform var(--duration-slow) var(--ease-out) 200ms; }
-}
-.lp-from-tail { transform-origin: 0 100%; }
-@keyframes lp-pop { from { opacity: 0; transform: scale(0.94); } }
-@keyframes lp-press { 50% { transform: scale(0.92); } }
 
 .lp-drawn .tile { box-shadow: none; }
 .lp-drawn .note-banner { width: 100%; }
@@ -3928,3 +3880,329 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 
 .family-link { display: block; margin-top: 0.125rem; }
 .table-cards tr.card-row > td.card-lead a.family-link { display: flex; }
+
+/* =========================================================================
+   Landing page, the prototype's look (templates/core/landing.html)
+   The owner's landing prototype: deep green, Bricolage Grotesque for display,
+   Figtree for text, JetBrains Mono for figures and labels. Everything is scoped
+   to `.sc`, outside the layers so it wins over the older `.lp-lattice` ground it
+   sits inside, and no rule here reaches a signed-in screen. The page is dark
+   whatever the visitor's setting, so these are literal colours, not the app's
+   light/dark tokens. The demo inside keeps the app's own light components.
+   ========================================================================= */
+.sc {
+  --sc-bg: #0b1510;
+  --sc-surface: #12211a;
+  --sc-fg: #e5eee8;
+  --sc-muted: #9fb3a6;
+  --sc-line: #22362b;
+  --sc-accent: #37c07f;
+  --sc-accent-ink: #06130c;
+  --sc-marigold: #f0b43c;
+  --sc-paid: #4fd394;
+  --sc-due: #f08a4b;
+  --sc-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --sc-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --sc-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+  background-color: var(--sc-bg);
+  color: var(--sc-fg);
+  color-scheme: dark;
+  font-family: var(--sc-body);
+  font-size: 16px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.sc-page { background-color: var(--sc-bg); }
+.sc a:focus-visible, .sc button:focus-visible, .sc summary:focus-visible {
+  outline: 3px solid var(--sc-marigold);
+  outline-offset: 3px;
+}
+
+.sc-wrap {
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
+  padding-inline: max(16px, env(safe-area-inset-left, 0px));
+}
+@media (min-width: 720px) { .sc-wrap { padding-inline: 32px; } }
+
+.sc-display { font-family: var(--sc-display); letter-spacing: -0.025em; text-wrap: balance; }
+.sc-eyebrow {
+  font-family: var(--sc-mono);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sc-muted);
+}
+.sc-mono { font-family: var(--sc-mono); font-variant-numeric: tabular-nums; }
+.sc-strong { font-weight: 600; }
+
+/* --- Navigation ------------------------------------------------------------ */
+.sc-top { position: absolute; inset: 0 0 auto 0; z-index: 30; }
+.sc-nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 20px; }
+.sc-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--sc-display); font-size: 20px; font-weight: 800; letter-spacing: 0.02em;
+  color: var(--sc-fg); text-decoration: none;
+}
+.sc-brand-mark {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 5px;
+  border-radius: 8px; background: var(--sc-accent); color: var(--sc-accent-ink);
+}
+.sc-nav-links { display: flex; align-items: center; gap: 22px; font-size: 15px; }
+.sc-nav-links a:not(.sc-btn) { color: var(--sc-fg); text-decoration: none; }
+.sc-nav-links a:not(.sc-btn):hover { color: var(--sc-accent); }
+@media (max-width: 760px) { .sc-hide-sm { display: none; } }
+@media (max-width: 420px) { .sc-hide-xs { display: none; } .sc-nav-links { gap: 14px; } }
+
+/* --- Buttons --------------------------------------------------------------- */
+.sc-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 44px; padding: 12px 22px;
+  border: 1px solid transparent; border-radius: 999px;
+  font-size: 15px; font-weight: 600; text-decoration: none; cursor: pointer;
+  transition: transform 0.15s, background-color 0.15s;
+}
+.sc-btn-primary { background: var(--sc-accent); color: var(--sc-accent-ink); }
+.sc-btn-primary:hover { transform: translateY(-1px); }
+.sc-btn-ghost {
+  background: color-mix(in srgb, var(--sc-surface) 70%, transparent);
+  border-color: var(--sc-line); color: var(--sc-fg);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+}
+.sc-btn-ghost:hover { border-color: var(--sc-accent); }
+.sc-btn-sm { min-height: 36px; padding: 8px 16px; font-size: 14px; }
+@media (max-width: 420px) { .sc-nav .sc-btn-sm { padding-inline: 12px; } }
+
+/* --- Hero ------------------------------------------------------------------ */
+.sc-hero { position: relative; isolation: isolate; overflow: hidden; background: var(--sc-bg); }
+/* The wash: a WebGL canvas over a CSS fallback in the same colours, so the
+   hero looks finished before (or without) the script. */
+.sc-wash {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(70% 60% at 18% 22%, #1f8a5a 0%, transparent 70%),
+    radial-gradient(60% 60% at 82% 30%, #7a5a12 0%, transparent 70%),
+    radial-gradient(70% 60% at 70% 88%, #0e5a38 0%, transparent 70%),
+    radial-gradient(55% 55% at 12% 86%, #0b2e22 0%, transparent 70%),
+    #0b1510;
+}
+.sc-wash canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-veil {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--sc-bg) 25%, transparent) 0%,
+    color-mix(in srgb, var(--sc-bg) 10%, transparent) 55%,
+    var(--sc-bg) 100%);
+}
+.sc-hero-inner { position: relative; z-index: 10; padding-top: 84px; }
+.sc-hero-grid { display: grid; align-items: center; gap: 40px; padding-block: 48px 72px; }
+@media (min-width: 900px) {
+  .sc-hero-grid { grid-template-columns: 1.15fr 0.85fr; padding-block: 64px 96px; }
+}
+.sc-hero h1 { margin: 14px 0 0; font-size: clamp(38px, 6.2vw, 68px); font-weight: 700; line-height: 1.02; }
+.sc-hero h1 em { font-style: normal; color: var(--sc-accent); }
+.sc-hero-sub { max-width: 34em; margin-top: 20px; font-size: 18px; color: var(--sc-muted); }
+.sc-ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.sc-hero-note { margin-top: 14px; font-size: 13px; color: var(--sc-muted); }
+
+/* The example ledger. */
+.sc-ledger {
+  min-width: 0; overflow: hidden;
+  border: 1px solid var(--sc-line); border-radius: 16px;
+  background: color-mix(in srgb, var(--sc-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: 0 30px 60px -30px rgb(10 40 25 / 0.35);
+}
+.sc-ledger-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  padding: 16px 18px; border-bottom: 1px dashed var(--sc-line);
+}
+.sc-ledger-title { font-family: var(--sc-display); font-size: 18px; font-weight: 650; }
+.sc-ledger-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 4px 12px;
+  padding: 12px 18px; font-size: 14px; border-bottom: 1px solid var(--sc-line);
+}
+.sc-ledger-row:last-child { border-bottom: 0; }
+.sc-who { min-width: 0; font-weight: 600; }
+.sc-meta { grid-column: 1; font-size: 12px; color: var(--sc-muted); }
+.sc-amt { text-align: right; }
+.sc-pill {
+  display: inline-block; padding: 2px 8px; border-radius: 999px;
+  font-family: var(--sc-mono); font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+}
+.sc-pill-paid { color: var(--sc-paid); background: color-mix(in srgb, var(--sc-paid) 14%, transparent); }
+.sc-pill-part { color: var(--sc-due); background: color-mix(in srgb, var(--sc-due) 14%, transparent); }
+.sc-ledger-foot {
+  display: flex; justify-content: space-between; gap: 12px; padding: 14px 18px;
+  font-size: 13px; color: var(--sc-muted);
+  background: color-mix(in srgb, var(--sc-accent) 8%, transparent);
+}
+.sc-ledger-foot .sc-strong { color: var(--sc-fg); }
+.sc-fresh { animation: sc-row-in 0.6s both; }
+@keyframes sc-row-in { from { background: color-mix(in srgb, var(--sc-marigold) 22%, transparent); } }
+
+/* --- The director's word ------------------------------------------------------ */
+.sc-quote-wrap { border-top: 1px solid var(--sc-line); }
+.sc-quote {
+  display: grid; gap: 20px; padding-block: 48px;
+}
+@media (min-width: 900px) { .sc-quote { grid-template-columns: minmax(0, 1fr) auto; align-items: end; column-gap: 48px; } }
+.sc-quote-text { margin: 0; font-family: var(--sc-display); font-weight: 600; line-height: 1.45; letter-spacing: -0.01em; }
+.sc-quote-by { display: grid; font-size: 14px; }
+@media (min-width: 900px) { .sc-quote-by { grid-row: 2; } .sc-quote-stat { grid-row: 1 / span 2; grid-column: 2; } }
+.sc-quote-role { color: var(--sc-muted); }
+.sc-quote-stat {
+  display: grid; gap: 2px; justify-self: start; padding: 14px 20px;
+  border: 1px solid var(--sc-line); border-radius: 16px;
+  background: color-mix(in srgb, var(--sc-accent) 8%, transparent);
+}
+.sc-quote-figure { font-family: var(--sc-display); font-size: 18px; font-weight: 700; color: var(--sc-accent); }
+
+/* --- Sections -------------------------------------------------------------- */
+.sc-section { padding-block: 88px; }
+.sc-section + .sc-section { border-top: 1px solid var(--sc-line); }
+.sc-section h2 { margin: 12px 0 0; font-size: clamp(30px, 4.2vw, 46px); font-weight: 700; line-height: 1.08; }
+.sc-lede { max-width: 36em; margin-top: 16px; font-size: 17px; color: var(--sc-muted); }
+.sc-split { display: grid; align-items: center; gap: 48px; }
+.sc-split > * { min-width: 0; }
+@media (min-width: 900px) {
+  .sc-split { grid-template-columns: 1fr 1fr; }
+  .sc-split.sc-flip > :first-child { order: 2; }
+}
+.sc-stage {
+  position: relative; overflow: hidden; height: 380px;
+  border: 1px solid var(--sc-line); border-radius: 20px; background: var(--sc-surface);
+}
+.sc-stage-tw { display: grid; place-items: center; }
+.sc-typewriter-live { display: block; }
+/* The typewriter draws its own paper; its component paints `bg-background`, so
+   point that at the stage colour. */
+.sc-stage-tw.sc-typewriter-live > * { background: var(--sc-surface); }
+.sc-receipt-still {
+  margin: 0; padding: 18px 22px; border-radius: 6px;
+  background: #fbf9f3; color: #1d2a22;
+  font-family: var(--sc-mono); font-size: 13px; line-height: 1.55; white-space: pre;
+  box-shadow: 0 20px 40px -24px rgb(0 0 0 / 0.6);
+}
+.sc-stage-iso { background: radial-gradient(120% 80% at 50% 100%, color-mix(in srgb, var(--sc-marigold) 10%, var(--sc-surface)), var(--sc-surface)); }
+.sc-stage-iso canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-stage-cap { position: absolute; left: 16px; bottom: 12px; z-index: 5; font-size: 11px; }
+
+.sc-facts { display: grid; gap: 14px; margin-top: 28px; padding: 0; list-style: none; }
+.sc-facts li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; }
+.sc-tick {
+  display: grid; place-items: center; width: 22px; height: 22px; margin-top: 2px;
+  border-radius: 50%; font-size: 12px;
+  color: var(--sc-accent); background: color-mix(in srgb, var(--sc-accent) 15%, transparent);
+}
+
+.sc-steps { display: grid; margin-top: 32px; }
+.sc-step { display: grid; grid-template-columns: 44px 1fr; gap: 16px; padding-block: 18px; border-top: 1px solid var(--sc-line); }
+.sc-step:last-child { border-bottom: 1px solid var(--sc-line); }
+.sc-step-n { padding-top: 3px; font-family: var(--sc-mono); font-size: 13px; color: var(--sc-marigold); }
+.sc-step h3 { margin: 0; font-family: var(--sc-display); font-size: 20px; font-weight: 650; }
+.sc-step p { margin: 4px 0 0; color: var(--sc-muted); }
+
+/* --- The demo: the app's own light components on the dark page ------------- */
+.sc-section-demo { padding-bottom: 0; }
+.sc-demo.lp-drawn { background: transparent; color: #1b2140; padding-bottom: 88px; }
+.sc-demo .lp-section { padding-top: 32px; }
+.sc-demo .lp-frame { max-width: 1120px; }
+@media (min-width: 720px) { .sc-demo .lp-frame { padding-inline: 32px; } }
+
+/* --- Pricing ----------------------------------------------------------------- */
+.sc-price-scroll { margin-top: 36px; overflow-x: auto; }
+.sc-price-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 15px; }
+.sc-price-table th, .sc-price-table td {
+  padding: 16px 14px; text-align: left; vertical-align: baseline;
+  border-bottom: 1px solid var(--sc-line);
+}
+.sc-price-table thead th {
+  font-family: var(--sc-mono); font-size: 12px; font-weight: 500;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--sc-muted);
+}
+.sc-plan { font-family: var(--sc-display); font-size: 18px; font-weight: 650; }
+.sc-num { font-family: var(--sc-mono); font-variant-numeric: tabular-nums; }
+.sc-choose { text-align: right !important; }
+.sc-feature th, .sc-feature td { background: color-mix(in srgb, var(--sc-accent) 7%, transparent); }
+.sc-includes-title { margin-top: 40px; font-family: var(--sc-display); font-size: 20px; font-weight: 650; }
+.sc-includes { display: grid; gap: 10px 32px; margin-top: 14px; padding: 0; list-style: none; }
+@media (min-width: 640px) { .sc-includes { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1024px) { .sc-includes { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.sc-includes li { position: relative; padding-left: 30px; }
+.sc-includes li::before {
+  content: "\2713"; position: absolute; left: 0; top: 2px;
+  display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%;
+  font-size: 11px; color: var(--sc-accent); background: color-mix(in srgb, var(--sc-accent) 15%, transparent);
+}
+
+/* --- Questions ----------------------------------------------------------------- */
+.sc-faq-grid { display: grid; gap: 40px; }
+@media (min-width: 900px) { .sc-faq-grid { grid-template-columns: 0.8fr 1.2fr; } }
+.sc-faq { border-top: 1px solid var(--sc-line); }
+.sc-faq details { border-bottom: 1px solid var(--sc-line); padding-block: 16px; }
+.sc-faq summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  font-weight: 600; cursor: pointer; list-style: none;
+}
+.sc-faq summary::-webkit-details-marker { display: none; }
+.sc-faq-mark { font-family: var(--sc-mono); color: var(--sc-marigold); transition: transform 0.15s; }
+.sc-faq details[open] .sc-faq-mark { transform: rotate(45deg); }
+.sc-faq details p { max-width: 40em; margin-top: 8px; color: var(--sc-muted); }
+
+.sc-closing-title { max-width: 16em; }
+
+/* --- Footer --------------------------------------------------------------------- */
+.sc-footer { border-top: 1px solid var(--sc-line); }
+.sc-footer-grid { display: grid; gap: 40px; padding-block: 56px; }
+@media (min-width: 768px) { .sc-footer-grid { grid-template-columns: 1.4fr 1fr 1fr; } }
+.sc-footer-copy { max-width: 26em; margin-top: 14px; color: var(--sc-muted); }
+.sc-footer-head { font-family: var(--sc-display); font-size: 16px; font-weight: 650; }
+.sc-footer-list { display: grid; gap: 8px; margin-top: 12px; padding: 0; list-style: none; color: var(--sc-muted); }
+.sc-footer-list a, .sc-footer-meta a { color: inherit; text-decoration: none; }
+.sc-footer-list a:hover, .sc-footer-meta a:hover { color: var(--sc-fg); text-decoration: underline; }
+.sc-social { display: flex; gap: 10px; margin-top: 16px; padding: 0; list-style: none; }
+.sc .footer-social { border-color: var(--sc-line); background: var(--sc-surface); color: var(--sc-muted); }
+.sc .footer-social:hover { border-color: var(--sc-accent); background: var(--sc-surface); color: var(--sc-fg); }
+.sc-footer-meta {
+  display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;
+  padding-block: 28px 120px; border-top: 1px solid var(--sc-line);
+  font-size: 13px; color: var(--sc-muted);
+}
+
+/* The stretch below the page (the 23rd stretchy footer), pinned to the viewport. */
+.sc-stretch { position: fixed; inset: auto 0 0 0; z-index: 35; height: 280px; pointer-events: none; }
+.sc-stretch-aurora { position: absolute; inset: auto 0 0 0; height: 280px; overflow: hidden; }
+.sc-stretch canvas { position: absolute; visibility: hidden; }
+
+/* --- The WhatsApp helper --------------------------------------------------------- */
+.sc-helper {
+  position: fixed; z-index: 40; display: flex; align-items: flex-end; gap: 10px;
+  right: calc(18px + env(safe-area-inset-right, 0px));
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+}
+.sc-helper-bubble {
+  max-width: 230px; padding: 12px 14px; font-size: 14px;
+  border: 1px solid var(--sc-line); border-radius: 16px 16px 4px 16px;
+  background: var(--sc-surface); color: var(--sc-fg);
+  box-shadow: 0 20px 40px -20px rgb(0 0 0 / 0.35);
+}
+.sc-helper-bubble strong { display: block; font-family: var(--sc-display); }
+.sc-helper-btn { position: relative; flex: none; width: 68px; height: 68px; border-radius: 50%; }
+.sc-orb {
+  position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle at 35% 30%, #6fe0a8, #37c07f 55%, #1f8a5a);
+}
+.sc-orb canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sc-helper-badge {
+  position: absolute; right: -2px; bottom: -2px; z-index: 3;
+  display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--sc-bg); background: #25d366; color: #ffffff;
+}
+@media (max-width: 520px) { .sc-helper-bubble { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .sc-fresh { animation: none; }
+  .sc-btn, .sc-faq-mark { transition: none; }
+}
