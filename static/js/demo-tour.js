@@ -44,6 +44,27 @@
     pending = null;
   }
 
+  // Next on a "press this" step does the pressing, so a visitor can finish the
+  // tour with Next alone. Same demo buttons, same result as pressing them.
+  function pressThenNext(press, delay, ready) {
+    return function () {
+      clearPending();
+      if (press) press();
+      window.setTimeout(function () {
+        if (!tour || !tour.isActive()) return;
+        if (ready && !ready()) return;
+        tour.moveNext();
+      }, delay || 150);
+    };
+  }
+  function click(selector) {
+    return function () { var el = $(selector); if (el) el.click(); };
+  }
+  function receiptOpen() {
+    var receipt = $('#receipt-modal');
+    return !!receipt && !receipt.classList.contains('hidden');
+  }
+
   function closeDemoDialogs() {
     var open = document.querySelectorAll('#payment-modal [data-demo-close], #receipt-modal [data-demo-close]');
     for (var i = 0; i < open.length; i++) {
@@ -74,8 +95,9 @@
           popover: {
             title: 'See who still owes',
             description: 'Press <strong>' + chipName + '</strong> to list only the students with a balance.',
-            showButtons: ['previous', 'close'],
-            side: 'bottom'
+            showButtons: ['next', 'previous', 'close'],
+            side: 'bottom',
+            onNextClick: pressThenNext(click(chip), 150)
           },
           onHighlighted: function () { advanceOnClick(chip, 150); }
         },
@@ -84,8 +106,9 @@
           popover: {
             title: 'Record a payment',
             description: 'A parent has just paid at the bank. Press <strong>Record</strong> next to their child.',
-            showButtons: ['previous', 'close'],
-            side: 'top'
+            showButtons: ['next', 'previous', 'close'],
+            side: 'top',
+            onNextClick: pressThenNext(click('#demo-table-body [data-demo-pay]'), 150)
           },
           onHighlighted: function () { advanceOnClick('#demo-table-body', 150); }
         },
@@ -94,8 +117,10 @@
           popover: {
             title: 'Enter what they paid',
             description: 'The balance is filled in. Change the amount if they paid part of it, then press <strong>Record and update the balance</strong>.',
-            showButtons: ['close'],
-            side: 'top'
+            showButtons: ['next', 'close'],
+            side: 'top',
+            // Stays put if the amount is invalid: the demo shows its own error.
+            onNextClick: pressThenNext(click('#demo-submit-payment'), 200, receiptOpen)
           },
           onHighlighted: function () { advanceOnClick('#demo-submit-payment', 200); }
         },
