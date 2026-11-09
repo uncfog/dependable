@@ -64,7 +64,8 @@ class WelcomeEmailTests(TestCase):
 
     def test_signing_up_sends_it(self):
         response = self.sign_up()
-        self.assertRedirects(response, reverse("core:onboarding"))
+        # Sign-up opens Plans & billing first; onboarding follows from there.
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1")
         message = self.sent()
         self.assertEqual(message.to, ["chidi@example.com"])
         self.assertEqual(message.subject, f"Welcome to {PRODUCT_NAME}")
@@ -174,7 +175,8 @@ class WelcomeEmailTests(TestCase):
     def test_the_account_works_immediately(self):
         """No confirmation link, nothing to click first."""
         response = self.sign_up(follow=False)
-        self.assertRedirects(response, reverse("core:onboarding"))
+        # Sign-up opens Plans & billing first; onboarding follows from there.
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1")
         owner = User.objects.get(email="chidi@example.com")
         self.assertTrue(owner.is_active)
         # Signed in already -- the onboarding screen is behind a login.
@@ -198,7 +200,8 @@ class WelcomeEmailTests(TestCase):
         ):
             with self.assertLogs("apps.core.emails", level="ERROR"):
                 response = self.sign_up()
-        self.assertRedirects(response, reverse("core:onboarding"))
+        # Sign-up opens Plans & billing first; onboarding follows from there.
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1")
         self.assertTrue(School.all_objects.filter(name="Brand New Academy").exists())
 
     @override_settings(PUBLIC_BASE_URL="")
@@ -207,7 +210,8 @@ class WelcomeEmailTests(TestCase):
         goes nowhere."""
         with self.assertLogs("apps.core.emails", level="WARNING"):
             response = self.sign_up()
-        self.assertRedirects(response, reverse("core:onboarding"))
+        # Sign-up opens Plans & billing first; onboarding follows from there.
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1")
         self.assertEqual(mail.outbox, [])
         self.assertTrue(School.all_objects.filter(name="Brand New Academy").exists())
 

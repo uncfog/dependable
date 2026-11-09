@@ -26,7 +26,10 @@ Pages fill:
 {% endcomment %}
 
 {% block anonymous_content %}
-<div class="auth-shell{% block auth_reversed %}{% endblock %}" data-auth-shell>
+<div class="auth-shell sc-auth{% block auth_reversed %}{% endblock %}" data-auth-shell>
+  {# The landing page's moving wash, behind both halves (js/landing.js). #}
+  <div class="sc-wash" data-sc-wash aria-hidden="true"><canvas></canvas></div>
+  <div class="sc-veil" aria-hidden="true"></div>
 
   {# ===== The visual panel: lg and up ==================================== #}
   {% comment %}
@@ -104,11 +107,12 @@ Pages fill:
       <a href="{% url 'core:landing' %}"
          class="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
         {% include "partials/_brand_mark.html" with size="size-10" %}
-        <span class="text-xl font-semibold tracking-tight text-brand-900">
+        <span class="sc-auth-brand text-xl">
           {{ product_name }}
         </span>
       </a>
 
+      <div class="sc-auth-card">
       <p class="text-sm font-semibold text-brand-600">
         {% block auth_eyebrow %}Welcome back{% endblock %}
       </p>
@@ -120,6 +124,7 @@ Pages fill:
       {% block auth_body %}{% endblock %}
 
       {% block auth_footer %}{% endblock %}
+      </div>
 
       {% comment %}
       The signed-out screens have no shell header to hang the theme switch on,
@@ -134,4 +139,10 @@ Pages fill:
   </div>
 
 </div>
+{% load static %}
+<script type="module">
+  import { start } from "{% static 'js/landing.js' %}";
+  const shaderGradient = await import("{% static 'js/vendor/23rd/shader-gradient-vanilla.js' %}").catch(() => null);
+  start({ shaderGradient });
+</script>
 {% endblock %}

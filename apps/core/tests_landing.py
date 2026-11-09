@@ -48,14 +48,18 @@ class CallToActionTests(LandingTestCase):
 
     def test_every_set_up_and_plan_button_goes_to_signup(self):
         signup = reverse("core:signup")
-        for label in ("Create a free school account",
-                      "Start free", "Choose Starter", "Choose Growth",
-                      "Choose Professional", "Create my school account"):
+        for label in ("Create a free school account", "Create my school account"):
             with self.subTest(label=label):
                 pattern = (
                     rf'<a href="{re.escape(signup)}"[^>]*>\s*(<span>)?'
                     rf"{re.escape(label)}"
                 )
+                self.assertRegex(self.html, pattern)
+        # Each plan's button names its plan, so sign-up can open Plans & billing on it.
+        for label, plan in (("Start free", "free"), ("Choose Starter", "starter"),
+                            ("Choose Growth", "growth"), ("Choose Professional", "professional")):
+            with self.subTest(label=label):
+                pattern = rf'<a href="{re.escape(signup)}\?plan={plan}"[^>]*>\s*{re.escape(label)}'
                 self.assertRegex(self.html, pattern)
 
     def test_whatsapp_links_read_the_branding_config(self):
@@ -236,3 +240,17 @@ class PricingMatchesTheCheckoutTests(LandingTestCase):
                 self.assertIn(offer.name, pricing)
                 self.assertIn(offer.price_display, pricing)
                 self.assertIn(offer.students, pricing)
+
+
+class BlueAndLimeTests(LandingTestCase):
+    def test_the_typewriter_types_the_owners_school(self):
+        self.assertIn("FULFILLED ACADEMY\nEKETE INLAND, UDU", self.html)
+        self.assertNotIn("GREENFIELD", self.html)
+
+    def test_the_page_wears_the_logo_blue_with_lime_buttons(self):
+        css = Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
+        block = css[css.index(".sc, .sc-auth {"):]
+        block = block[:block.index("}")]
+        self.assertIn("--sc-bg: #081a38;", block)
+        self.assertIn("--sc-accent: #d2f04e;", block)
+        self.assertIn("border-color: var(--sc-accent); color: var(--sc-accent);", css)

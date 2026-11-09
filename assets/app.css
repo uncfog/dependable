@@ -3201,34 +3201,6 @@
       var(--color-lattice-dark);
   }
 
-  @keyframes lp-h1-reveal {
-    0% { opacity: 0; transform: translateY(28px) scale(0.97); }
-    100% { opacity: 1; transform: translateY(0) scale(1); }
-  }
-  .lp-animate-h1 {
-    animation: lp-h1-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  /* Hidden until scrolled to -- but only once the page's script has run and
-     armed it (`.lp-js` on <html>), so a visitor without JavaScript still sees
-     every section. */
-  .lp-js .lp-reveal {
-    opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-    will-change: opacity, transform;
-  }
-  .lp-js .lp-reveal.is-visible {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .lp-animate-h1 { animation: none; }
-    .lp-js .lp-reveal { opacity: 1; transform: none; transition: none; }
-  }
-
   .lp-faq summary::-webkit-details-marker { display: none; }
 }
 
@@ -3918,20 +3890,26 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
    whatever the visitor's setting, so these are literal colours, not the app's
    light/dark tokens. The demo inside keeps the app's own light components.
    ========================================================================= */
-.sc {
-  --sc-bg: #0b1510;
-  --sc-surface: #12211a;
-  --sc-fg: #e5eee8;
-  --sc-muted: #9fb3a6;
-  --sc-line: #22362b;
-  --sc-accent: #37c07f;
-  --sc-accent-ink: #06130c;
-  --sc-marigold: #f0b43c;
-  --sc-paid: #4fd394;
-  --sc-due: #f08a4b;
+.sc, .sc-auth {
+  /* The logo's navy and blues, with the brand lime for every button and
+     highlight. `--sc-marigold` names the second highlight colour, which is
+     now the lime too. */
+  --sc-bg: #081a38;
+  --sc-surface: #0f2a52;
+  --sc-fg: #eef3fb;
+  --sc-muted: #a9bcdc;
+  --sc-line: #1f3d6b;
+  --sc-accent: #d2f04e;
+  --sc-accent-ink: #1b2140;
+  --sc-marigold: #d2f04e;
+  --sc-blue: #5886cb;
+  --sc-paid: #d2f04e;
+  --sc-due: #f6a26b;
   --sc-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --sc-body: "Figtree", "Segoe UI", system-ui, sans-serif;
   --sc-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", monospace;
+}
+.sc {
   background-color: var(--sc-bg);
   color: var(--sc-fg);
   color-scheme: dark;
@@ -3941,6 +3919,11 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
   -webkit-font-smoothing: antialiased;
 }
 .sc-page { background-color: var(--sc-bg); }
+/* On a phone nothing on this page may pull it sideways, and the page behind it
+   is navy too, so a bounce at either edge never shows an empty light band. */
+.sc { overflow-x: clip; }
+html:has(> body .sc), html:has(> body .sc) body,
+html:has(> body .sc-auth), html:has(> body .sc-auth) body { background-color: #081a38; }
 .sc a:focus-visible, .sc button:focus-visible, .sc summary:focus-visible {
   outline: 3px solid var(--sc-marigold);
   outline-offset: 3px;
@@ -3993,12 +3976,14 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 }
 .sc-btn-primary { background: var(--sc-accent); color: var(--sc-accent-ink); }
 .sc-btn-primary:hover { transform: translateY(-1px); }
+/* The second button is lime too: lime line and lime text, so the filled one
+   still reads as the main action beside it. */
 .sc-btn-ghost {
-  background: color-mix(in srgb, var(--sc-surface) 70%, transparent);
-  border-color: var(--sc-line); color: var(--sc-fg);
+  background: color-mix(in srgb, var(--sc-bg) 55%, transparent);
+  border-color: var(--sc-accent); color: var(--sc-accent);
   -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
 }
-.sc-btn-ghost:hover { border-color: var(--sc-accent); }
+.sc-btn-ghost:hover { background: color-mix(in srgb, var(--sc-accent) 14%, transparent); }
 .sc-btn-sm { min-height: 36px; padding: 8px 16px; font-size: 14px; }
 @media (max-width: 420px) { .sc-nav .sc-btn-sm { padding-inline: 12px; } }
 
@@ -4009,11 +3994,11 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 .sc-wash {
   position: absolute; inset: 0; pointer-events: none;
   background:
-    radial-gradient(70% 60% at 18% 22%, #1f8a5a 0%, transparent 70%),
-    radial-gradient(60% 60% at 82% 30%, #7a5a12 0%, transparent 70%),
-    radial-gradient(70% 60% at 70% 88%, #0e5a38 0%, transparent 70%),
-    radial-gradient(55% 55% at 12% 86%, #0b2e22 0%, transparent 70%),
-    #0b1510;
+    radial-gradient(70% 60% at 18% 22%, #2e63b0 0%, transparent 70%),
+    radial-gradient(60% 60% at 82% 30%, #5f7a14 0%, transparent 70%),
+    radial-gradient(70% 60% at 70% 88%, #1b4680 0%, transparent 70%),
+    radial-gradient(55% 55% at 12% 86%, #0f2a52 0%, transparent 70%),
+    #081a38;
 }
 .sc-wash canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sc-veil {
@@ -4040,7 +4025,7 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
   border: 1px solid var(--sc-line); border-radius: 16px;
   background: color-mix(in srgb, var(--sc-surface) 88%, transparent);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-  box-shadow: 0 30px 60px -30px rgb(10 40 25 / 0.35);
+  box-shadow: 0 30px 60px -30px rgb(4 12 30 / 0.55);
 }
 .sc-ledger-head {
   display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
@@ -4113,7 +4098,7 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
   font-family: var(--sc-mono); font-size: 13px; line-height: 1.55; white-space: pre;
   box-shadow: 0 20px 40px -24px rgb(0 0 0 / 0.6);
 }
-.sc-stage-iso { background: radial-gradient(120% 80% at 50% 100%, color-mix(in srgb, var(--sc-marigold) 10%, var(--sc-surface)), var(--sc-surface)); }
+.sc-stage-iso { background: radial-gradient(120% 80% at 50% 100%, color-mix(in srgb, var(--sc-accent) 9%, var(--sc-surface)), var(--sc-surface)); }
 .sc-stage-iso canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sc-stage-cap { position: absolute; left: 16px; bottom: 12px; z-index: 5; font-size: 11px; }
 
@@ -4140,7 +4125,9 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 @media (min-width: 720px) { .sc-demo .lp-frame { padding-inline: 32px; } }
 
 /* --- Pricing ----------------------------------------------------------------- */
-.sc-price-scroll { margin-top: 36px; overflow-x: auto; }
+/* Positioned, so the screen-reader-only "Choose" heading stays inside the
+   table's own scroll instead of widening the whole page on a phone. */
+.sc-price-scroll { position: relative; margin-top: 36px; overflow-x: auto; }
 .sc-price-table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 15px; }
 .sc-price-table th, .sc-price-table td {
   padding: 16px 14px; text-align: left; vertical-align: baseline;
@@ -4220,7 +4207,7 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 .sc-helper-btn { position: relative; flex: none; width: 68px; height: 68px; border-radius: 50%; }
 .sc-orb {
   position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-  background: radial-gradient(circle at 35% 30%, #6fe0a8, #37c07f 55%, #1f8a5a);
+  background: radial-gradient(circle at 35% 30%, #ecfa9e, #d2f04e 55%, #a8c23a);
 }
 .sc-orb canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .sc-helper-badge {
@@ -4230,7 +4217,76 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 }
 @media (max-width: 520px) { .sc-helper-bubble { display: none; } }
 
+/* --- On a phone: compact. Desktop spacing on a 390px screen reads as empty
+   bands between sections, so everything tightens below 640px. ------------- */
+@media (max-width: 639px) {
+  .sc-nav { padding-block: 14px; }
+  .sc-hero-inner { padding-top: 64px; }
+  .sc-hero-grid { gap: 28px; padding-block: 20px 40px; }
+  .sc-hero h1 { margin-top: 10px; }
+  .sc-hero-sub { margin-top: 14px; font-size: 16px; }
+  .sc-ctas { margin-top: 20px; gap: 10px; }
+  .sc-quote { gap: 14px; padding-block: 28px; }
+  .sc-section { padding-block: 48px; }
+  .sc-section h2 { font-size: 28px; }
+  .sc-lede { margin-top: 12px; font-size: 16px; }
+  .sc-split { gap: 24px; }
+  .sc-stage { height: 260px; border-radius: 16px; }
+  .sc-facts { margin-top: 20px; gap: 12px; }
+  .sc-steps { margin-top: 20px; }
+  .sc-step { padding-block: 14px; }
+  .sc-price-scroll { margin-top: 24px; }
+  .sc-includes-title { margin-top: 28px; }
+  .sc-faq-grid { gap: 20px; }
+  .sc-demo.lp-drawn { padding-bottom: 48px; }
+  .sc-demo .lp-section { padding-top: 20px; }
+  .sc-footer-grid { gap: 28px; padding-block: 36px; }
+  .sc-footer-meta { padding-block: 20px 96px; }
+  .sc-helper { right: 12px; bottom: 12px; }
+  .sc-helper-btn { width: 54px; height: 54px; }
+  .sc-auth .auth-form-side { padding-block: 28px; }
+  .sc-auth-card { padding: 1.5rem 1.25rem; border-radius: 20px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .sc-fresh { animation: none; }
   .sc-btn, .sc-faq-mark { transition: none; }
 }
+
+/* =========================================================================
+   Sign in, sign up and the password screens (registration/_auth_switch.html,
+   _auth_base.html), in the landing page's look: the logo's navy under the same
+   moving wash, Bricolage for the big type, and the form in one card. The card
+   keeps the app's own light and dark colours, so the theme switch under it still
+   means something. The panel swap in js/ui.js is untouched.
+   ========================================================================= */
+.sc-auth { position: relative; isolation: isolate; background-color: var(--sc-bg); }
+.sc-auth > .sc-wash { position: absolute; inset: 0; z-index: -1; }
+.sc-auth > .sc-veil {
+  position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--sc-bg) 20%, transparent), color-mix(in srgb, var(--sc-bg) 65%, transparent));
+}
+.sc-auth .auth-visual { background: transparent !important; color: var(--sc-fg); }
+.sc-auth .auth-visual h2 {
+  font-family: var(--sc-display); font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 700; letter-spacing: -0.025em; line-height: 1.05;
+}
+.sc-auth .auth-visual .text-panel-copy { color: var(--sc-muted); }
+.sc-auth .auth-visual .glass-dark {
+  background: color-mix(in srgb, var(--sc-surface) 88%, transparent);
+  border: 1px solid var(--sc-line); border-radius: 16px; box-shadow: none;
+}
+.sc-auth .auth-form-side { background: transparent; }
+.sc-auth-brand { color: #ffffff; font-family: var(--sc-display); font-weight: 800; letter-spacing: 0.02em; }
+.sc-auth-card {
+  padding: 2rem 1.5rem;
+  border: 1px solid color-mix(in srgb, var(--color-ink-200) 70%, transparent);
+  border-radius: 24px;
+  background-color: var(--color-surface);
+  box-shadow: 0 40px 80px -40px rgb(2 8 24 / 0.75);
+}
+@media (min-width: 640px) { .sc-auth-card { padding: 2.5rem 2.25rem; } }
+.sc-auth-card h1 { font-family: var(--sc-display); letter-spacing: -0.02em; }
+.sc-auth-card .btn-primary { border-radius: 999px; }
+.sc-auth .theme-toggle { border-color: var(--sc-line); background: color-mix(in srgb, var(--sc-surface) 80%, transparent); }
+.sc-auth .theme-toggle-option { color: var(--sc-muted); }
