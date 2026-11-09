@@ -24,6 +24,7 @@ this is included with `form=signup_form` instead.
 
 <form method="post" action="{% url 'core:signup' %}" class="mt-7 space-y-5" novalidate>
   {% csrf_token %}
+  {% if chosen_plan %}<input type="hidden" name="plan" value="{{ chosen_plan }}">{% endif %}
 
   {% include "partials/_field.html" with field=form.school_name %}
   {% include "partials/_field.html" with field=form.full_name %}

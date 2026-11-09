@@ -9,13 +9,15 @@
 //
 // Nothing below makes a request. The page is dark whatever the visitor's
 // setting, so every effect is told `theme: "dark"` rather than reading the
-// <html> element, which stays pinned to light for the demo's sake.
+// <html> element, which stays pinned to light for the demo's sake. The sign-in
+// and sign-up pages use the same start(), with only the wash to start.
 
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-const WASH = ["#0E5A38", "#1F8A5A", "#7A5A12", "#0B2E22"];
-const STRETCH = ["#0B2E22", "#0F5A3A", "#0F7A4A", "#37C07F", "#E9F2DA",
-                 "#F6D58A", "#F0B43C", "#C98A0B", "#7A4A06"];
+// The logo's navy and blues, with a little of the lime the buttons use.
+const WASH = ["#2E63B0", "#1B4680", "#5F7A14", "#081A38"];
+const STRETCH = ["#081A38", "#0F2A52", "#1B4680", "#2E63B0", "#5886CB",
+                 "#B8CDEC", "#EEF3FB", "#D2F04E", "#A8C23A"];
 
 function attempt(name, start) {
   try {
@@ -72,8 +74,11 @@ function startLedger() {
   let sum = 247000;
   let next = 0;
   let minutes = 9 * 60 + 42;
-  window.setInterval(() => {
+  // One morning's worth: each example payment arrives once, then the ledger
+  // holds still, so the total never climbs into figures no school would see.
+  const timer = window.setInterval(() => {
     if (document.hidden) return;
+    if (next >= MORE.length) { window.clearInterval(timer); return; }
     const entry = MORE[next % MORE.length];
     next += 1;
     minutes += 3 + (next % 4);
@@ -102,7 +107,7 @@ export function start(engines) {
       typewriter.replaceChildren();
       typewriter.classList.add("sc-typewriter-live");
       return engines.typewriter.createTypewriter(typewriter, {
-        text, color: "#3F8F68", speed: 16, columns: 30, hold: 3200,
+        text, color: "#2E63B0", speed: 16, columns: 30, hold: 3200,
         label: "SCHOOLCORD", sound: false,
       });
     });
@@ -111,7 +116,7 @@ export function start(engines) {
   const iso = document.querySelector("[data-sc-iso]");
   if (iso && engines.isoLattice) {
     attempt("isometric figure", () => engines.isoLattice.createIsoLattice(iso, {
-      shapes: ["steps", "pillars", "cube"], interval: 4, color: "#F0B43C",
+      shapes: ["steps", "pillars", "cube"], interval: 4, color: "#D2F04E",
       glow: 0.55, size: 0.62, theme: "dark",
     }));
   }
@@ -119,7 +124,7 @@ export function start(engines) {
   const orb = document.querySelector("[data-sc-orb]");
   if (orb && engines.liveOrb) {
     attempt("orb", () => engines.liveOrb.createLiveOrb(orb, {
-      variant: "custom", color: "#37C07F", eyeColor: "#06130C", theme: "dark",
+      variant: "custom", color: "#D2F04E", eyeColor: "#0F2A52", theme: "dark",
     }));
   }
 

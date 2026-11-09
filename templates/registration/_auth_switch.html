@@ -22,7 +22,10 @@ nothing to switch to.
 {% endcomment %}
 
 {% block anonymous_content %}
-<div class="auth-shell" data-auth-shell data-auth-panel="{{ auth_panel|default:'login' }}">
+<div class="auth-shell sc-auth" data-auth-shell data-auth-panel="{{ auth_panel|default:'login' }}">
+  {# The landing page's moving wash, behind both halves (js/landing.js). #}
+  <div class="sc-wash" data-sc-wash aria-hidden="true"><canvas></canvas></div>
+  <div class="sc-veil" aria-hidden="true"></div>
 
   {% comment %}
   The visual panel. Its *contents* differ per side, so both are rendered and
@@ -125,17 +128,19 @@ nothing to switch to.
       <a href="{% url 'core:landing' %}"
          class="mb-8 flex items-center justify-center gap-2.5 lg:hidden">
         {% include "partials/_brand_mark.html" with size="size-10" %}
-        <span class="text-xl font-semibold tracking-tight text-brand-900">
+        <span class="sc-auth-brand text-xl">
           {{ product_name }}
         </span>
       </a>
 
+      <div class="sc-auth-card">
       <div data-auth-form-for="login"{% if auth_panel == "signup" %} hidden{% endif %}>
         {% include "registration/_panel_login.html" with form=login_form %}
       </div>
 
       <div data-auth-form-for="signup"{% if auth_panel != "signup" %} hidden{% endif %}>
         {% include "core/_panel_signup.html" with form=signup_form %}
+      </div>
       </div>
 
       <div class="mt-10 flex justify-center">
@@ -146,4 +151,10 @@ nothing to switch to.
   </div>
 
 </div>
+{% load static %}
+<script type="module">
+  import { start } from "{% static 'js/landing.js' %}";
+  const shaderGradient = await import("{% static 'js/vendor/23rd/shader-gradient-vanilla.js' %}").catch(() => null);
+  start({ shaderGradient });
+</script>
 {% endblock %}

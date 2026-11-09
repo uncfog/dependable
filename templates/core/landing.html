@@ -3,7 +3,8 @@
 
 {% comment %}
 The public home page, from the owner's landing prototype (claude.ai artifact
-"SCHOOLCORD Landing Prototype"): deep green, Bricolage Grotesque for display,
+"SCHOOLCORD Landing Prototype"), in the logo's navy and blue with lime for every
+button. Bricolage Grotesque for display,
 Figtree for text, JetBrains Mono for figures and labels, all three served from
 static/fonts. The page is dark whatever the visitor's setting; its tokens live on
 `.sc` in assets/app.css ("Landing page, the prototype's look"), so no signed-in
@@ -14,8 +15,11 @@ Truthful by construction. The prototype promised a bank account number per
 student and automatic matching; SCHOOLCORD does neither, so the copy here says
 what it does: the bursar records each payment, checks it against the bank, and
 the receipt and balance follow. Every name, figure and school on the page is
-invented. Prices come from apps/schools/plans.py (`plan_offers`), the list the
-checkout charges from. WhatsApp links read `support_whatsapp_url`.
+invented, except the school on the typewriter's receipt, which the owner chose.
+Prices come from apps/schools/plans.py (`plan_offers`), the list the checkout
+charges from; each plan's button goes to sign-up with `?plan=`, and sign-up then
+opens Plans & billing with that plan marked before onboarding (core.views.SignupView).
+WhatsApp links read `support_whatsapp_url`.
 
 The moving parts are five components from the 23rd registry (23rd.dev), compiled
 to plain JavaScript in static/js/vendor/23rd and started by static/js/landing.js:
@@ -156,7 +160,8 @@ Title, meta description and JSON-LD come from apps/core/seo.py.
   <section class="sc-section" id="receipts">
     <div class="sc-wrap sc-split">
       <div class="sc-stage sc-stage-tw" data-sc-typewriter
-           data-text="GREENFIELD ACADEMY, WARRI
+           data-text="FULFILLED ACADEMY
+EKETE INLAND, UDU
 Fee payment received
 
 Chidinma Okoro, JSS 2B
@@ -166,7 +171,8 @@ Balance          NGN 35,000
 
 Thank you. The Bursary">
         {# Shown until the typewriter starts, and instead of it without JavaScript. #}
-        <pre class="sc-receipt-still" aria-label="A sample receipt">GREENFIELD ACADEMY, WARRI
+        <pre class="sc-receipt-still" aria-label="A sample receipt">FULFILLED ACADEMY
+EKETE INLAND, UDU
 Fee payment received
 
 Chidinma Okoro, JSS 2B
@@ -331,9 +337,9 @@ Thank you. The Bursary</pre>
                   {% if offer.price_naira is None %}
                     <a class="sc-btn sc-btn-sm sc-btn-ghost" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener">Talk to us</a>
                   {% elif offer.price_naira == 0 %}
-                    <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-sm sc-btn-ghost">Start free</a>
+                    <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="sc-btn sc-btn-sm sc-btn-ghost">Start free</a>
                   {% else %}
-                    <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-sm {% if offer.plan == 'growth' %}sc-btn-primary{% else %}sc-btn-ghost{% endif %}">Choose {{ offer.name }}</a>
+                    <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="sc-btn sc-btn-sm {% if offer.plan == 'growth' %}sc-btn-primary{% else %}sc-btn-ghost{% endif %}">Choose {{ offer.name }}</a>
                   {% endif %}
                 </td>
               </tr>

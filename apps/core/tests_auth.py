@@ -87,7 +87,8 @@ class SignupTests(TestCase):
 
     def test_it_creates_the_school_its_first_branch_and_the_owner(self):
         response = self.client.post(self.url, signup_post())
-        self.assertRedirects(response, reverse("core:onboarding"))
+        # Plans & billing first, then onboarding.
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1")
 
         school = School.all_objects.get(name="Bright Star Academy")
         self.assertEqual(school.contact_email, "ngozi@brightstar.example")
@@ -105,12 +106,13 @@ class SignupTests(TestCase):
         self.assertEqual(owner.last_name, "Okonkwo")
         self.assertTrue(owner.check_password("correct-horse-battery"))
 
-    def test_the_new_owner_is_signed_in_and_lands_in_onboarding(self):
+    def test_the_new_owner_is_signed_in_and_goes_from_plans_to_onboarding(self):
         response = self.client.post(self.url, signup_post(), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["user"].is_authenticated)
         self.assertEqual(response.context["user"].role, Role.SCHOOL_OWNER)
-        self.assertContains(response, "Academic setup")
+        self.assertContains(response, "Continue to set up your school")
+        self.assertContains(self.client.get(reverse("core:onboarding")), "Academic setup")
 
     def test_a_one_word_name_does_not_crash(self):
         self.client.post(self.url, signup_post(full_name="Ngozi"))
@@ -125,7 +127,7 @@ class SignupTests(TestCase):
     def test_a_clashing_username_is_given_a_suffix_not_an_error(self):
         User.objects.create_user("ngozi", password="pw", role=Role.PLATFORM_OWNER)
         response = self.client.post(self.url, signup_post())
-        self.assertRedirects(response, reverse("core:onboarding"))
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1")
         self.assertTrue(
             User.objects.filter(email="ngozi@brightstar.example",
                                 username="ngozi-2").exists()
@@ -500,3 +502,42 @@ class DashboardScopingTests(SeededRoleTestCase):
         self.assertEqual(response.status_code, 200)
         # The Annex belongs to their school but not to them.
         self.assertNotContains(response, "Annex")
+
+
+class PlanBeforeOnboardingTests(TestCase):
+    """A plan picked on the landing page rides through sign-up to Plans & billing,
+    which offers the way on to onboarding until the school gets there."""
+
+    url = reverse("core:signup")
+
+    def test_the_landing_plan_is_carried_in_the_form(self):
+        body = self.client.get(self.url + "?plan=growth").content.decode()
+        self.assertIn('<input type="hidden" name="plan" value="growth">', body)
+
+    def test_an_unknown_plan_is_dropped(self):
+        body = self.client.get(self.url + "?plan=platinum").content.decode()
+        self.assertNotIn('name="plan"', body)
+
+    def test_sign_up_opens_plans_with_the_pick_marked(self):
+        response = self.client.post(self.url, signup_post(plan="growth"))
+        self.assertRedirects(response, reverse("billing:checkout") + "?welcome=1&plan=growth")
+        page = self.client.get(reverse("billing:checkout") + "?welcome=1&plan=growth")
+        self.assertContains(page, "Welcome to SCHOOLCORD.")
+        self.assertContains(page, "Your pick")
+        self.assertContains(page, f'href="{reverse("core:onboarding")}"')
+        self.assertContains(page, "Continue to set up your school")
+
+    def test_onboarding_ends_the_plan_step(self):
+        self.client.post(self.url, signup_post())
+        self.client.get(reverse("core:onboarding"))
+        page = self.client.get(reverse("billing:checkout"))
+        self.assertNotContains(page, "Continue to set up your school")
+
+    def test_the_sign_in_pages_wear_the_landing_look(self):
+        for url in (reverse("login"), self.url, reverse("password_reset")):
+            with self.subTest(url=url):
+                body = self.client.get(url).content.decode()
+                self.assertIn("sc-auth", body)
+                self.assertIn("data-sc-wash", body)
+                self.assertIn("sc-auth-card", body)
+                self.assertIn("js/vendor/23rd/shader-gradient-vanilla.js", body)
