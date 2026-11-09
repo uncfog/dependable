@@ -3928,3 +3928,47 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 
 .family-link { display: block; margin-top: 0.125rem; }
 .table-cards tr.card-row > td.card-lead a.family-link { display: flex; }
+
+/* ==========================================================================
+   Notifications: the bell in the page header and the list it opens
+   (templates/notifications/). Built on the app's tokens, so it follows the
+   light and dark themes like every other screen.
+   ========================================================================== */
+@layer components {
+  .bell { @apply relative; }
+  .bell-button {
+    @apply relative grid size-9 place-items-center rounded-md border border-ink-200 bg-surface text-ink-600;
+    transition: color var(--duration-quick) var(--ease-out),
+                border-color var(--duration-quick) var(--ease-out);
+  }
+  .bell-button:hover { @apply border-brand-300 text-brand-700; }
+  .bell-count {
+    @apply absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full
+           bg-overdue px-1 text-[0.6875rem] font-bold leading-none text-white;
+  }
+  .bell-panel {
+    @apply absolute right-0 top-full z-50 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden p-0 shadow-panel;
+  }
+  .bell-panel-body { max-height: min(26rem, 60vh); overflow-y: auto; }
+  /* On a phone the bell is not at the screen's edge, so the panel spans the
+     screen instead of hanging off the bell and running off the left side. */
+  @media (max-width: 639px) {
+    .bell-panel {
+      position: fixed; left: 1rem; right: 1rem; width: auto;
+      top: calc(env(safe-area-inset-top, 0px) + 4rem);
+    }
+  }
+
+  .notice-list { @apply divide-y divide-ink-200; }
+  .notice-link {
+    @apply grid grid-cols-[0.5rem_minmax(0,1fr)] items-start gap-3 px-4 py-3;
+    transition: background-color var(--duration-quick) var(--ease-out);
+  }
+  .notice-link:hover { @apply bg-ink-50; }
+  .notice-dot { @apply mt-1.5 size-2 rounded-full bg-transparent; }
+  .notice-unread .notice-dot { @apply bg-brand-500; }
+  .notice-title { @apply block text-sm text-ink-700; }
+  .notice-unread .notice-title { @apply font-semibold text-ink-900; }
+  .notice-body { @apply mt-0.5 block text-sm text-ink-600; }
+  .notice-meta { @apply mt-1 block text-xs text-ink-500; }
+}
