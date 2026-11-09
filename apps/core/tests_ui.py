@@ -1134,7 +1134,8 @@ class AboutContentTests(UITestCase):
 class FooterAccountTests(UITestCase):
     def footer(self) -> str:
         body = self.client.get(reverse("core:landing")).content.decode()
-        return body[body.index("<footer"):]
+        # The footer only: the WhatsApp helper after it is not a social account.
+        return body[body.index("<footer"):body.index("</footer>")]
 
     def test_the_three_accounts_are_linked_with_their_real_addresses(self):
         """The whole URL, share parameters included -- asserted on the escaped

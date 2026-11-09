@@ -284,9 +284,9 @@ class PublicPageHeadTests(TestCase):
             # The hero headline. The snippet is here to prove the copy is in
             # the HTML a crawler receives, so it has to be the copy that is
             # actually on the page.
-            "/": ["Run Your School. Not Your Paperwork.",
-                  "One school term, without the paperwork.",
-                  "How much could your school recover?"],
+            "/": ["Run Your School. Not Your <em>Paperwork</em>.",
+                  "A proper receipt, the minute the payment is checked.",
+                  "We do the setup. You take over with one click."],
             "/signup/": ["Create your school account", 'name="school_name"'],
             "/accounts/login/": ["Sign in", "Email or username"],
         }
