@@ -3182,6 +3182,34 @@
       var(--color-lattice-dark);
   }
 
+  @keyframes lp-h1-reveal {
+    0% { opacity: 0; transform: translateY(28px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .lp-animate-h1 {
+    animation: lp-h1-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Hidden until scrolled to -- but only once the page's script has run and
+     armed it (`.lp-js` on <html>), so a visitor without JavaScript still sees
+     every section. */
+  .lp-js .lp-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .lp-js .lp-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lp-animate-h1 { animation: none; }
+    .lp-js .lp-reveal { opacity: 1; transform: none; transition: none; }
+  }
+
   .lp-faq summary::-webkit-details-marker { display: none; }
 }
 
@@ -3845,74 +3873,6 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
   font-weight: 600;
   line-height: 1.5;
 }
-
-/* --- Landing motion ----------------------------------------------------------
-   One rule for the whole page: what moves is the product doing its job. The
-   receipt prints, the stamp lands, the message is delivered; down the term,
-   each step's paperwork changes as it does in the app, each once, on screen. Nothing fades up for
-   the sake of it, nothing bounces (`--ease-out` only) and no figure counts up.
-
-   Every element is written in its finished state. The "before" states live
-   only inside `prefers-reduced-motion: no-preference` and under `.lp-motion`,
-   which the page's script adds once it can play them. */
-.lp-swap { display: inline-grid; }
-.lp-swap > * { grid-area: 1 / 1; }
-.lp-swap > .lp-was { opacity: 0; }
-
-@keyframes lp-feed { from { opacity: 0; transform: translateY(14px) rotate(-1.5deg); } }
-@keyframes lp-line { from { opacity: 0; transform: translateY(4px); } }
-@keyframes lp-stamp { from { opacity: 0; transform: rotate(-9deg) scale(1.35); } }
-@keyframes lp-rise { from { opacity: 0; transform: translateY(10px); } }
-@keyframes lp-show { from { opacity: 0; } }
-@keyframes lp-hide { from { opacity: 1; } to { opacity: 0; } }
-
-@media (prefers-reduced-motion: no-preference) {
-  /* The hero, once, when the receipt is on screen: about two seconds. */
-  .lp-motion .lp-hero:not(.is-live) .lp-receipt,
-  .lp-motion .lp-hero:not(.is-live) .lp-bubble { opacity: 0; }
-  .lp-motion .lp-hero.is-live .lp-receipt { animation: lp-feed var(--duration-settle) var(--ease-out) 150ms both; }
-  .lp-motion .lp-hero.is-live .lp-print { animation: lp-line var(--duration-quick) var(--ease-out) both; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(1) { animation-delay: 550ms; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(2) { animation-delay: 650ms; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(3) { animation-delay: 750ms; }
-  .lp-motion .lp-hero.is-live .lp-print:nth-child(4) { animation-delay: 850ms; }
-  .lp-motion .lp-hero.is-live .lp-stamp { animation: lp-stamp var(--duration-quick) var(--ease-out) 1150ms both; }
-  .lp-motion .lp-hero.is-live .lp-bubble { animation: lp-rise var(--duration-settle) var(--ease-out) 1500ms both; }
-  .lp-motion .lp-hero.is-live .lp-swap > .lp-was { animation: lp-hide var(--duration-quick) var(--ease-out) 2300ms both; }
-  .lp-motion .lp-hero.is-live .lp-swap > .lp-now { animation: lp-show var(--duration-quick) var(--ease-out) 2300ms both; }
-
-  /* The term rail: a step's dot fills when its step goes live. */
-  .lp-motion .lp-term-step::before { transition: background-color var(--duration-settle) var(--ease-out); }
-  .lp-motion .lp-term-step:not(.is-live)::before { background-color: #f4f6fb; box-shadow: 0 0 0 4px #f4f6fb, inset 0 0 0 2px #4a5fc0; }
-
-  /* Before a step is live: its paperwork is not there yet, or not done yet. */
-  .lp-motion .lp-term-step:not(.is-live) .lp-print,
-  .lp-motion .lp-term-step:not(.is-live) .lp-arrive { opacity: 0; }
-  .lp-motion .lp-term-step:not(.is-live) .lp-swap > .lp-was { opacity: 1; }
-  .lp-motion .lp-term-step:not(.is-live) .lp-swap > .lp-now { opacity: 0; }
-  .lp-motion .lp-term-step:not(.is-live) .lp-fill { transform: scaleX(0); }
-
-  /* When it goes live. */
-  .lp-motion .is-live .lp-print { animation: lp-line var(--duration-quick) var(--ease-out) both; }
-  .lp-motion .is-live .lp-print:nth-child(1) { animation-delay: 150ms; }
-  .lp-motion .is-live .lp-print:nth-child(2) { animation-delay: 300ms; }
-  .lp-motion .is-live .lp-print:nth-child(3) { animation-delay: 450ms; }
-  .lp-motion .is-live .lp-print:nth-child(4) { animation-delay: 650ms; }
-  .lp-motion .is-live .lp-arrive { animation: lp-rise var(--duration-settle) var(--ease-out) 100ms both; }
-  .lp-motion .is-live .lp-arrive.lp-from-tail { animation-name: lp-pop; }
-  .lp-motion .is-live .lp-print.lp-late { animation-delay: 900ms; }
-  .lp-motion .is-live .lp-swap > .lp-was { animation: lp-hide var(--duration-quick) var(--ease-out) 900ms both; }
-  .lp-motion .is-live .lp-swap > .lp-now { animation: lp-show var(--duration-quick) var(--ease-out) 900ms both; }
-  /* The Check button is pressed, then gives way to the Checked pill. */
-  .lp-motion .is-live .lp-swap > .lp-was.lp-press {
-    animation: lp-press var(--duration-quick) var(--ease-out) 600ms both,
-               lp-hide var(--duration-quick) var(--ease-out) 900ms both;
-  }
-  .lp-motion .lp-fill { transform-origin: 0 50%; transition: transform var(--duration-slow) var(--ease-out) 200ms; }
-}
-.lp-from-tail { transform-origin: 0 100%; }
-@keyframes lp-pop { from { opacity: 0; transform: scale(0.94); } }
-@keyframes lp-press { 50% { transform: scale(0.92); } }
 
 .lp-drawn .tile { box-shadow: none; }
 .lp-drawn .note-banner { width: 100%; }
