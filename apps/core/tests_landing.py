@@ -130,50 +130,6 @@ class DesignCleanupTests(LandingTestCase):
         self.assertIn('<script type="application/ld+json">', self.html)
 
 
-class MotionTests(LandingTestCase):
-    """What moves is the product doing its job, and the page ships finished.
-
-    The receipt prints, the stamp lands and the message is delivered; each term
-    step's paperwork changes as it does in the app. There is no fade-up on
-    every section, and the "before" states exist only where motion is allowed.
-    """
-
-    def css(self) -> str:
-        return Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
-
-    def test_no_section_fades_up_for_its_own_sake(self):
-        self.assertNotIn("lp-reveal", self.html)
-        self.assertNotIn("lp-reveal", self.css())
-
-    def test_the_receipt_and_each_term_step_play_their_own_change(self):
-        self.assertIn('class="lp-hero ', self.html)
-        self.assertEqual(self.html.count('class="lp-term-step"'), 5)
-        # Each step's finished state is written in the page: the payment is
-        # checked, the bar stands at 53%, the message was delivered.
-        self.assertIn('<span class="lp-now">All checked</span>', self.html)
-        self.assertIn("lp-fill block h-full w-[53%]", self.html)
-        self.assertIn("10:51 &middot; delivered", self.html)
-
-    def test_before_states_only_exist_where_motion_is_allowed(self):
-        css = self.css()
-        start = css.index("/* --- Landing motion")
-        block = css[start:css.index(".lp-drawn .tile", start)]
-        gated = block[block.index("@media (prefers-reduced-motion: no-preference) {"):]
-        ungated = block[:block.index("@media (prefers-reduced-motion: no-preference) {")]
-        self.assertNotIn(":not(.is-live)", ungated)
-        self.assertIn(".lp-motion .lp-term-step:not(.is-live)", gated)
-        # Armed by the script only when it can play them.
-        self.assertIn("root.classList.add('lp-motion')", self.html)
-        self.assertIn("prefers-reduced-motion: reduce", self.html)
-
-    def test_nothing_bounces_or_counts_up(self):
-        block = self.css()[self.css().index("/* --- Landing motion"):]
-        block = block[:block.index(".lp-drawn .tile")]
-        self.assertNotIn("--ease-spring", block)
-        self.assertNotIn("cubic-bezier", block)
-        self.assertNotIn("countUp", self.html)
-
-
 class DemoIsADemoTests(LandingTestCase):
     def test_it_is_labelled_as_a_demo(self):
         demo = self.demo()

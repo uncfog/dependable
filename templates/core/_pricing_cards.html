@@ -6,7 +6,7 @@ each card says how many schools are on the plan.
 {% endcomment %}
     <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       {% for offer in plan_offers %}
-        <article class="flex flex-col rounded-[24px] p-6 shadow-card {% if offer.plan == 'growth' %}bg-panel text-white{% else %}bg-white{% endif %}">
+        <article class="lp-reveal flex flex-col rounded-[24px] p-6 shadow-card {% if offer.plan == 'growth' %}bg-panel text-white{% else %}bg-white{% endif %}">
           <h3 class="text-lg font-extrabold {% if offer.plan != 'growth' %}text-ink-900{% endif %}">{{ offer.name }}</h3>
           <p class="mt-1 text-sm {% if offer.plan == 'growth' %}text-panel-copy{% else %}text-ink-600{% endif %}">{{ offer.students }}</p>
           <p class="mt-5 text-3xl font-extrabold tabular-nums">{{ offer.price_display }}</p>
