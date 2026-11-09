@@ -10,6 +10,12 @@ A recorded payment writes two events: its ``PaymentTransaction`` and its
 child); shared family payments from the transaction (it is one sum, however
 many children it covers). Each payment is told about once.
 
+Who is told: when something is done successfully, everyone who works at that
+campus hears about it straight away (and the owners, who look after every
+campus), except the person who did it. They already have the success message
+on their own screen. Things about one person's account (a role change, two-step
+sign-in, ownership) stay with that person and the owners.
+
 A failure here must never undo the payment that caused it, so :func:`handle`
 runs each rule in its own savepoint and swallows its errors.
 """
@@ -23,7 +29,7 @@ from django.urls import reverse
 
 from apps.core.roles import Role
 
-from .delivery import campus_staff, notify, owners
+from .delivery import campus_everyone, notify, owners
 from .models import Kind
 
 log = logging.getLogger(__name__)
@@ -78,7 +84,7 @@ def _payment_created(event):
     what = f"{naira(payment.amount)} for {payment.student.full_name}"
     if payment.status == PaymentStatus.PENDING:
         notify(
-            campus_staff(payment.school_id, payment.branch_id) + owners(payment.school_id),
+            campus_everyone(payment.school_id, payment.branch_id),
             kind=Kind.PAYMENT_WAITING, title=f"{what} is waiting to be checked",
             body=f"Recorded by {_who(event)}. Check it against the bank before it counts.",
             url=url, school_id=payment.school_id, branch_id=payment.branch_id,
@@ -86,7 +92,7 @@ def _payment_created(event):
         )
     elif payment.status == PaymentStatus.CONFIRMED:
         notify(
-            owners(payment.school_id),
+            campus_everyone(payment.school_id, payment.branch_id),
             kind=Kind.PAYMENT_RECORDED, title=f"{what} recorded",
             body=f"Recorded and checked by {_who(event)}.",
             url=url, school_id=payment.school_id, branch_id=payment.branch_id,
@@ -107,7 +113,7 @@ def _payment_status(event, *, voided: bool):
         title, kind = f"{what} was checked", Kind.PAYMENT_CHECKED
         body = f"Checked against the bank by {_who(event)}. It now counts toward the balance."
     notify(
-        [payment.recorded_by] + owners(payment.school_id),
+        campus_everyone(payment.school_id, payment.branch_id),
         kind=kind, title=title, body=body,
         url=reverse("payments:payment_detail", args=[payment.pk]),
         school_id=payment.school_id, branch_id=payment.branch_id,
@@ -129,7 +135,7 @@ def _transaction_created(event):
     url = reverse("payments:shared_detail", args=[txn.pk])
     if txn.status == PaymentStatus.PENDING:
         notify(
-            campus_staff(txn.school_id, txn.branch_id) + owners(txn.school_id),
+            campus_everyone(txn.school_id, txn.branch_id),
             kind=Kind.PAYMENT_WAITING, title=f"{_shared_label(txn)} is waiting to be checked",
             body=f"Recorded by {_who(event)}. Check it against the bank before it counts.",
             url=url, school_id=txn.school_id, branch_id=txn.branch_id,
@@ -137,7 +143,7 @@ def _transaction_created(event):
         )
     elif txn.status == PaymentStatus.CONFIRMED:
         notify(
-            owners(txn.school_id),
+            campus_everyone(txn.school_id, txn.branch_id),
             kind=Kind.PAYMENT_RECORDED, title=f"{_shared_label(txn)} recorded",
             body=f"Recorded and checked by {_who(event)}.",
             url=url, school_id=txn.school_id, branch_id=txn.branch_id,
@@ -157,7 +163,7 @@ def _transaction_status(event, *, voided: bool):
         title, kind = f"{_shared_label(txn)} was checked", Kind.PAYMENT_CHECKED
         body = f"Checked against the bank by {_who(event)}."
     notify(
-        [txn.recorded_by] + owners(txn.school_id),
+        campus_everyone(txn.school_id, txn.branch_id),
         kind=kind, title=title, body=body,
         url=reverse("payments:shared_detail", args=[txn.pk]),
         school_id=txn.school_id, branch_id=txn.branch_id,
@@ -174,9 +180,10 @@ def _import(event, *, undone: bool):
         if reason:
             body += f" Reason: {reason}"
     notify(
-        owners(event.school_id), kind=Kind.IMPORT, title=title, body=body,
+        campus_everyone(event.school_id, event.branch_id), kind=Kind.IMPORT,
+        title=title, body=body,
         url=reverse("onboarding:detail", args=[event.target_id]),
-        school_id=event.school_id, event=event, exclude=event.actor,
+        school_id=event.school_id, branch_id=event.branch_id, event=event, exclude=event.actor,
     )
 
 
@@ -196,9 +203,10 @@ def _staff(event, *, created: bool):
     name = person.get_full_name() or person.get_username()
     url = reverse("staff:list")
     if created:
-        # A new owner is not told about their own account.
+        # The campus meets its new colleague; the new person is not told about themselves.
         notify(
-            [o for o in owners(person.school_id) if o.pk != person.pk], kind=Kind.STAFF,
+            [p for p in campus_everyone(person.school_id, person.branch_id) if p.pk != person.pk],
+            kind=Kind.STAFF,
             title=f"New staff account: {name}",
             body=f"{_role_label(person.role)}, added by {_who(event)}.",
             url=url, school_id=person.school_id, branch_id=person.branch_id,

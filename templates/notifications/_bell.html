@@ -2,8 +2,13 @@
 The bell in the page header: the unread count, and on press a panel of the
 latest notifications fetched from notifications:panel. Without the script it
 is a plain link to the notifications page.
+
+`data-live-url` and `data-latest` drive the live check in js/ui.js: anything
+newer than `data-latest` that arrives while the page is open pops up as a toast
+and moves the count, without a reload.
 {% endcomment %}
-<div class="bell" data-bell data-panel-url="{% url 'notifications:panel' %}">
+<div class="bell" data-bell data-panel-url="{% url 'notifications:panel' %}"
+     data-live-url="{% url 'notifications:live' %}" data-latest="{{ latest_notification|default:0 }}">
   <a href="{% url 'notifications:index' %}" class="bell-button" data-bell-button
      aria-haspopup="true" aria-expanded="false" aria-controls="bell-panel"
      aria-label="Notifications{% if unread_notifications %}, {{ unread_notifications }} unread{% endif %}">

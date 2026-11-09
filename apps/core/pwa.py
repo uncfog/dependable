@@ -70,13 +70,21 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch (error) { data = {}; }
-  event.waitUntil(self.registration.showNotification(data.title || 'SCHOOLCORD', {
-    body: data.body || '',
-    tag: data.tag || undefined,
-    icon: ICON,
-    badge: ICON,
-    data: { url: data.url || '/notifications/' },
-  }));
+  // An open SCHOOLCORD page is told too, so it pops the notice up in the app and
+  // moves the bell straight away (js/ui.js, initLiveNotifications). The system
+  // notification is still shown: phones expect one for every push.
+  const tellOpenPages = self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    .then((windows) => windows.forEach((client) => client.postMessage({ type: 'schoolcord:notification' })));
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(data.title || 'SCHOOLCORD', {
+      body: data.body || '',
+      tag: data.tag || undefined,
+      icon: ICON,
+      badge: ICON,
+      data: { url: data.url || '/notifications/' },
+    }),
+    tellOpenPages,
+  ]));
 });
 
 // A tap opens the page it is about, in an open SCHOOLCORD window if there is one.

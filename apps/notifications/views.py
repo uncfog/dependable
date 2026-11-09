@@ -11,7 +11,7 @@ from datetime import timedelta
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -82,6 +82,45 @@ class PanelView(LoginRequiredMixin, View):
     def get(self, request):
         rows = Notification.objects.for_user(request.user)[:PANEL_SIZE]
         return render(request, "notifications/_panel.html", {"notifications": rows})
+
+
+#: The most a live check hands back at once. Any more wait in the bell.
+LIVE_SIZE = 5
+
+
+class LiveView(LoginRequiredMixin, View):
+    """What arrived since the page last looked, so an open page can pop it up.
+
+    The page asks with ``after`` (the newest id it has already seen) every few
+    seconds, and straight away when a push lands on the device. It gets back the
+    unread count for the bell and up to five new unread notices, oldest first.
+    Only ever the person's own (``for_user``), and never anything but JSON.
+    """
+
+    def get(self, request):
+        mine = Notification.objects.for_user(request.user)
+        try:
+            after = max(int(request.GET.get("after", "0")), 0)
+        except ValueError:
+            after = 0
+        new = list(mine.unread().filter(pk__gt=after).order_by("-pk")[:LIVE_SIZE])
+        new.reverse()
+        latest = mine.order_by("-pk").values_list("pk", flat=True).first() or 0
+        response = JsonResponse({
+            "unread": mine.unread().count(),
+            "latest": max(latest, after),
+            "items": [
+                {
+                    "id": n.pk,
+                    "title": n.title,
+                    "body": n.body,
+                    "url": reverse("notifications:open", args=[n.pk]),
+                }
+                for n in new
+            ],
+        })
+        response["Cache-Control"] = "no-store"
+        return response
 
 
 class OpenView(LoginRequiredMixin, View):
