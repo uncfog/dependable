@@ -16,6 +16,12 @@ transfer, and what happens next. Nothing here moves money.
 {% endblock %}
 
 {% block content %}
+{% if setup_pending %}
+  <div class="card card-pad mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <p class="text-sm text-ink-700">You can set up your school while the transfer is on its way. Your trial carries on until it arrives.</p>
+    <a href="{% url 'core:onboarding' %}" class="btn btn-lime shrink-0">Continue to set up your school</a>
+  </div>
+{% endif %}
 <div class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
 
   <section class="card card-pad" aria-labelledby="pay-heading">

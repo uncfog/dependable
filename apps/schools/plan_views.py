@@ -73,9 +73,16 @@ class PlanCheckoutView(ManagePlanMixin, TemplateView):
             .order_by("-created_at")
             .first()
         )
+        from apps.core.views import SETUP_AFTER_PLAN, chosen_plan
+
         return super().get_context_data(
             school=self._school(),
             offers=offers(),
+            # Straight from sign-up: a welcome, the plan picked on the landing
+            # page marked out, and the way on to onboarding.
+            welcome=self.request.GET.get("welcome") == "1",
+            setup_pending=bool(self.request.session.get(SETUP_AFTER_PLAN)),
+            chosen_plan=chosen_plan(self.request),
             open_order=open_order,
             bank_ready=bank_details_ready(),
             support_email=SUPPORT_EMAIL,
@@ -118,7 +125,10 @@ class PlanOrderView(ManagePlanMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         order = get_object_or_404(PlanOrder.objects, reference=self.kwargs["reference"])
+        from apps.core.views import SETUP_AFTER_PLAN
+
         return super().get_context_data(
+            setup_pending=bool(self.request.session.get(SETUP_AFTER_PLAN)),
             order=order,
             offer=offer_for(order.plan),
             bank=bank_details(),
