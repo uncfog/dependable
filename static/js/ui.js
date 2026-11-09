@@ -1531,6 +1531,116 @@
     document.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && !panel.hidden) { close(); button.focus(); }
     });
+    // A live notification arrived (initLiveNotifications): the list is old now.
+    bell.addEventListener('bell:stale', function () {
+      loaded = false;
+      if (!panel.hidden) { panel.hidden = true; open(); }
+    });
+  }
+
+  /* ====================================================================== *
+   * Live notifications
+   * ----------------------------------------------------------------------
+   * When someone else at the campus records a payment (or anything else that
+   * notifies), a page that is open pops it up as a toast and moves the bell's
+   * count, with no reload. It asks notifications:live for anything newer than
+   * the newest it has seen:
+   *   - at once, when a push lands on this device (the service worker passes it
+   *     on), so a device with phone notifications on hears in about a second;
+   *   - every 10 seconds while the page is in view, for everyone else;
+   *   - when the page comes back into view.
+   * A hidden tab does not ask. A failed check is retried on the next beat; a
+   * signed-out answer (a redirect to the sign-in page) stops it for this page.
+   * ====================================================================== */
+  var LIVE_EVERY = 10000;
+
+  function setBellCount(bell, unread) {
+    var button = bell.querySelector('[data-bell-button]');
+    var badge = bell.querySelector('.bell-count');
+    if (unread > 0) {
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'bell-count';
+        badge.setAttribute('aria-hidden', 'true');
+        button.appendChild(badge);
+      }
+      badge.textContent = unread > 99 ? '99+' : String(unread);
+      button.setAttribute('aria-label', 'Notifications, ' + unread + ' unread');
+    } else {
+      if (badge) badge.parentNode.removeChild(badge);
+      button.setAttribute('aria-label', 'Notifications');
+    }
+  }
+
+  function liveToast(item) {
+    var text = item.body ? item.title + '. ' + item.body : item.title;
+    var el = showToast(text, 'info');
+    if (!el || !item.url) return;
+    var message = el.querySelector('.toast-message');
+    if (!message) return;
+    var link = document.createElement('a');
+    link.href = item.url; // notifications:open, which marks it read and goes there
+    link.className = 'font-semibold underline';
+    link.textContent = 'Open';
+    message.appendChild(document.createTextNode(' '));
+    message.appendChild(link);
+  }
+
+  function initLiveNotifications() {
+    var bell = document.querySelector('[data-bell]');
+    var url = bell && bell.getAttribute('data-live-url');
+    if (!url || !window.fetch) return;
+    var latest = parseInt(bell.getAttribute('data-latest'), 10) || 0;
+    var busy = false;
+    var stopped = false;
+    var timer = null;
+
+    function check() {
+      if (busy || stopped || document.hidden) return;
+      busy = true;
+      fetch(url + '?after=' + latest, {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) {
+          var type = r.headers.get('Content-Type') || '';
+          if (r.redirected || type.indexOf('application/json') === -1) {
+            stopped = true; // signed out: nothing more to ask for here
+            return null;
+          }
+          if (!r.ok) throw new Error(r.status);
+          return r.json();
+        })
+        .then(function (data) {
+          if (!data) return;
+          latest = Math.max(latest, data.latest || 0);
+          bell.setAttribute('data-latest', String(latest));
+          (data.items || []).forEach(liveToast);
+          setBellCount(bell, data.unread || 0);
+          if (data.items && data.items.length) {
+            // The panel's list is out of date now: fetch it afresh next time it opens.
+            bell.dispatchEvent(new CustomEvent('bell:stale'));
+          }
+        })
+        .catch(function () { /* the next beat tries again */ })
+        .then(function () { busy = false; });
+    }
+
+    function beat() {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(function () { check(); beat(); }, LIVE_EVERY);
+    }
+
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden) check();
+    });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('message', function (event) {
+        if (event.data && event.data.type === 'schoolcord:notification') check();
+      });
+    }
+    beat();
   }
 
   /* ====================================================================== *
@@ -1562,6 +1672,7 @@
     initInstallPrompt();
     initFilterSheets();
     initBell();
+    initLiveNotifications();
   }
 
   if (document.readyState === 'loading') {

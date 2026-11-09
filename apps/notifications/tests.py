@@ -87,11 +87,14 @@ class PaymentNotificationTests(NotificationCase):
         notice = told(self.bursar, Kind.PAYMENT_VOIDED).get()
         self.assertIn("Duplicate slip", notice.body)
 
-    def test_a_payment_recorded_already_checked_tells_the_owner(self):
+    def test_a_payment_recorded_already_checked_tells_the_whole_campus(self):
         with acting_as(self.bursar):
             self.pay(self.ada, Decimal("5000"), recorded_by=self.bursar)
-        self.assertEqual(told(self.owner, Kind.PAYMENT_RECORDED).count(), 1)
-        self.assertFalse(told(self.principal).exists())
+        for person in (self.owner, self.principal):
+            with self.subTest(person=person.username):
+                self.assertEqual(told(person, Kind.PAYMENT_RECORDED).count(), 1)
+        self.assertFalse(told(self.bursar).exists())
+        self.assertFalse(told(self.south_bursar).exists())
 
     def test_a_muted_kind_is_not_written(self):
         NotificationPreference.objects.create(user=self.owner, muted=[Kind.PAYMENT_WAITING])
@@ -144,6 +147,9 @@ class AccessNotificationTests(NotificationCase):
                 school=self.alpha, branch=self.north,
             )
         self.assertIn("new.bursar", told(self.owner, Kind.STAFF).get().title)
+        # The campus meets its new colleague; the other campus does not.
+        self.assertIn("new.bursar", told(self.bursar, Kind.STAFF).get().title)
+        self.assertFalse(told(self.south_bursar).exists())
 
     def test_a_recovery_code_tells_the_person_even_though_they_used_it(self):
         with acting_as(self.bursar):
@@ -152,6 +158,48 @@ class AccessNotificationTests(NotificationCase):
                    target_label=self.bursar.username, school_id=self.alpha.pk)
         self.assertEqual(told(self.bursar, Kind.SECURITY).count(), 1)
         self.assertEqual(told(self.owner, Kind.SECURITY).count(), 1)
+
+    def test_every_role_at_the_campus_is_told_and_nobody_elsewhere(self):
+        from django.contrib.auth import get_user_model
+
+        User = get_user_model()
+        second_bursar = User.objects.create_user(
+            "north.bursar2", password="pw", role=Role.BURSAR,
+            school=self.alpha, branch=self.north,
+        )
+        switched_off = User.objects.create_user(
+            "north.gone", password="pw", role=Role.BURSAR,
+            school=self.alpha, branch=self.north, is_active=False,
+        )
+        Notification.objects.all().delete()
+        self.record_pending(self.bursar)
+        for person in (self.owner, self.principal, second_bursar):
+            with self.subTest(person=person.username):
+                self.assertEqual(told(person, Kind.PAYMENT_WAITING).count(), 1)
+        for person in (self.bursar, switched_off, self.south_bursar):
+            with self.subTest(left_out=person.username):
+                self.assertFalse(told(person).exists())
+
+    def test_checking_and_voiding_tell_the_whole_campus(self):
+        payment = self.record_pending(self.bursar)
+        Notification.objects.all().delete()
+        with acting_as(self.owner):
+            payment.void(by=self.owner, reason="Duplicate slip")
+        for person in (self.bursar, self.principal):
+            with self.subTest(person=person.username):
+                self.assertEqual(told(person, Kind.PAYMENT_VOIDED).count(), 1)
+        self.assertFalse(told(self.owner).exists())
+        self.assertFalse(told(self.south_bursar).exists())
+
+    def test_an_import_tells_everyone_at_the_school(self):
+        with acting_as(self.principal):
+            record(action="importbatch.committed", category=Category.ACCESS,
+                   target_type="onboarding.ImportBatch", target_id=7,
+                   target_label="records.xlsx", school_id=self.alpha.pk)
+        for person in (self.owner, self.bursar, self.south_bursar):
+            with self.subTest(person=person.username):
+                self.assertIn("records.xlsx", told(person, Kind.IMPORT).get().title)
+        self.assertFalse(told(self.principal).exists())
 
     def test_an_import_tells_the_owner(self):
         with acting_as(self.principal):
@@ -486,6 +534,9 @@ class PushTests(NotificationCase):
         body = self.client.get("/sw.js").content.decode()
         self.assertIn("addEventListener('push'", body)
         self.assertIn("showNotification", body)
+        # And tells any open page, so it pops the notice up in the app at once.
+        self.assertIn("schoolcord:notification", body)
+        self.assertIn("postMessage", body)
         self.assertIn("addEventListener('notificationclick'", body)
         self.assertIn("target.origin !== self.location.origin", body)
 
@@ -503,3 +554,51 @@ class PushTests(NotificationCase):
             body = self.client.get(reverse("notifications:settings")).content.decode()
         self.assertIn('data-push-ready="no"', body)
         self.assertIn("Not available on this site yet", body)
+
+
+class LiveTests(NotificationCase):
+    """What an open page asks for, so it can pop a new notice up without a reload."""
+
+    def live(self, user, after=0):
+        self.client.force_login(user)
+        return self.client.get(reverse("notifications:live"), {"after": after})
+
+    def test_it_returns_only_what_is_newer_and_unread(self):
+        self.record_pending(self.bursar)
+        first = told(self.principal).get()
+        data = self.live(self.principal, after=0).json()
+        self.assertEqual(data["unread"], 1)
+        self.assertEqual([i["id"] for i in data["items"]], [first.pk])
+        self.assertEqual(data["items"][0]["url"], reverse("notifications:open", args=[first.pk]))
+        self.assertIn("Ada Obi", data["items"][0]["title"])
+        again = self.live(self.principal, after=data["latest"]).json()
+        self.assertEqual(again["items"], [])
+        self.assertEqual(again["unread"], 1)
+
+    def test_it_never_shows_anyone_elses(self):
+        self.record_pending(self.bursar)
+        data = self.live(self.south_bursar).json()
+        self.assertEqual((data["unread"], data["items"]), (0, []))
+
+    def test_the_recorder_gets_nothing_live_for_their_own_payment(self):
+        self.record_pending(self.bursar)
+        self.assertEqual(self.live(self.bursar).json()["items"], [])
+
+    def test_a_bad_after_is_treated_as_nothing_seen(self):
+        self.record_pending(self.bursar)
+        self.assertEqual(len(self.live(self.principal, after="x").json()["items"]), 1)
+
+    def test_signed_out_is_sent_to_sign_in_not_given_json(self):
+        response = self.client.get(reverse("notifications:live"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_it_is_never_cached(self):
+        self.assertEqual(self.live(self.owner)["Cache-Control"], "no-store")
+
+    def test_the_bell_carries_the_newest_id_so_old_ones_do_not_pop_up(self):
+        self.record_pending(self.bursar)
+        newest = told(self.principal).get().pk
+        self.client.force_login(self.principal)
+        page = self.client.get(reverse("notifications:index")).content.decode()
+        self.assertIn(f'data-latest="{newest}"', page)
+        self.assertIn(f'data-live-url="{reverse("notifications:live")}"', page)

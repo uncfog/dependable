@@ -32,6 +32,24 @@ def campus_staff(school_id, branch_id, roles=(Role.PRINCIPAL, Role.BURSAR)) -> l
     ))
 
 
+def campus_everyone(school_id, branch_id) -> list:
+    """Everyone who works at that campus, and the school's owners.
+
+    Every active staff account on the campus, whatever its role, plus the owners,
+    who look after every campus. Without a campus (an import, say, which covers
+    the whole school) it is everyone at the school. Another campus never hears
+    about this one, and the platform owner is never on the list.
+    """
+    if not school_id:
+        return []
+    staff = User.objects.filter(school_id=school_id, is_active=True).exclude(
+        role=Role.PLATFORM_OWNER
+    )
+    if branch_id:
+        staff = staff.filter(branch_id=branch_id)
+    return owners(school_id) + list(staff.exclude(role=Role.SCHOOL_OWNER))
+
+
 def notify(recipients: Iterable, *, kind: str, title: str, body: str = "", url: str = "",
            school_id=None, branch_id=None, event=None, dedupe_key: str = "",
            exclude=None) -> list[Notification]:
