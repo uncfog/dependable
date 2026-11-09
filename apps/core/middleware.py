@@ -76,6 +76,10 @@ _WRITABLE_WHEN_READ_ONLY = frozenset(
         # school behind on its bill may be changing hands for exactly that reason.
         "accounts:ownership_start", "accounts:ownership_cancel",
         "accounts:ownership_accept",
+        # Reading and setting one's own notifications changes no school record.
+        "notifications:mark_all_read", "notifications:settings",
+        "notifications:remind", "notifications:reminder_cancel",
+        "notifications:push_subscribe", "notifications:push_unsubscribe",
     }
 )
 

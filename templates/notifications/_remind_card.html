@@ -1,0 +1,28 @@
+{% comment %}
+'Remind me' for one student or payment: a date and a note, for the person
+setting it only. It arrives as a notification on that day (run_reminders).
+Pass target_type ("student" or "payment") and target_id.
+{% endcomment %}
+<section class="card overflow-hidden" aria-labelledby="remind-title-{{ target_type }}-{{ target_id }}">
+  <div class="border-b border-ink-200 px-5 py-3">
+    <h2 id="remind-title-{{ target_type }}-{{ target_id }}" class="text-sm font-semibold text-ink-900">Remind me</h2>
+    <p class="mt-0.5 text-xs text-ink-500">Only you see it. It arrives in your notifications on that day.</p>
+  </div>
+  <form method="post" action="{% url 'notifications:remind' %}" class="space-y-3 px-5 py-4">
+    {% csrf_token %}
+    <input type="hidden" name="target_type" value="{{ target_type }}">
+    <input type="hidden" name="target_id" value="{{ target_id }}">
+    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <div>
+      <label for="remind-on-{{ target_type }}-{{ target_id }}" class="field-label">On</label>
+      <input type="date" name="due_on" id="remind-on-{{ target_type }}-{{ target_id }}" class="field-input" required
+             min="{% now 'Y-m-d' %}">
+    </div>
+    <div>
+      <label for="remind-note-{{ target_type }}-{{ target_id }}" class="field-label">Note <span class="font-normal text-ink-500">(optional)</span></label>
+      <input type="text" name="note" id="remind-note-{{ target_type }}-{{ target_id }}" class="field-input" maxlength="200"
+             placeholder="e.g. Call the parent about the balance">
+    </div>
+    <button type="submit" class="btn btn-secondary w-full text-sm">Set reminder</button>
+  </form>
+</section>

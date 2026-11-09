@@ -127,6 +127,8 @@ PRIVATE_PATHS: tuple[str, ...] = (
     "/plan/",
     "/admissions/",
     "/reports/",
+    # Each person's own notifications and reminders.
+    "/notifications/",
     "/media/",
     # A school's logo, /schools/<school-slug>/logo/. Fetched by browsers on the
     # school's pages; nothing a search index needs.

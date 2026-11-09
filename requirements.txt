@@ -22,4 +22,7 @@ segno==1.6.6
 # why this one is worth a dependency where the payment receipt was not.
 # Pillow arrives with it and is not otherwise used.
 reportlab==5.1.0
+# Web Push, for notifications on a phone's or computer's notification centre.
+# Off until the VAPID keys are set. See apps/notifications/push.py.
+pywebpush==2.5.0
 whitenoise==6.12.0

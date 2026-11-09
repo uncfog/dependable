@@ -1,0 +1,13 @@
+{% comment %}One notification: opened through notifications:open, which marks it read.{% endcomment %}
+<li class="notice{% if not notification.read_at %} notice-unread{% endif %}">
+  <a href="{% url 'notifications:open' notification.pk %}" class="notice-link">
+    <span class="notice-dot" aria-hidden="true"></span>
+    <span class="min-w-0">
+      <span class="notice-title">{% if not notification.read_at %}<span class="sr-only">Unread: </span>{% endif %}{{ notification.title }}</span>
+      {% if notification.body %}<span class="notice-body">{{ notification.body }}</span>{% endif %}
+      <span class="notice-meta">
+        {% if notification.is_reminder %}Reminder &middot; {% endif %}<time datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|timesince }} ago</time>
+      </span>
+    </span>
+  </a>
+</li>

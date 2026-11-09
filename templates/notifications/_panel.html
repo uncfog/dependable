@@ -1,0 +1,8 @@
+{% comment %}The bell's dropdown, fetched by js/ui.js when the bell opens.{% endcomment %}
+{% if notifications %}
+  <ul class="notice-list">
+    {% for notification in notifications %}{% include "notifications/_item.html" %}{% endfor %}
+  </ul>
+{% else %}
+  <p class="px-4 py-6 text-center text-sm text-ink-500">Nothing yet. Payments, imports and reminders will show here.</p>
+{% endif %}

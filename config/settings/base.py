@@ -97,6 +97,8 @@ INSTALLED_APPS = [
     "apps.payments",
     # The append-only record of changes to money and access. See apps/audit/models.py.
     "apps.audit",
+    # In-app notifications and reminders, read off the audit log. Never emailed or texted.
+    "apps.notifications",
     # Authenticator codes and recovery codes for two-step sign-in.
     "django_otp",
     "django_otp.plugins.otp_totp",
@@ -166,6 +168,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.tenancy",
                 "apps.core.pwa.pwa_context",
+                "apps.notifications.context_processors.unread_notifications",
                 # The product's own name, on signed-out pages too -- which is
                 # where it matters most.
                 "apps.core.branding.branding",
@@ -442,3 +445,12 @@ LOGGING = {
     "handlers": {"console": {"class": "logging.StreamHandler"}},
     "root": {"handlers": ["console"], "level": os.environ.get("LOG_LEVEL", "INFO")},
 }
+
+# --- Web Push --------------------------------------------------------------
+# Notifications on a phone's or computer's own notification centre, for people
+# who turn them on per device. Off until all three are set; make a key pair with
+# `python manage.py vapid_keys`. The subject is a mailto: or https: contact the
+# browsers' push services can reach about this server, e.g. mailto:hello@...
+WEBPUSH_VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+WEBPUSH_VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+WEBPUSH_VAPID_SUBJECT = os.environ.get("VAPID_SUBJECT", "").strip()

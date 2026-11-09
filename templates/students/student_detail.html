@@ -417,6 +417,7 @@
         </div>
       </section>
     {% endif %}
+    {% include "notifications/_remind_card.html" with target_type="student" target_id=student.pk %}
   </div>
 </div>
 {% endblock %}

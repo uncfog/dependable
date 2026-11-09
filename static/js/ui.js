@@ -1485,6 +1485,55 @@
   }
 
   /* ====================================================================== *
+   * The notification bell
+   * ----------------------------------------------------------------------
+   * The bell is a link to the notifications page. With this script it opens
+   * a panel instead, whose list is fetched from notifications:panel the first
+   * time it opens (so no page pays for the list until someone asks). Escape,
+   * a click outside or pressing the bell again closes it.
+   * ====================================================================== */
+  function initBell() {
+    var bell = document.querySelector('[data-bell]');
+    if (!bell || !window.fetch) return;
+    var button = bell.querySelector('[data-bell-button]');
+    var panel = bell.querySelector('.bell-panel');
+    var body = bell.querySelector('[data-bell-body]');
+    var loaded = false;
+
+    function close() {
+      panel.hidden = true;
+      button.setAttribute('aria-expanded', 'false');
+    }
+    function open() {
+      panel.hidden = false;
+      button.setAttribute('aria-expanded', 'true');
+      if (loaded) return;
+      loaded = true;
+      fetch(bell.getAttribute('data-panel-url'), {
+        credentials: 'same-origin',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      })
+        .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+        .then(function (html) { body.innerHTML = html; })
+        .catch(function () {
+          loaded = false;
+          body.innerHTML = '<p class="px-4 py-6 text-center text-sm text-ink-500">' +
+            'Could not load. Open the notifications page instead.</p>';
+        });
+    }
+    button.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (panel.hidden) open(); else close();
+    });
+    document.addEventListener('click', function (e) {
+      if (!panel.hidden && !bell.contains(e.target)) close();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && !panel.hidden) { close(); button.focus(); }
+    });
+  }
+
+  /* ====================================================================== *
    * Boot
    * ====================================================================== */
   function init() {
@@ -1512,6 +1561,7 @@
     initServiceWorker();
     initInstallPrompt();
     initFilterSheets();
+    initBell();
   }
 
   if (document.readyState === 'loading') {
