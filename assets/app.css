@@ -3201,6 +3201,34 @@
       var(--color-lattice-dark);
   }
 
+  @keyframes lp-h1-reveal {
+    0% { opacity: 0; transform: translateY(28px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .lp-animate-h1 {
+    animation: lp-h1-reveal 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Hidden until scrolled to -- but only once the page's script has run and
+     armed it (`.lp-js` on <html>), so a visitor without JavaScript still sees
+     every section. */
+  .lp-js .lp-reveal {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .lp-js .lp-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lp-animate-h1 { animation: none; }
+    .lp-js .lp-reveal { opacity: 1; transform: none; transition: none; }
+  }
+
   .lp-faq summary::-webkit-details-marker { display: none; }
 }
 
