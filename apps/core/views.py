@@ -338,8 +338,29 @@ class BrandedPasswordResetConfirmView(PasswordResetConfirmView):
         return response
 
 
+#: Set at sign-up; Plans & billing shows "Continue to set up your school" while it
+#: is there, and onboarding clears it.
+SETUP_AFTER_PLAN = "setup_after_plan"
+
+
+def chosen_plan(request) -> str:
+    """The plan a visitor picked on the landing page (``?plan=growth``), if it is real."""
+    from apps.schools.plans import offer_for
+
+    wanted = (request.POST.get("plan") or request.GET.get("plan") or "").strip()
+    offer = offer_for(wanted) if wanted else None
+    return offer.plan if offer is not None else ""
+
+
 class SignupView(FormView):
-    """Onboarding step 1: create the school, the first branch and the owner."""
+    """Onboarding step 1: create the school, the first branch and the owner.
+
+    A visitor who picked a plan on the landing page arrives with ``?plan=``. It
+    rides through the form as a hidden field, and once the school exists they go
+    to Plans & billing with that plan picked out, then on to onboarding. Everyone
+    goes that way: the plan is the first decision, and the trial is the default
+    for anyone who chooses later.
+    """
 
     template_name = "core/signup.html"
     form_class = SchoolSignupForm
@@ -349,6 +370,7 @@ class SignupView(FormView):
         context = super().get_context_data(**kwargs)
         context["auth_panel"] = "signup"
         context["signup_form"] = context["form"]
+        context["chosen_plan"] = chosen_plan(self.request)
         # Imported here rather than at module scope: core importing the auth
         # form at load time would have core and django.contrib.auth reaching
         # into each other before either app registry is ready.
@@ -389,9 +411,14 @@ class SignupView(FormView):
         messages.success(
             self.request,
             f"{school.name} is set up, with {branch.name} as its first campus. "
-            f"Four steps to go.",
+            f"Choose your plan, then four steps to go.",
         )
-        return HttpResponseRedirect(reverse("core:onboarding"))
+        self.request.session[SETUP_AFTER_PLAN] = True
+        url = reverse("billing:checkout") + "?welcome=1"
+        plan = chosen_plan(self.request)
+        if plan:
+            url += f"&plan={plan}"
+        return HttpResponseRedirect(url)
 
 
 # ===========================================================================
@@ -1302,6 +1329,11 @@ class OnboardingView(LoginRequiredMixin, TemplateView):
     """Where signup lands, and where the shell links back to until it is done."""
 
     template_name = "core/onboarding.html"
+
+    def get(self, request, *args, **kwargs):
+        # Past the plan step: Plans & billing stops offering the way back here.
+        request.session.pop(SETUP_AFTER_PLAN, None)
+        return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

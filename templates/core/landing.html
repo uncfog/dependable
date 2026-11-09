@@ -3,7 +3,8 @@
 
 {% comment %}
 The public home page, from the owner's landing prototype (claude.ai artifact
-"SCHOOLCORD Landing Prototype"): deep green, Bricolage Grotesque for display,
+"SCHOOLCORD Landing Prototype"), in the logo's navy and blue with lime for every
+button. Bricolage Grotesque for display,
 Figtree for text, JetBrains Mono for figures and labels, all three served from
 static/fonts. The page is dark whatever the visitor's setting; its tokens live on
 `.sc` in assets/app.css ("Landing page, the prototype's look"), so no signed-in
@@ -14,8 +15,11 @@ Truthful by construction. The prototype promised a bank account number per
 student and automatic matching; SCHOOLCORD does neither, so the copy here says
 what it does: the bursar records each payment, checks it against the bank, and
 the receipt and balance follow. Every name, figure and school on the page is
-invented. Prices come from apps/schools/plans.py (`plan_offers`), the list the
-checkout charges from. WhatsApp links read `support_whatsapp_url`.
+invented, except the school on the typewriter's receipt, which the owner chose.
+Prices come from apps/schools/plans.py (`plan_offers`), the list the checkout
+charges from; each plan's button goes to sign-up with `?plan=`, and sign-up then
+opens Plans & billing with that plan marked before onboarding (core.views.SignupView).
+WhatsApp links read `support_whatsapp_url`.
 
 The moving parts are five components from the 23rd registry (23rd.dev), compiled
 to plain JavaScript in static/js/vendor/23rd and started by static/js/landing.js:
@@ -34,6 +38,17 @@ Title, meta description and JSON-LD come from apps/core/seo.py.
 
 {% block extra_head %}
   <script type="application/ld+json">{{ structured_data }}</script>
+  {% comment %}
+  The demo's guided tour. Driver.js is the copy base.html already loads for the
+  signed-in tour (vendored, MIT, no CDN); base.html only loads it for signed-in
+  users, so a visitor gets it here. The start button stays hidden until the tour
+  script finds Driver.js, so with either file blocked the demo works as before.
+  {% endcomment %}
+  {% if not user.is_authenticated %}
+    <link rel="stylesheet" href="{% static 'css/vendor/driver.css' %}">
+    <script src="{% static 'js/vendor/driver.js.iife.js' %}" defer></script>
+  {% endif %}
+  <script src="{% static 'js/demo-tour.js' %}" defer></script>
 {% endblock %}
 
 {% block anonymous_content %}
@@ -145,7 +160,8 @@ Title, meta description and JSON-LD come from apps/core/seo.py.
   <section class="sc-section" id="receipts">
     <div class="sc-wrap sc-split">
       <div class="sc-stage sc-stage-tw" data-sc-typewriter
-           data-text="GREENFIELD ACADEMY, WARRI
+           data-text="FULFILLED ACADEMY
+EKETE INLAND, UDU
 Fee payment received
 
 Chidinma Okoro, JSS 2B
@@ -155,7 +171,8 @@ Balance          NGN 35,000
 
 Thank you. The Bursary">
         {# Shown until the typewriter starts, and instead of it without JavaScript. #}
-        <pre class="sc-receipt-still" aria-label="A sample receipt">GREENFIELD ACADEMY, WARRI
+        <pre class="sc-receipt-still" aria-label="A sample receipt">FULFILLED ACADEMY
+EKETE INLAND, UDU
 Fee payment received
 
 Chidinma Okoro, JSS 2B
@@ -221,6 +238,9 @@ Thank you. The Bursary</pre>
       <p class="sc-eyebrow">Try it</p>
       <h2 class="sc-display" id="sc-demo-title">Record a payment yourself.</h2>
       <p class="sc-lede">Sample students and made-up figures. Nothing you do here is saved or sent.</p>
+      <button type="button" class="sc-btn sc-btn-primary sc-demo-tour-start" data-demo-tour-start hidden>
+        Show me how it works, step by step
+      </button>
     </div>
     <div class="sc-demo lp-drawn">
   {% comment %}
@@ -256,7 +276,7 @@ Thank you. The Bursary</pre>
           <span><strong>Demo only</strong> &mdash; sample students and figures. Nothing you do here is saved, sent or charged.</span>
         </p>
 
-        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4" data-tour="demo-totals">
           <div class="tile tint-blue"><span>Expected</span><b id="summary-expected">&#8358;415,000</b></div>
           <div class="tile tint-green"><span>Collected</span><b id="summary-collected">&#8358;250,000</b></div>
           <div class="tile tint-red"><span>Outstanding</span><b id="summary-outstanding">&#8358;165,000</b></div>
@@ -317,9 +337,9 @@ Thank you. The Bursary</pre>
                   {% if offer.price_naira is None %}
                     <a class="sc-btn sc-btn-sm sc-btn-ghost" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener">Talk to us</a>
                   {% elif offer.price_naira == 0 %}
-                    <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-sm sc-btn-ghost">Start free</a>
+                    <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="sc-btn sc-btn-sm sc-btn-ghost">Start free</a>
                   {% else %}
-                    <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-sm {% if offer.plan == 'growth' %}sc-btn-primary{% else %}sc-btn-ghost{% endif %}">Choose {{ offer.name }}</a>
+                    <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="sc-btn sc-btn-sm {% if offer.plan == 'growth' %}sc-btn-primary{% else %}sc-btn-ghost{% endif %}">Choose {{ offer.name }}</a>
                   {% endif %}
                 </td>
               </tr>
@@ -379,7 +399,7 @@ Thank you. The Bursary</pre>
       <p class="sc-eyebrow">Get started</p>
       <h2 class="sc-display sc-closing-title">Open your school's free account before next term's fees fall due.</h2>
       <div class="sc-ctas">
-        <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-primary">Create my school account</a>
+        <a href="{% url 'core:signup' %}" class="sc-btn sc-btn-primary" data-tour="demo-signup">Create my school account</a>
         <a class="sc-btn sc-btn-ghost" href="{{ support_whatsapp_url }}" target="_blank" rel="noopener">
           {% include "core/_whatsapp_glyph.html" %} Chat with us on WhatsApp
         </a>
@@ -455,7 +475,7 @@ Thank you. The Bursary</pre>
   <!-- DEMO DIALOG: RECORD PAYMENT (sample data only) -->
   <div id="payment-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink-900/70 p-4"
        role="dialog" aria-modal="true" aria-labelledby="modal-student-name">
-    <div class="relative w-full max-w-md space-y-5 rounded-[24px] bg-white p-6 text-ink-900 shadow-panel">
+    <div class="relative w-full max-w-md space-y-5 rounded-[24px] bg-white p-6 text-ink-900 shadow-panel" data-tour="demo-payment">
       <button type="button" data-demo-close class="absolute right-4 top-4 grid size-11 place-items-center rounded-xl text-xl font-bold text-ink-600 hover:bg-ink-100" aria-label="Close">&times;</button>
 
       <div>
@@ -601,6 +621,14 @@ Thank you. The Bursary</pre>
         PARTIAL: '<span class="status-pill status-partial">Part paid</span>'
       };
 
+      // Column headings, copied onto each cell so a phone shows the rows as
+      // labelled cards. ui.js does this once at load; the demo redraws its rows
+      // on every filter and payment, so it labels them itself.
+      var LABELS = Array.prototype.map.call(
+        byId('demo-table-body').closest('table').tHead.rows[0].cells,
+        function (th) { return th.textContent.replace(/\s+/g, ' ').trim(); }
+      );
+
       function renderDemoTable() {
         var filterClass = byId('demo-class-filter').value;
         var tbody = byId('demo-table-body');
@@ -619,14 +647,28 @@ Thank you. The Bursary</pre>
             '<td class="whitespace-nowrap px-4 py-3 text-right tabular-nums text-ink-600">' + naira(s.paid) + '</td>' +
             '<td class="whitespace-nowrap px-4 py-3 text-right font-bold tabular-nums text-ink-900">' + naira(balance) + '</td>' +
             '<td class="px-4 py-3">' + TAGS[statusOf(s)] + '</td>' +
-            '<td class="px-4 py-3"><div class="flex items-center justify-end gap-2">' +
+            '<td class="demo-actions px-4 py-3"><div class="flex items-center justify-end gap-2">' +
               '<button type="button" data-demo-pay="' + s.id + '" class="lp-btn lp-btn-lime lp-btn-sm">Record</button>' +
               '<button type="button" data-demo-remind="' + s.id + '" class="lp-btn lp-btn-line lp-btn-sm">WhatsApp</button>' +
             '</div></td>';
+          for (var c = 0; c < tr.cells.length - 1; c++) {
+            if (LABELS[c]) tr.cells[c].setAttribute('data-label', LABELS[c]);
+          }
           tbody.appendChild(tr);
         });
         calculateTotals();
       }
+
+      // For the guided tour (static/js/demo-tour.js): which status chip still
+      // shows a student with a balance, so the tour never sends a visitor to an
+      // empty list. Read-only; the tour changes the demo by clicking it.
+      window.scDemo = {
+        owingStatus: function () {
+          if (studentData.some(function (s) { return statusOf(s) === 'PARTIAL'; })) return 'PARTIAL';
+          if (studentData.some(function (s) { return statusOf(s) === 'UNPAID'; })) return 'UNPAID';
+          return null;
+        }
+      };
 
       function calculateTotals() {
         var expected = 0, collected = 0;

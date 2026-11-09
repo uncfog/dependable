@@ -14,6 +14,17 @@ when the platform owner confirms the money arrived (apps/schools/admin.py).
 
 {% block content %}
 <div class="space-y-4">
+  {% if setup_pending %}
+    <div class="card card-pad flex flex-col gap-3 border-lime bg-lime/15 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="font-semibold text-ink-900">{% if welcome %}Welcome to SCHOOLCORD. {% endif %}Your school is ready.</p>
+        <p class="mt-1 text-sm text-ink-700">
+          {% if chosen_plan %}You picked a plan on our website; it is marked below. {% endif %}Pay for a plan now, or carry on with your trial and choose later. Next, set up your classes, fees, students and staff.
+        </p>
+      </div>
+      <a href="{% url 'core:onboarding' %}" class="btn btn-lime shrink-0">Continue to set up your school</a>
+    </div>
+  {% endif %}
   {% if open_order %}
     <div class="note-banner">
       <span>
@@ -36,11 +47,12 @@ when the platform owner confirms the money arrived (apps/schools/admin.py).
 
   <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
     {% for offer in offers %}
-      <section class="card card-pad flex flex-col {% if offer.plan == school.plan %}ring-2 ring-lime{% endif %}"
+      <section class="card card-pad flex flex-col {% if offer.plan == school.plan or offer.plan == chosen_plan %}ring-2 ring-lime{% endif %}"
                aria-labelledby="plan-{{ offer.plan }}">
         <div class="flex items-center justify-between gap-2">
           <h2 id="plan-{{ offer.plan }}" class="text-lg font-extrabold text-ink-900">{{ offer.name }}</h2>
-          {% if offer.plan == school.plan %}<span class="status-pill status-paid">Current</span>{% endif %}
+          {% if offer.plan == school.plan %}<span class="status-pill status-paid">Current</span>
+          {% elif offer.plan == chosen_plan %}<span class="status-pill status-partial">Your pick</span>{% endif %}
         </div>
         <p class="mt-1 text-sm text-ink-600">{{ offer.students }}</p>
         <p class="mt-4 text-3xl font-extrabold tabular-nums text-ink-900">{{ offer.price_display }}</p>
