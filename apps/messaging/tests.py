@@ -828,14 +828,15 @@ class ViewTests(MessagingTestCase):
         self.send_two_messages()
         self.client.force_login(self.north_bursar)
 
-        with self.assertNumQueries(9):
+        with self.assertNumQueries(10):
             # session, user, count for pagination, the annotated page, the two
             # the tenant middleware needs, one for the school's messaging
             # identity, one for the school's enabled modules -- which decides
             # what the sidebar offers and which URLs are reachable at all -- and
             # -- for a bursar only -- one for the school's admissions policy,
             # which decides whether the sidebar offers them the applicant
-            # pipeline. The point of the assertion is that none of them grows
+            # pipeline, and one for the unread count on the notification bell
+            # in the header. The point of the assertion is that none of them grows
             # with the number of messages on the page.
             response = self.client.get(reverse("messaging:index"))
 

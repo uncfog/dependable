@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block page_actions %}
+  <a href="{% url 'notifications:index' %}" class="btn btn-ghost text-sm">Back to notifications</a>
+{% endblock %}
+
+{% block content %}
+{% load static %}
+<section class="card mx-auto mb-5 max-w-2xl overflow-hidden" aria-labelledby="device-title"
+         data-push
+         data-push-key="{{ vapid_public_key }}"
+         data-push-ready="{% if push_ready %}yes{% else %}no{% endif %}"
+         data-subscribe-url="{% url 'notifications:push_subscribe' %}"
+         data-unsubscribe-url="{% url 'notifications:push_unsubscribe' %}">
+  <div class="border-b border-ink-200 px-5 py-4">
+    <h2 id="device-title" class="text-base font-semibold text-ink-900">On this phone or computer</h2>
+    <p class="mt-1 text-sm text-ink-600">
+      Show your notifications in this device's notification centre, even when SCHOOLCORD is closed.
+      They show in full, names and amounts included, so turn this on only on a device that is yours.
+      Signing out of this browser turns it off here.
+    </p>
+  </div>
+  <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+    <p class="text-sm text-ink-700" data-push-status role="status">
+      {% if push_ready %}Checking this device&hellip;{% else %}Not available on this site yet.{% endif %}
+    </p>
+    <button type="button" class="btn btn-primary text-sm" data-push-on hidden>Turn on for this device</button>
+    <button type="button" class="btn btn-secondary text-sm" data-push-off hidden>Turn off for this device</button>
+  </div>
+  {% csrf_token %}
+  {% if device_count %}
+    <p class="border-t border-ink-200 px-5 py-3 text-xs text-ink-500">
+      Turned on for {{ device_count }} device{{ device_count|pluralize }} in all.
+    </p>
+  {% endif %}
+</section>
+<script src="{% static 'js/push.js' %}" defer></script>
+
+<form method="post" class="card mx-auto max-w-2xl overflow-hidden">
+  {% csrf_token %}
+  <div class="border-b border-ink-200 px-5 py-4">
+    <h2 class="text-base font-semibold text-ink-900">What you are told about</h2>
+    <p class="mt-1 text-sm text-ink-600">Under the bell, and on any device you turned on above. Nothing is emailed or texted.</p>
+  </div>
+  <fieldset class="divide-y divide-ink-200">
+    <legend class="sr-only">Notification kinds</legend>
+    {% for row in rows %}
+      <label class="flex items-center justify-between gap-4 px-5 py-3 text-sm text-ink-800">
+        <span>{{ row.label }}</span>
+        <input type="checkbox" name="on" value="{{ row.kind }}" class="size-5"{% if row.on %} checked{% endif %}>
+      </label>
+    {% endfor %}
+  </fieldset>
+  <div class="border-t border-ink-200 px-5 py-4 text-sm text-ink-600">
+    <p class="font-medium text-ink-800">Always on</p>
+    <p class="mt-1">{{ always|join:", " }}. These concern your account, the school's ownership and reminders you set yourself.</p>
+  </div>
+  <div class="flex justify-end border-t border-ink-200 px-5 py-4">
+    <button type="submit" class="btn btn-primary text-sm">Save</button>
+  </div>
+</form>
+{% endblock %}

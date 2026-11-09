@@ -173,6 +173,10 @@
         {% block page_subtitle %}{% endblock %}
       </div>
 
+      <span class="shrink-0 sm:order-last">
+        {% include "notifications/_bell.html" %}
+      </span>
+
       <span class="shrink-0 sm:order-last" data-tour="theme-toggle">
         {% include "partials/_theme_toggle.html" %}
       </span>

@@ -314,6 +314,7 @@
         {% endif %}
       </div>
     </section>
+    {% include "notifications/_remind_card.html" with target_type="payment" target_id=payment.pk %}
   </div>
 </div>
 {% endblock %}

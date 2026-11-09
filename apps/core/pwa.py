@@ -25,6 +25,7 @@ _WORKER = """'use strict';
 const CACHE = 'schoolcord-static-%(version)s';
 const OFFLINE = '%(offline)s';
 const STATIC_PREFIX = '%(prefix)s';
+const ICON = '%(icon)s';
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.add(OFFLINE)).then(() => self.skipWaiting()));
@@ -62,6 +63,39 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(fetch(request).catch(() => caches.match(OFFLINE)));
   }
 });
+
+// A notification pushed by the server (apps/notifications/push.py), shown by the
+// phone or computer even when SCHOOLCORD is closed. Nothing is stored: the text
+// arrives in the push and goes to the system's notification centre.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (error) { data = {}; }
+  event.waitUntil(self.registration.showNotification(data.title || 'SCHOOLCORD', {
+    body: data.body || '',
+    tag: data.tag || undefined,
+    icon: ICON,
+    badge: ICON,
+    data: { url: data.url || '/notifications/' },
+  }));
+});
+
+// A tap opens the page it is about, in an open SCHOOLCORD window if there is one.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const target = new URL((event.notification.data && event.notification.data.url) || '/notifications/',
+                         self.location.origin);
+  if (target.origin !== self.location.origin) return;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if (new URL(client.url).origin === target.origin && 'focus' in client) {
+          return client.focus().then((focused) => (focused || client).navigate(target.href));
+        }
+      }
+      return self.clients.openWindow(target.href);
+    })
+  );
+});
 """
 
 _REMOVER = """'use strict';
@@ -90,6 +124,7 @@ class ServiceWorkerView(View):
                 "version": _version(),
                 "offline": static("offline.html"),
                 "prefix": settings.STATIC_URL,
+                "icon": static("img/icon-192.png"),
             }
         else:
             body = _REMOVER

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% comment %}
+Everything SCHOOLCORD told this person, newest first, with the reminders they
+set still to come. In-app only: nothing here is emailed or texted.
+{% endcomment %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    {% if unread_count %}{{ unread_count }} unread{% else %}All caught up{% endif %}
+  </p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'notifications:settings' %}" class="btn btn-ghost text-sm">Settings</a>
+  {% if unread_count %}
+    <form method="post" action="{% url 'notifications:mark_all_read' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-secondary text-sm">Mark all read</button>
+    </form>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="grid gap-5 lg:grid-cols-3">
+  <div class="space-y-4 lg:col-span-2">
+    <div class="filter-panel card card-pad">
+      <div class="chip-row" role="group" aria-label="Show">
+        <a href="{% querystring show=None page=None %}" class="filter-chip {% if show == 'all' %}filter-chip-lime{% endif %}"{% if show == 'all' %} aria-current="page"{% endif %}>All</a>
+        <a href="{% querystring show='unread' page=None %}" class="filter-chip {% if show == 'unread' %}filter-chip-lime{% endif %}"{% if show == 'unread' %} aria-current="page"{% endif %}>Unread <span class="numeric ml-1">{{ unread_count }}</span></a>
+        <a href="{% querystring show='reminders' page=None %}" class="filter-chip {% if show == 'reminders' %}filter-chip-lime{% endif %}"{% if show == 'reminders' %} aria-current="page"{% endif %}>Reminders</a>
+      </div>
+    </div>
+
+    {% if notifications %}
+      <section class="card overflow-hidden">
+        <ul class="notice-list">
+          {% for notification in notifications %}{% include "notifications/_item.html" %}{% endfor %}
+        </ul>
+      </section>
+      {% if page_obj.paginator.num_pages > 1 %}
+        <nav class="flex items-center justify-between gap-3" aria-label="Pagination">
+          <p class="text-sm text-ink-600">{{ page_obj.start_index }}&ndash;{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</p>
+          <div class="flex gap-2">
+            {% if page_obj.has_previous %}<a href="{% querystring page=page_obj.previous_page_number %}" class="btn btn-secondary text-sm">Newer</a>{% endif %}
+            {% if page_obj.has_next %}<a href="{% querystring page=page_obj.next_page_number %}" class="btn btn-secondary text-sm">Older</a>{% endif %}
+          </div>
+        </nav>
+      {% endif %}
+    {% else %}
+      <div class="card empty-state">
+        <p class="text-base font-medium text-ink-700">
+          {% if show == 'unread' %}Nothing unread{% elif show == 'reminders' %}No reminders yet{% else %}No notifications yet{% endif %}
+        </p>
+        <p class="mt-2 text-sm text-ink-500">Payments waiting to be checked, imports, staff changes and your reminders show up here.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="space-y-5">
+    <section class="card overflow-hidden" aria-labelledby="upcoming-title">
+      <div class="border-b border-ink-200 px-5 py-3">
+        <h2 id="upcoming-title" class="text-sm font-semibold text-ink-900">Your reminders to come</h2>
+        <p class="mt-0.5 text-xs text-ink-500">Set from a student or a payment with "Remind me".</p>
+      </div>
+      {% if upcoming %}
+        <ul class="divide-y divide-ink-200">
+          {% for reminder in upcoming %}
+            <li class="flex items-start justify-between gap-3 px-5 py-3">
+              <div class="min-w-0 text-sm">
+                <a href="{{ reminder.url }}" class="font-medium text-ink-900 hover:underline">{{ reminder.target_label }}</a>
+                <p class="text-ink-600">{{ reminder.due_on|date:"j M Y" }}{% if reminder.note %} &middot; {{ reminder.note }}{% endif %}</p>
+              </div>
+              <form method="post" action="{% url 'notifications:reminder_cancel' reminder.pk %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-ghost text-xs" aria-label="Cancel the reminder about {{ reminder.target_label }}">Cancel</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="px-5 py-4 text-sm text-ink-500">None set.</p>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}
