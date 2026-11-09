@@ -96,12 +96,18 @@ class TourAssetTests(GuidanceTestCase):
         self.assertIn("vendor/driver.css", body)
         self.assertIn("js/tour.js", body)
 
-    def test_none_of_it_is_loaded_signed_out(self):
-        """There is nothing to tour on the landing page, and 28KB spent there is
-        28KB spent on nobody."""
+    def test_signed_out_gets_the_demo_tour_not_the_app_tour(self):
+        """The landing page has a tour of its own over the demo
+        (static/js/demo-tour.js), so it loads Driver.js, deferred. The app's tour
+        and its per-account config are for signed-in pages only."""
         body = self.client.get(reverse("core:landing")).content.decode()
-        self.assertNotIn("driver.js.iife.js", body)
         self.assertNotIn("js/tour.js", body)
+        self.assertNotIn('id="tour-config"', body)
+        for src in ("vendor/driver.js.iife.js", "js/demo-tour.js"):
+            with self.subTest(script=src):
+                tags = re.findall(r'<script[^>]*' + re.escape(src) + r'[^>]*>', body)
+                self.assertEqual(len(tags), 1)
+                self.assertIn("defer", tags[0])
 
     def test_the_scripts_do_not_block_paint(self):
         body = self.page(self.owner)
