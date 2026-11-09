@@ -236,3 +236,41 @@ class PricingMatchesTheCheckoutTests(LandingTestCase):
                 self.assertIn(offer.name, pricing)
                 self.assertIn(offer.price_display, pricing)
                 self.assertIn(offer.students, pricing)
+
+
+class DemoTourTests(LandingTestCase):
+    """The guided tour over the demo: vendored, optional, and pointing at real targets."""
+
+    def test_the_tour_uses_the_vendored_driver_and_no_cdn(self):
+        self.assertIn("/static/js/vendor/driver.js.iife.js", self.html)
+        self.assertIn("/static/css/vendor/driver.css", self.html)
+        self.assertIn("/static/js/demo-tour.js", self.html)
+        self.assertTrue(Path(settings.BASE_DIR, "static", "js", "demo-tour.js").exists())
+        for host in ("cdn.jsdelivr", "unpkg.com", "cdnjs"):
+            self.assertNotIn(host, self.html)
+
+    def test_the_start_button_is_hidden_until_the_script_shows_it(self):
+        button = re.search(r"<button[^>]*data-demo-tour-start[^>]*>", self.html)
+        self.assertIsNotNone(button)
+        self.assertIn("hidden", button.group(0))
+
+    def test_every_step_target_is_on_the_page(self):
+        for target in ('data-tour="demo-totals"', 'data-tour="demo-payment"',
+                       'data-tour="demo-signup"', 'id="tab-PARTIAL"', 'id="tab-UNPAID"',
+                       'id="demo-table-body"', 'id="demo-submit-payment"', 'id="printable-receipt"'):
+            with self.subTest(target=target):
+                self.assertIn(target, self.html)
+
+    def test_the_tour_ends_on_sign_up(self):
+        signup = re.search(r'<a href="([^"]+)"[^>]*data-tour="demo-signup"', self.html)
+        self.assertIsNotNone(signup)
+        self.assertEqual(signup.group(1), reverse("core:signup"))
+
+    def test_the_tour_makes_no_requests(self):
+        source = Path(settings.BASE_DIR, "static", "js", "demo-tour.js").read_text()
+        for call in ("fetch(", "XMLHttpRequest", "sendBeacon", "localStorage"):
+            self.assertNotIn(call, source)
+
+    def test_demo_rows_label_their_cells_for_phones(self):
+        self.assertIn("setAttribute('data-label'", self.demo())
+        self.assertIn("demo-actions", self.demo())

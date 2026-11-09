@@ -3896,7 +3896,24 @@ body:has(.no-bottom-nav) .bottom-nav { display: none; }
 
 .lp-drawn .tile { box-shadow: none; }
 .lp-drawn .note-banner { width: 100%; }
-.lp-drawn #demo-table-body tr { height: 3.75rem; }
+/* The fixed row height is for the table. Below `sm` each row is a stacked card
+   of seven lines (ui.js and the demo script label the cells), and a 60px row
+   made those cards spill over one another. */
+@media (min-width: 640px) {
+  .lp-drawn #demo-table-body tr { height: 3.75rem; }
+}
+@media (max-width: 639.98px) {
+  .lp-drawn #demo-table-body tr { padding-block: 0.75rem; }
+  .lp-drawn #demo-table-body td.demo-actions::before { content: none; }
+  .lp-drawn #demo-table-body td.demo-actions > div { width: 100%; padding-top: 0.5rem; }
+  .lp-drawn #demo-table-body td.demo-actions .lp-btn { flex: 1 1 0; min-height: var(--spacing-touch); }
+}
+
+/* The demo tour's start button, under the "Try it" heading. */
+.sc-demo-tour-start { margin-top: 20px; }
+/* The floating WhatsApp helper sits above everything and would cover the rows a
+   tour step points at. It comes back when the tour ends. */
+body.driver-active .sc-helper { visibility: hidden; }
 
 @media (min-width: 1024px) { #lp-menu-button { display: none; } }
 .lp-drawn .filter-chip { min-height: 2.75rem; }
