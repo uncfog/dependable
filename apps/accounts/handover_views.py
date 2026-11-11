@@ -15,6 +15,7 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.generic import FormView, View
 
+from apps.core.forms import StyledFormMixin
 from apps.core.navigation import home_url_for
 
 from . import handover as service
@@ -30,7 +31,7 @@ def _settings(anchor: str) -> str:
     return reverse("accounts:settings") + anchor
 
 
-class StartForm(forms.Form):
+class StartForm(StyledFormMixin, forms.Form):
     full_name = forms.CharField(
         label="Their full name", max_length=150,
         widget=forms.TextInput(attrs={"autocomplete": "off"}),
@@ -136,7 +137,7 @@ class DecideHandoverView(LoginRequiredMixin, View):
         return HttpResponseRedirect(_settings("#handovers"))
 
 
-class AcceptForm(forms.Form):
+class AcceptForm(StyledFormMixin, forms.Form):
     first_name = forms.CharField(label="First name", max_length=150,
                                  widget=forms.TextInput(attrs={"autocomplete": "given-name"}))
     last_name = forms.CharField(label="Surname", max_length=150,

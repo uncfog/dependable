@@ -7,13 +7,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
+from apps.core.forms import StyledFormMixin
+
 from .models import OwnershipTransfer
 from .ownership import TransferError, recipient_for
 
 Afterwards = OwnershipTransfer.Afterwards
 
 
-class StartTransferForm(forms.Form):
+class StartTransferForm(StyledFormMixin, forms.Form):
     """The owner names the new owner, says what happens to them, and re-enters a password.
 
     The password is asked for because this is the one action that gives the
@@ -85,7 +87,7 @@ class StartTransferForm(forms.Form):
         return cleaned
 
 
-class AcceptAsNewForm(forms.Form):
+class AcceptAsNewForm(StyledFormMixin, forms.Form):
     """Someone with no account yet: their name and a password, then yes."""
 
     first_name = forms.CharField(label="First name", max_length=150,
@@ -131,7 +133,7 @@ class AcceptAsNewForm(forms.Form):
         return cleaned
 
 
-class AcceptAsStaffForm(forms.Form):
+class AcceptAsStaffForm(StyledFormMixin, forms.Form):
     """Someone already on the staff, signed in: just yes."""
 
     understood = forms.BooleanField(
