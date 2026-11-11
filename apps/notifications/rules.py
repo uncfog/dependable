@@ -275,7 +275,37 @@ def _ownership(event):
     )
 
 
+def _handover(event):
+    from apps.accounts.models import RoleHandover
+
+    handover = RoleHandover.objects.select_related("from_user", "branch").filter(
+        pk=event.target_id).first()
+    if handover is None:
+        return
+    who = handover.from_user.get_full_name() or handover.from_user.get_username()
+    role = handover.get_role_display()
+    settings_url = reverse("accounts:settings")
+    common = dict(kind=Kind.STAFF, school_id=handover.school_id, branch_id=handover.branch_id,
+                  event=event, exclude=event.actor)
+    if event.action == "handover.requested":
+        notify(owners(handover.school_id), title=f"{who} wants to hand over their {role} role",
+               body=f"To {handover.to_name}. It needs your approval.",
+               url=settings_url + "#handovers", **common)
+    elif event.action in ("handover.approved", "handover.rejected", "handover.declined"):
+        outcome = {"handover.approved": "was approved", "handover.rejected": "was not approved",
+                   "handover.declined": f"was declined by {handover.to_name}"}[event.action]
+        notify([handover.from_user], title=f"Your role handover {outcome}",
+               url=settings_url + "#handover", **common)
+    elif event.action == "handover.completed":
+        notify(owners(handover.school_id),
+               title=f"{handover.to_name} is now {role} at {handover.branch.name}",
+               body=f"{who}'s account has been switched off.", url=reverse("staff:list"), **common)
+
+
 RULES = {
+    **{action: _handover for action in (
+        "handover.requested", "handover.approved", "handover.rejected",
+        "handover.declined", "handover.completed")},
     "payment.created": _payment_created,
     "payment.confirmed": lambda e: _payment_status(e, voided=False),
     "payment.voided": lambda e: _payment_status(e, voided=True),

@@ -50,6 +50,12 @@ ACTION_LABELS = {
     "ownership.transfer_cancelled": "Ownership transfer cancelled",
     "ownership.transfer_declined": "Ownership transfer declined",
     "ownership.transferred": "Ownership transferred",
+    "handover.requested": "Role handover requested",
+    "handover.approved": "Role handover approved",
+    "handover.rejected": "Role handover not approved",
+    "handover.cancelled": "Role handover cancelled",
+    "handover.declined": "Role handover declined",
+    "handover.completed": "Role handed over",
 }
 
 

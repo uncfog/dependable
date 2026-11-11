@@ -105,6 +105,19 @@ def ownership_summary(user) -> dict | None:
     return {"school": user.school, "open": open_transfer(user.school)}
 
 
+def handover_summary(user) -> dict:
+    """A principal or bursar: their own handover. The owner: requests waiting for them."""
+    from . import handover
+    from .ownership_views import is_school_owner
+
+    summary = {}
+    if handover.may_hand_over(user):
+        summary["handover"] = {"open": handover.open_for(user)}
+    if is_school_owner(user):
+        summary["handover_requests"] = list(handover.awaiting_owner(user.school_id))
+    return summary
+
+
 class AccountSettingsView(LoginRequiredMixin, TemplateView):
     """Anyone's own account: how they are named, their email, their password.
 
@@ -128,6 +141,7 @@ class AccountSettingsView(LoginRequiredMixin, TemplateView):
         context["temporary_password"] = user.must_change_password
         context["plan"] = plan_summary(user)
         context["ownership"] = ownership_summary(user)
+        context.update(handover_summary(user))
         context["page_title"] = "Account settings"
         return context
 

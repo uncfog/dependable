@@ -244,3 +244,83 @@ class OwnershipTransfer(models.Model):
     def is_open(self) -> bool:
         """Pending and not yet past its expiry."""
         return self.status == self.Status.PENDING and self.expires_at > timezone.now()
+
+
+class RoleHandover(models.Model):
+    """A principal or bursar handing their own position to someone new, by email.
+
+    The person asks; the school's owner approves; the newcomer accepts from a
+    single-use link; then the newcomer has the same role at the same campus and
+    the old account is switched off. Nobody gains anything above the role being
+    handed over. The rules are in :mod:`apps.accounts.handover`.
+
+    ``school`` only, never branch-scoped: an owner must see every campus's
+    requests, and the scoped manager would stamp the asker's branch.
+    """
+
+    class Status(models.TextChoices):
+        AWAITING_APPROVAL = "awaiting_approval", "Waiting for the owner"
+        PENDING = "pending", "Waiting to be accepted"
+        ACCEPTED = "accepted", "Accepted"
+        DECLINED = "declined", "Declined"
+        REJECTED = "rejected", "Not approved"
+        CANCELLED = "cancelled", "Cancelled"
+        EXPIRED = "expired", "Expired"
+
+    OPEN = (Status.AWAITING_APPROVAL, Status.PENDING)
+
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.CASCADE, related_name="role_handovers"
+    )
+    branch = models.ForeignKey(
+        "schools.Branch", on_delete=models.CASCADE, related_name="role_handovers"
+    )
+    from_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="role_handovers"
+    )
+    #: The role being handed over, kept so a later role change cannot widen it.
+    role = models.CharField(max_length=32, choices=Role.choices)
+    to_email = models.EmailField()
+    to_name = models.CharField(max_length=150)
+    to_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="+",
+    )
+    #: SHA-256 of the emailed token. Empty until the owner approves.
+    token_hash = models.CharField(max_length=64, blank=True)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.AWAITING_APPROVAL
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["from_user"],
+                condition=models.Q(status__in=["awaiting_approval", "pending"]),
+                name="one_open_role_handover_per_person",
+            ),
+            models.UniqueConstraint(
+                fields=["token_hash"],
+                condition=~models.Q(token_hash=""),
+                name="role_handover_token_unique",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.get_role_display()} at {self.branch} to {self.to_email}"
+
+    @property
+    def is_acceptable(self) -> bool:
+        return (
+            self.status == self.Status.PENDING
+            and self.expires_at is not None
+            and self.expires_at > timezone.now()
+        )

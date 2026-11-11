@@ -1,0 +1,72 @@
+{% extends "registration/_auth_base.html" %}
+
+{% comment %}
+What a role handover link opens (AcceptHandoverView): invalid (404), closed,
+signed_in (somebody is signed in on this browser), new (choose a name and
+password), declined.
+{% endcomment %}
+
+{% block title %}Take over a role{% endblock %}
+{% block auth_width %}max-w-md{% endblock %}
+{% block auth_eyebrow %}{% if handover %}{{ handover.school.name }}{% else %}Role handover{% endif %}{% endblock %}
+
+{% block auth_heading %}
+  {% if state == "invalid" %}This link does not work
+  {% elif state == "closed" %}This handover is closed
+  {% elif state == "declined" %}You declined
+  {% else %}Take over as {{ handover.get_role_display }}{% endif %}
+{% endblock %}
+
+{% block auth_body %}
+  {% if error %}
+    <div class="mt-4 rounded-md border border-overdue/30 bg-overdue-soft px-3 py-2.5 text-sm text-overdue-strong" role="alert">
+      <p>{{ error }}</p>
+    </div>
+  {% endif %}
+
+  {% if state == "invalid" %}
+    <p class="mt-2 text-sm text-ink-600">The link may have been copied wrongly. Open it again from the email, or ask for a new one.</p>
+  {% elif state == "closed" %}
+    <p class="mt-2 text-sm text-ink-600">
+      {% if handover.status == "accepted" %}It has already been accepted.
+      {% elif handover.status == "declined" %}It was declined.
+      {% elif handover.status == "cancelled" %}It was cancelled.
+      {% else %}The link stopped working three days after it was sent.{% endif %}
+      If you still expect to take over, ask the school to start again.
+    </p>
+  {% elif state == "declined" %}
+    <p class="mt-2 text-sm text-ink-600">Nothing has changed, and we have let {{ handover.from_user.get_full_name|default:"them" }} know.</p>
+  {% else %}
+    <p class="mt-2 text-sm text-ink-600">
+      {{ handover.from_user.get_full_name|default:handover.from_user.username }} is handing you their role as
+      <strong class="text-ink-900">{{ handover.get_role_display }}</strong> at {{ handover.branch.name }},
+      {{ handover.school.name }}. The school's owner has approved it.
+    </p>
+    <p class="mt-3 text-xs text-ink-600">This link is for {{ handover.to_email }} and works until {{ handover.expires_at|date:"j F Y, g:i A" }}.</p>
+
+    {% if state == "signed_in" %}
+      <p class="mt-4 text-sm text-ink-600">
+        You are signed in as {{ user.email|default:user.username }}. This handover creates a new
+        account for {{ handover.to_email }}, so sign out, then open the link again.
+      </p>
+      <form method="post" action="{% url 'logout' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <button type="submit" class="btn btn-primary w-full">Sign out</button>
+      </form>
+    {% else %}
+      <form method="post" class="mt-5 space-y-4" novalidate>
+        {% csrf_token %}
+        <div class="grid gap-4 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.first_name %}
+          {% include "partials/_field.html" with field=form.last_name %}
+        </div>
+        {% include "partials/_field.html" with field=form.password %}
+        {% include "partials/_field.html" with field=form.password_confirm %}
+        <p class="text-xs text-ink-600">You will sign in with {{ handover.to_email }} and this password.</p>
+        <button type="submit" name="action" value="accept" class="btn btn-primary w-full">Accept and take over</button>
+        <button type="submit" name="action" value="decline" formnovalidate class="btn btn-secondary w-full">Decline</button>
+      </form>
+    {% endif %}
+  {% endif %}
+{% endblock %}
