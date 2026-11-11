@@ -9,6 +9,7 @@ urlpatterns = [
     path("record/", views.PaymentCreateView.as_view(), name="record"),
     # Before the <int:pk> patterns, so these words are never read as ids.
     path("pending/", views.PendingQueueView.as_view(), name="pending"),
+    path("daily/", views.DailyPaymentsView.as_view(), name="daily"),
     path("position/", views.StudentPositionView.as_view(), name="student_position"),
     path("students/search/", views.StudentSearchView.as_view(), name="student_search"),
     path("outstanding/", views.OutstandingView.as_view(), name="outstanding"),

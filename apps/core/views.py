@@ -864,7 +864,7 @@ def waiting_receipts(request) -> list:
 
 #: The phone overview's quick-access tiles. Each colour marks the section it opens.
 QUICK_ACCESS = (
-    ("Record payment", "payments:record", "blue", "plus"),
+    ("Daily payments", "payments:daily", "blue", "calendar"),
     ("Outstanding", "payments:outstanding", "red", "alert"),
     ("Students", "students:student_list", "purple", "person"),
     ("Payments", "payments:index", "green", "lines"),
@@ -888,8 +888,9 @@ def quick_access(request) -> list[dict]:
     tiles = []
     for label, url_name, tint, icon in QUICK_ACCESS:
         href = reverse(url_name)
-        if url_name == "payments:record":
-            permitted = has_capability(request.user, Capability.RECORD_PAYMENTS)
+        if url_name == "payments:daily":
+            # Not a sidebar entry, so asked directly: anyone who can see payments.
+            permitted = has_capability(request.user, Capability.VIEW_PAYMENTS)
         else:
             permitted = href in allowed
         if permitted:

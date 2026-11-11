@@ -162,6 +162,90 @@ class PaymentListView(ViewPaymentsMixin, TermMixin, ListView):
         return context
 
 
+class DailyPaymentsView(ViewPaymentsMixin, ListView):
+    """One day's payments: what was collected, how, and who recorded it.
+
+    The day is the date the money was paid (``date_paid``), today unless
+    ``?date=`` names another. Voided payments are listed, struck through, and
+    never counted. Campus staff see their own campus, as on every payments
+    screen, because the queryset is the tenant-scoped one.
+    """
+
+    model = Payment
+    template_name = "payments/daily.html"
+    context_object_name = "payments"
+
+    def day(self):
+        from datetime import date
+
+        from django.utils import timezone
+
+        if not hasattr(self, "_day"):
+            today = timezone.localdate()
+            try:
+                wanted = date.fromisoformat(self.request.GET.get("date", ""))
+            except ValueError:
+                wanted = today
+            # Nothing has been collected on a day that has not happened.
+            self._day = min(wanted, today)
+        return self._day
+
+    def get_queryset(self):
+        return (
+            super().get_queryset().filter(date_paid=self.day())
+            .select_related("student", "student__school_class", "recorded_by",
+                            "transaction", "transaction__family")
+            .order_by("-created_at", "-id")
+        )
+
+    def get_context_data(self, **kwargs):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        context = super().get_context_data(**kwargs)
+        day, today = self.day(), timezone.localdate()
+        rows = list(context["payments"])
+        counted = [p for p in rows if p.status != PaymentStatus.VOID]
+        confirmed = [p for p in counted if p.status == PaymentStatus.CONFIRMED]
+        pending = [p for p in counted if p.status == PaymentStatus.PENDING]
+
+        def breakdown(label_of):
+            groups: dict[str, list] = {}
+            for payment in counted:
+                groups.setdefault(label_of(payment), []).append(payment)
+            return sorted(
+                ({"label": label, "count": len(items),
+                  "total": sum((p.amount for p in items), ZERO)}
+                 for label, items in groups.items()),
+                key=lambda row: row["total"], reverse=True,
+            )
+
+        def recorder(payment):
+            person = payment.recorded_by
+            if person is None:
+                return "Not recorded by a person"
+            return person.get_full_name() or person.get_username()
+
+        context.update(
+            day=day,
+            is_today=day == today,
+            previous_day=day - timedelta(days=1),
+            next_day=day + timedelta(days=1) if day < today else None,
+            today=today,
+            collected_total=sum((p.amount for p in counted), ZERO),
+            confirmed_total=sum((p.amount for p in confirmed), ZERO),
+            pending_total=sum((p.amount for p in pending), ZERO),
+            payment_count=len(counted),
+            pending_count=len(pending),
+            by_method=breakdown(lambda p: p.get_method_display()),
+            by_recorder=breakdown(recorder),
+            can_record=has_capability(self.request.user, Capability.RECORD_PAYMENTS),
+            page_title="Daily payments",
+        )
+        return context
+
+
 class PendingQueueView(ViewPaymentsMixin, ListView):
     """Receipts handed in and waiting to be checked.
 
