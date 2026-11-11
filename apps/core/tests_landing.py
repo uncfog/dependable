@@ -33,7 +33,7 @@ class LandingTestCase(TestCase):
             self.html.index('id="live-demo"'):self.html.index('id="pricing"')
         ]
         dialogs_and_script = self.html[
-            self.html.index("<!-- DEMO DIALOG: RECORD PAYMENT"):self.html.index('<script type="module">')
+            self.html.index("<!-- DEMO DIALOG: RECORD PAYMENT"):self.html.index("<footer")
         ]
         return section + dialogs_and_script
 
@@ -48,7 +48,8 @@ class CallToActionTests(LandingTestCase):
 
     def test_every_set_up_and_plan_button_goes_to_signup(self):
         signup = reverse("core:signup")
-        for label in ("Create a free school account", "Create my school account"):
+        for label in ("Set up my school", "Recover your unpaid fees",
+                      "Create my school account"):
             with self.subTest(label=label):
                 pattern = (
                     rf'<a href="{re.escape(signup)}"[^>]*>\s*(<span>)?'
@@ -65,10 +66,7 @@ class CallToActionTests(LandingTestCase):
     def test_whatsapp_links_read_the_branding_config(self):
         self.assertEqual(
             self.html.count(f'href="{SUPPORT_WHATSAPP_URL}" target="_blank" rel="noopener"'),
-            # The hero's "Ask us on WhatsApp", Enterprise's "Talk to us" and the
-            # closing "Chat with us on WhatsApp". The corner helper is the fourth,
-            # with noreferrer as well.
-            3,
+            2,  # Enterprise's "Talk to us" and "Chat with us on WhatsApp"
         )
 
     def test_whatsapp_and_footer_use_the_real_support_line(self):
@@ -154,36 +152,26 @@ class TruthfulCopyTests(LandingTestCase):
 
     def test_it_says_what_the_bursar_does(self):
         self.assertIn("checks it against the bank", self.html)
-        self.assertIn("Payments checked today", self.html)
+        self.assertIn("Checked, then receipted", self.html)
 
 
-class PrototypeLookTests(LandingTestCase):
-    """The prototype's three families, served by us, and effects that only add."""
+class NoHeavyAnimationTests(LandingTestCase):
+    """The owner asked for the blue-and-lime page back, without the heavy animation."""
 
-    def test_its_fonts_are_ours(self):
-        source = Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
-        for family, stem in (("Bricolage Grotesque", "bricolage-grotesque-latin-opsz"),
-                             ("Figtree", "figtree-latin-wght"),
-                             ("JetBrains Mono", "jetbrains-mono-latin-wght")):
-            with self.subTest(family=family):
-                self.assertIn(f'font-family: "{family}"', source)
-                self.assertTrue(Path(settings.BASE_DIR, "static", "fonts", f"{stem}-normal.woff2").exists())
-        self.assertNotIn("fonts.googleapis.com", self.html)
+    def test_no_moving_background_or_effects_on_the_landing_page(self):
+        for gone in ("js/vendor/23rd/", "js/landing.js", "data-sc-wash", "data-sc-typewriter",
+                     "data-sc-iso", "data-sc-orb", "data-sc-stretch", "<canvas"):
+            with self.subTest(gone=gone):
+                self.assertNotIn(gone, self.html)
 
-    def test_the_effects_are_ours_and_optional(self):
-        for name in ("shader-gradient", "typewriter", "iso-lattice", "live-orb", "stretchy-footer"):
-            with self.subTest(effect=name):
-                self.assertIn(f"/static/js/vendor/23rd/{name}-vanilla.js", self.html)
-                self.assertTrue(Path(settings.BASE_DIR, "static", "js", "vendor", "23rd",
-                                     f"{name}-vanilla.js").exists())
-        # The receipt is in the page as text, before and without the typewriter.
-        self.assertIn('<pre class="sc-receipt-still"', self.html)
-        self.assertIn("Balance          NGN 35,000", self.html)
+    def test_nothing_fades_in_on_scroll(self):
+        self.assertNotIn("lp-reveal", self.html)
+        self.assertNotIn("IntersectionObserver", self.html)
 
-    def test_fixed_parts_sit_outside_the_page_the_footer_stretch_lifts(self):
-        page_end = self.html.index("</div>{# .sc-page") if "{# .sc-page" in self.html else             self.html.index("</footer>")
-        self.assertGreater(self.html.index('class="sc-helper"'), page_end)
-        self.assertGreater(self.html.index('id="payment-modal"'), page_end)
+    def test_it_is_the_blue_band_with_lime_buttons(self):
+        self.assertIn('class="lp-band', self.html)
+        self.assertIn("lp-btn lp-btn-lime lp-btn-lg", self.html)
+        self.assertIn("One school term, without the paperwork.", self.html)
 
 
 class DemoIsADemoTests(LandingTestCase):
@@ -280,15 +268,7 @@ class DemoTourTests(LandingTestCase):
         self.assertIn("demo-actions", self.demo())
 
 
-class BlueAndLimeTests(LandingTestCase):
-    def test_the_typewriter_types_the_owners_school(self):
-        self.assertIn("FULFILLED ACADEMY\nEKETE INLAND, UDU", self.html)
-        self.assertNotIn("GREENFIELD", self.html)
-
-    def test_the_page_wears_the_logo_blue_with_lime_buttons(self):
-        css = Path(settings.BASE_DIR, "assets", "app.css").read_text(encoding="utf-8")
-        block = css[css.index(".sc, .sc-auth {"):]
-        block = block[:block.index("}")]
-        self.assertIn("--sc-bg: #081a38;", block)
-        self.assertIn("--sc-accent: #d2f04e;", block)
-        self.assertIn("border-color: var(--sc-accent); color: var(--sc-accent);", css)
+class OwnersSchoolTests(LandingTestCase):
+    def test_the_hero_receipt_is_from_the_owners_school(self):
+        self.assertIn("Fulfilled Academy, Ekete Inland, Udu", self.html)
+        self.assertNotIn("Sample school", self.html)
