@@ -21,11 +21,11 @@ each card says how many schools are on the plan.
           {% elif offer.price_naira is None %}
             <a href="{{ support_whatsapp_url }}" target="_blank" rel="noopener" class="lp-btn lp-btn-line w-full">Talk to us</a>
           {% elif offer.plan == 'growth' %}
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-lime w-full">Choose {{ offer.name }}</a>
+            <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="lp-btn lp-btn-lime w-full">Choose {{ offer.name }}</a>
           {% elif offer.price_naira == 0 %}
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-line w-full">Start free</a>
+            <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="lp-btn lp-btn-line w-full">Start free</a>
           {% else %}
-            <a href="{% url 'core:signup' %}" class="lp-btn lp-btn-blue w-full">Choose {{ offer.name }}</a>
+            <a href="{% url 'core:signup' %}?plan={{ offer.plan }}" class="lp-btn lp-btn-blue w-full">Choose {{ offer.name }}</a>
           {% endif %}
         </article>
       {% endfor %}
