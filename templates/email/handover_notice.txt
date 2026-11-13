@@ -1,0 +1,10 @@
+{% autoescape off %}{% if greeting %}{{ greeting }}
+
+{% endif %}{% for line in lines %}{{ line }}
+
+{% endfor %}{% if cta_url %}{{ cta_label }}: {{ cta_url }}
+
+{% endif %}Questions: {{ contact_email }}
+
+-- {{ product_name }} - {{ product_tagline }}
+{% endautoescape %}

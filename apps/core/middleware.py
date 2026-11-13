@@ -76,6 +76,9 @@ _WRITABLE_WHEN_READ_ONLY = frozenset(
         # school behind on its bill may be changing hands for exactly that reason.
         "accounts:ownership_start", "accounts:ownership_cancel",
         "accounts:ownership_accept",
+        # A member of staff handing on their own role: accounts again, not records.
+        "accounts:handover_start", "accounts:handover_cancel",
+        "accounts:handover_decide", "accounts:handover_accept",
         # Reading and setting one's own notifications changes no school record.
         "notifications:mark_all_read", "notifications:settings",
         "notifications:remind", "notifications:reminder_cancel",

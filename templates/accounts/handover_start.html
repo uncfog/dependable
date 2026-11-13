@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% comment %}
+A principal or bursar names the person taking over their role. The rules are in
+apps/accounts/handover.py: the owner approves first, then the newcomer accepts
+from an emailed link.
+{% endcomment %}
+
+{% block shell_class %}band-overlap no-bottom-nav{% endblock %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">Your role as {{ user.get_role_display }}{% if user.branch %} at {{ user.branch.name }}{% endif %}</p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'accounts:settings' %}#handover" class="btn btn-ghost text-sm">Cancel</a>
+{% endblock %}
+
+{% block content %}
+<form method="post" novalidate class="grid items-start gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
+  {% csrf_token %}
+  {% if form.non_field_errors %}
+    <div class="card border-overdue/30 bg-overdue-soft px-4 py-3 text-sm text-overdue-strong lg:col-span-2" role="alert">
+      {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+    </div>
+  {% endif %}
+
+  <section class="card card-pad space-y-3.5">
+    <h2 class="card-heading">Who is taking over</h2>
+    {% include "partials/_field.html" with field=form.full_name %}
+    {% include "partials/_field.html" with field=form.email %}
+    <p class="field-hint">Use an email address that has no SCHOOLCORD account yet.</p>
+    {% include "partials/_field.html" with field=form.password %}
+  </section>
+
+  <section class="card card-pad space-y-3">
+    <h2 class="card-heading">What happens next</h2>
+    <ol class="list-decimal space-y-2 pl-5 text-sm text-ink-700">
+      <li>The school owner is asked to approve.</li>
+      <li>Once approved, we email your successor a link that works once, for three days.</li>
+      <li>When they accept, they become {{ user.get_role_display }}{% if user.branch %} at {{ user.branch.name }}{% endif %} and your account is switched off.</li>
+    </ol>
+    <p class="text-sm text-ink-600">Nothing you recorded is deleted, and you can cancel until they accept.</p>
+    <button type="submit" class="btn btn-lime btn-full">Send for approval</button>
+  </section>
+</form>
+{% endblock %}

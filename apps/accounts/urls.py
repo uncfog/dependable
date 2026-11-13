@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from . import mfa_views, ownership_views, views
+from . import handover_views, mfa_views, ownership_views, views
 
 app_name = "accounts"
 
@@ -17,4 +17,10 @@ urlpatterns = [
          name="ownership_cancel"),
     path("ownership/accept/<str:token>/", ownership_views.AcceptTransferView.as_view(),
          name="ownership_accept"),
+    path("handover/start/", handover_views.StartHandoverView.as_view(), name="handover_start"),
+    path("handover/cancel/", handover_views.CancelHandoverView.as_view(), name="handover_cancel"),
+    path("handover/<int:pk>/decide/", handover_views.DecideHandoverView.as_view(),
+         name="handover_decide"),
+    path("handover/accept/<str:token>/", handover_views.AcceptHandoverView.as_view(),
+         name="handover_accept"),
 ]

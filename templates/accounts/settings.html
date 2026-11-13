@@ -196,5 +196,61 @@
       {% endif %}
     </section>
   {% endif %}
+
+  {% comment %}
+  A principal or bursar handing their own role to someone new (apps/accounts/handover.py).
+  The owner approves first, so nothing here changes anything by itself.
+  {% endcomment %}
+  {% if handover %}
+    <section class="card card-pad" id="handover" aria-labelledby="handover-heading">
+      <h2 id="handover-heading" class="text-sm font-semibold text-ink-900">Hand over your role</h2>
+      {% if handover.open %}
+        <p class="mt-1 text-sm text-ink-700">
+          {% if handover.open.status == "awaiting_approval" %}
+            Waiting for the school owner to approve handing your role to
+            <strong class="text-ink-900">{{ handover.open.to_name }}</strong> ({{ handover.open.to_email }}).
+          {% else %}
+            Approved. Waiting for <strong class="text-ink-900">{{ handover.open.to_name }}</strong>
+            ({{ handover.open.to_email }}) to accept. The link works until
+            {{ handover.open.expires_at|date:"j F, g:i A" }}.
+          {% endif %}
+          Nothing changes until they accept.
+        </p>
+        <form method="post" action="{% url 'accounts:handover_cancel' %}" class="mt-3">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-secondary btn-sm">Cancel the handover</button>
+        </form>
+      {% else %}
+        <p class="mt-1 text-sm text-ink-700">
+          Leaving, or changing jobs? Hand your role as {{ user.get_role_display }} to your
+          successor by email. The school owner approves it first; when your successor accepts,
+          they take over and your account is switched off.
+        </p>
+        <a href="{% url 'accounts:handover_start' %}" class="btn btn-secondary btn-sm mt-3">Hand over my role</a>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {% if handover_requests %}
+    <section class="card card-pad" id="handovers" aria-labelledby="handovers-heading">
+      <h2 id="handovers-heading" class="text-sm font-semibold text-ink-900">Role handovers waiting for you</h2>
+      <ul class="mt-2 divide-y divide-ink-200">
+        {% for item in handover_requests %}
+          <li class="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-ink-700">
+              <strong class="text-ink-900">{{ item.from_user.get_full_name|default:item.from_user.username }}</strong>,
+              {{ item.get_role_display }} at {{ item.branch.name }}, wants to hand their role to
+              <strong class="text-ink-900">{{ item.to_name }}</strong> ({{ item.to_email }}).
+            </p>
+            <form method="post" action="{% url 'accounts:handover_decide' item.pk %}" class="flex shrink-0 gap-2">
+              {% csrf_token %}
+              <button type="submit" name="decision" value="approve" class="btn btn-lime btn-sm">Approve</button>
+              <button type="submit" name="decision" value="reject" class="btn btn-secondary btn-sm">Do not approve</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% endif %}
 </div>
 {% endblock %}

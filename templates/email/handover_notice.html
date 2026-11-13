@@ -1,0 +1,17 @@
+{% extends "email/_base.html" %}{% comment %}
+Every role handover email (apps/accounts/handover.py): a heading, a few lines,
+and sometimes one button.
+{% endcomment %}
+
+{% block subject %}{{ heading }}{% endblock %}
+{% block preheader %}{{ lines.0 }}{% endblock %}
+{% block heading %}{{ heading }}{% endblock %}
+
+{% block body %}
+  {% if greeting %}<p style="margin:0 0 14px 0;">{{ greeting }}</p>{% endif %}
+  {% for line in lines %}<p style="margin:0 0 14px 0;">{{ line }}</p>{% endfor %}
+{% endblock %}
+
+{% block cta %}
+  {% if cta_url %}{% include "email/_button.html" with url=cta_url label=cta_label %}{% endif %}
+{% endblock %}
