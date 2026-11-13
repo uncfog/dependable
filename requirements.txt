@@ -1,4 +1,4 @@
-Django==5.2.18
+Django==5.2.19
 # Resend's API, as a Django email backend. The [resend] extra adds the
 # signature verification Anymail uses for Resend's status webhooks.
 django-anymail[resend]==15.2
