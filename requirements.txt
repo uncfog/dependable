@@ -2,7 +2,7 @@ Django==5.2.18
 # Resend's API, as a Django email backend. The [resend] extra adds the
 # signature verification Anymail uses for Resend's status webhooks.
 django-anymail[resend]==15.2
-gunicorn==23.0.0
+gunicorn==26.2.0
 openpyxl==3.1.5
 # Uploaded files -- school logos and payment receipts -- live in an
 # S3-compatible bucket rather than on the container's own disk, which on Railway
