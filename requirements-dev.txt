@@ -2,4 +2,4 @@
 coverage==7.17.2
 pip-audit==2.10.1
 # The browser smoke tests in e2e/. After installing: playwright install chromium
-playwright==1.64.1
+playwright==1.65.0
