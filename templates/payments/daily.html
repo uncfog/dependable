@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load money %}
+
+{% comment %}
+One day's payments, opened from the overview's "Daily payments" tile: what was
+collected on that day, split by how it was paid and by who recorded it, then
+every payment. Voided payments are shown struck through and never counted.
+See payments.views.DailyPaymentsView.
+{% endcomment %}
+
+{% block page_subtitle %}
+  <p class="truncate text-sm text-ink-600">
+    {% if is_today %}Today, {% endif %}{{ day|date:"l j F Y" }}
+  </p>
+{% endblock %}
+
+{% block page_actions %}
+  <a href="{% url 'payments:index' %}" class="btn btn-ghost text-sm">All payments</a>
+  {% if can_record %}
+    <a href="{% url 'payments:record' %}" class="btn btn-primary text-sm">Record a payment</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="space-y-4">
+
+  {# ===== Which day ======================================================== #}
+  <div class="card card-pad flex flex-wrap items-center justify-between gap-3">
+    <nav class="flex items-center gap-2" aria-label="Change day">
+      <a href="?date={{ previous_day|date:'Y-m-d' }}" class="btn btn-secondary text-sm">&larr; {{ previous_day|date:"j M" }}</a>
+      {% if next_day %}
+        <a href="?date={{ next_day|date:'Y-m-d' }}" class="btn btn-secondary text-sm">{{ next_day|date:"j M" }} &rarr;</a>
+      {% endif %}
+      {% if not is_today %}
+        <a href="{% url 'payments:daily' %}" class="btn btn-ghost text-sm">Today</a>
+      {% endif %}
+    </nav>
+    <form method="get" class="flex items-end gap-2">
+      <div>
+        <label for="daily-date" class="field-label">Go to a day</label>
+        <input type="date" id="daily-date" name="date" class="field-input"
+               value="{{ day|date:'Y-m-d' }}" max="{{ today|date:'Y-m-d' }}">
+      </div>
+      <button type="submit" class="btn btn-secondary text-sm">Show</button>
+    </form>
+  </div>
+
+  {# ===== The day's figures ================================================ #}
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div class="tile tint-blue"><span>Collected</span><b class="numeric">{{ collected_total|naira }}</b></div>
+    <div class="tile tint-green"><span>Checked</span><b class="numeric">{{ confirmed_total|naira }}</b></div>
+    <div class="tile tint-amber"><span>Waiting to be checked</span><b class="numeric">{{ pending_total|naira }}</b></div>
+    <div class="tile tint-purple"><span>Payments</span><b class="numeric">{{ payment_count }}</b></div>
+  </div>
+
+  {% if pending_count %}
+    <a href="{% url 'payments:pending' %}" class="card block border-partial/30 bg-partial-soft px-5 py-4 text-sm text-partial-strong">
+      {{ pending_count }} of these {{ pending_count|pluralize:"is,are" }} waiting to be checked against the bank, so {{ pending_count|pluralize:"it does,they do" }} not count toward a balance yet.
+      <span class="font-medium underline">Open the queue</span>
+    </a>
+  {% endif %}
+
+  {% if payments %}
+    <div class="grid gap-4 lg:grid-cols-2">
+      <section class="card overflow-hidden" aria-labelledby="by-method">
+        <h2 id="by-method" class="border-b border-ink-200 px-5 py-3 text-sm font-semibold text-ink-900">By how it was paid</h2>
+        <dl class="divide-y divide-ink-200">
+          {% for row in by_method %}
+            <div class="flex items-baseline justify-between gap-3 px-5 py-3 text-sm">
+              <dt class="text-ink-700">{{ row.label }} <span class="text-ink-500">&middot; {{ row.count }}</span></dt>
+              <dd class="numeric font-semibold text-ink-900">{{ row.total|naira }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+      </section>
+      <section class="card overflow-hidden" aria-labelledby="by-recorder">
+        <h2 id="by-recorder" class="border-b border-ink-200 px-5 py-3 text-sm font-semibold text-ink-900">By who recorded it</h2>
+        <dl class="divide-y divide-ink-200">
+          {% for row in by_recorder %}
+            <div class="flex items-baseline justify-between gap-3 px-5 py-3 text-sm">
+              <dt class="text-ink-700">{{ row.label }} <span class="text-ink-500">&middot; {{ row.count }}</span></dt>
+              <dd class="numeric font-semibold text-ink-900">{{ row.total|naira }}</dd>
+            </div>
+          {% endfor %}
+        </dl>
+      </section>
+    </div>
+
+    <div class="card overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead class="border-b border-ink-200 text-xs text-ink-600">
+            <tr>
+              <th scope="col" class="px-5 py-3">Student</th>
+              <th scope="col" class="px-5 py-3">Method</th>
+              <th scope="col" class="px-5 py-3">Recorded by</th>
+              <th scope="col" class="px-5 py-3 text-right">Amount</th>
+              <th scope="col" class="px-5 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-ink-100">
+            {% for payment in payments %}
+              <tr class="card-row">
+                <td class="card-lead order-1 px-5 py-3">
+                  <span class="min-w-0">
+                    <a href="{{ payment.get_absolute_url }}" class="font-bold text-ink-900 hover:underline">{{ payment.student.full_name }}</a>
+                    <span class="sub-line">{{ payment.student.school_class.display_name }} &middot; {{ payment.receipt_number }}</span>
+                  </span>
+                </td>
+                <td class="card-secondary whitespace-nowrap px-5 py-3 text-ink-700">{{ payment.get_method_display }}</td>
+                <td class="card-secondary whitespace-nowrap px-5 py-3 text-ink-700">
+                  {% if payment.recorded_by %}{{ payment.recorded_by.get_full_name|default:payment.recorded_by.get_username }}{% else %}&mdash;{% endif %}
+                </td>
+                <td class="card-half card-end card-bare order-2 numeric whitespace-nowrap px-5 py-3 text-right
+                           {% if payment.status == 'void' %}text-ink-500 line-through{% else %}font-bold text-ink-900{% endif %}">{{ payment.amount|naira }}</td>
+                <td class="card-half card-bare order-3 px-5 py-3">
+                  <span class="status-pill {{ payment.pill_class }}">{{ payment.status_label }}</span>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="card empty-state">
+      <p class="text-base font-medium text-ink-700">No payments {% if is_today %}yet today{% else %}on {{ day|date:"j F Y" }}{% endif %}</p>
+      <p class="mt-2 text-sm text-ink-500">Payments show here on the day they were paid, as soon as they are recorded.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
