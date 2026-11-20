@@ -13,7 +13,7 @@ psycopg[binary]==3.3.8
 pwned-passwords-django==5.2.0
 python-dotenv==1.2.4
 # Error reporting, off unless SENTRY_DSN is set. See config/settings/monitoring.py.
-sentry-sdk[django]==2.74.0
+sentry-sdk[django]==2.75.0
 # Authenticator-app sign-in for platform accounts, with recovery codes. segno draws
 # the QR code to scan and is pure Python. See apps/accounts/mfa_views.py.
 django-otp==1.7.5
